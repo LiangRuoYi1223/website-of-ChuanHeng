@@ -1,0 +1,45 @@
+.activity-filters { color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 32px; overflow: hidden; }
+.activity-filters-head { display: flex; align-items: center; justify-content: space-between; gap: 32px; padding: 24px 32px; border-bottom: 1px solid var(--line); }
+.activity-filters-head > div > span { display: block; font-size: 12px; line-height: 18px; letter-spacing: .12em; color: var(--muted); font-weight: 500; }
+.activity-filters-head > div > p { margin: 8px 0 0; font-family: var(--font-editorial); font-size: 32px; font-weight: 500; line-height: 44px; }
+.activity-filters-head .activity-filters-combine { margin: 0; font-size: 12px; line-height: 18px; color: var(--muted); }
+.activity-filters-groups { padding: 8px 32px; }
+.activity-filters-group { min-width: 0; display: flex; align-items: center; gap: 32px; border: 0; border-bottom: 1px solid var(--line); padding: 16px 0; margin: 0; }
+.activity-filters-group:last-child { border-bottom: 0; }
+.activity-filters-group > legend { float: left; display: flex; align-items: center; gap: 12px; width: 160px; min-width: 160px; font-size: 14px; line-height: 22px; font-weight: 500; padding: 0; }
+.activity-filters-group > legend > svg { color: var(--green); flex-shrink: 0; }
+.activity-filters-options { min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.activity-filters-option { display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; min-height: 40px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: var(--muted); font: inherit; font-size: 14px; line-height: 22px; font-weight: 400; cursor: pointer; transition: background var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out); white-space: nowrap; }
+.activity-filters-option:hover { background: var(--soft); color: var(--green-hover); }
+.activity-filters-option[aria-pressed='true'] { background: var(--green); color: var(--surface); }
+.activity-filters-option[aria-pressed='true']:hover { background: var(--green-hover); }
+.activity-filters-option:focus-visible, .activity-filters-clear:focus-visible { outline: 2px solid var(--green-hover); outline-offset: 4px; }
+.activity-filters-foot { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 16px 32px; border-top: 1px solid var(--line); background: var(--soft); min-height: 64px; }
+.activity-filters-foot > p { margin: 0; font-size: 14px; line-height: 22px; color: var(--muted); }
+.activity-filters-foot > p > strong { font-size: 24px; line-height: 34px; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--green); margin: 0 8px; }
+.activity-filters-foot > p > span { font-size: 12px; line-height: 18px; color: var(--muted); }
+.activity-filters-clear { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; background: transparent; border: 0; border-radius: 4px; padding: 8px 12px; font: inherit; font-size: 14px; line-height: 22px; color: var(--green); cursor: pointer; transition: background var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out); }
+.activity-filters-clear:hover { background: var(--surface); color: var(--green-hover); text-decoration: underline; text-underline-offset: 4px; }
+.activity-filters-hint { color: var(--muted); font-size: 12px; line-height: 18px; }
+@media (max-width: 850px) {
+  .activity-filters-head, .activity-filters-foot { padding-inline: 24px; }
+  .activity-filters-groups { padding-inline: 24px; }
+  .activity-filters-group { gap: 16px; }
+  .activity-filters-group > legend { width: 144px; min-width: 144px; }
+  .activity-filters-option { padding-inline: 12px; }
+}
+@media (max-width: 600px) {
+  .activity-filters-head { align-items: flex-start; padding: 24px; }
+  .activity-filters-head > div > p { font-size: 24px; line-height: 34px; }
+  .activity-filters-head .activity-filters-combine { display: none; }
+  .activity-filters-groups { padding-inline: 24px; }
+  .activity-filters-group { display: block; padding-block: 16px; }
+  .activity-filters-group > legend { float: none; width: auto; min-width: 0; margin-bottom: 12px; }
+  .activity-filters-options { gap: 8px; }
+  .activity-filters-option { padding-inline: 12px; min-height: 40px; }
+  .activity-filters-foot { padding: 16px 24px; gap: 12px; }
+  .activity-filters-hint { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .activity-filters-option, .activity-filters-clear { transition: none; }
+}

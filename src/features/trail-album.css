@@ -1,0 +1,111 @@
+.trail-album-section { padding: 96px 0; color: var(--ink); background: var(--paper); }
+.trail-album-container { width: min(1296px, calc(100% - 96px)); margin-inline: auto; }
+.trail-album-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; margin-bottom: 32px; }
+.trail-album-eyebrow { display: block; font-size: 12px; line-height: 18px; font-weight: 500; color: var(--muted); letter-spacing: .12em; }
+.trail-album-heading h2 { margin-top: 16px; font-family: var(--font-editorial); font-size: 48px; font-weight: 500; line-height: 60px; letter-spacing: -.02em; }
+.trail-album-heading h2 > span { color: var(--lime); }
+.trail-album-heading > p { margin: 0; color: var(--muted); font-size: 18px; line-height: 32px; }
+.trail-album-selector { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 32px; }
+.trail-album-choice { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-height: 64px; padding: 8px 24px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; text-align: left; font: inherit; transition: background var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out); }
+.trail-album-choice > span { font-size: 14px; line-height: 22px; font-weight: 500; }
+.trail-album-choice > time { font-size: 12px; line-height: 18px; color: var(--muted); }
+.trail-album-choice:hover { background: var(--soft); border-color: var(--green); }
+.trail-album-choice[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: var(--surface); }
+.trail-album-choice[aria-pressed="true"]:hover { background: var(--green-hover); border-color: var(--green-hover); }
+.trail-album-choice[aria-pressed="true"] > time { color: var(--surface); }
+.trail-album-meta { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 16px; font-size: 12px; line-height: 18px; color: var(--muted); }
+.trail-album-meta > div { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+.trail-album-category { padding: 4px 8px; background: var(--soft); color: var(--green); border-radius: 4px; }
+.trail-album-photo-count { flex-shrink: 0; font-size: 12px; line-height: 18px; }
+.trail-album-mosaic { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); grid-template-rows: repeat(2, minmax(0, 1fr)); aspect-ratio: 5 / 2; gap: 16px; }
+.trail-album-photo { position: relative; display: block; width: 100%; min-width: 0; min-height: 0; padding: 0; border: 0; border-radius: 4px; overflow: hidden; background: var(--soft); cursor: pointer; text-align: left; font: inherit; color: var(--surface); }
+.trail-album-photo-1 { grid-row: span 2; }
+.trail-album-photo-2 { margin-top: 16px; }
+.trail-album-photo-3 { margin-bottom: 16px; }
+.trail-album-photo img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform var(--motion-image) var(--ease-out); }
+.trail-album-photo:hover img { transform: scale(1.025); }
+.trail-album-demo { position: absolute; top: 16px; left: 16px; display: inline-flex; padding: 4px 8px; background: color-mix(in srgb, var(--ink) 88%, transparent); border: 1px solid color-mix(in srgb, var(--surface) 24%, transparent); border-radius: 4px; color: var(--surface); font-size: 12px; line-height: 18px; }
+.trail-album-photo-bottom { position: absolute; inset: auto 0 0; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 48px 24px 24px; background: linear-gradient(transparent, color-mix(in srgb, var(--ink) 92%, transparent)); }
+.trail-album-photo-bottom > span { display: grid; gap: 8px; }
+.trail-album-photo-bottom small { font-size: 12px; line-height: 18px; color: var(--surface); letter-spacing: .08em; }
+.trail-album-photo-bottom > span > span { font-size: 16px; font-weight: 400; line-height: 28px; }
+.trail-album-photo-bottom > svg { flex-shrink: 0; color: var(--lime); }
+.trail-album-photo-1 .trail-album-photo-bottom { padding: 64px 32px 32px; }
+.trail-album-photo-1 .trail-album-photo-bottom > span > span { font-family: var(--font-editorial); font-size: 24px; line-height: 34px; font-weight: 500; }
+.trail-album-mosaic[data-count="1"] { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr); aspect-ratio: 3 / 2; }
+.trail-album-mosaic[data-count="1"] .trail-album-photo-1 { grid-row: auto; }
+.trail-album-mosaic[data-count="2"] { grid-template-rows: minmax(0, 1fr); }
+.trail-album-mosaic[data-count="2"] .trail-album-photo-1 { grid-row: auto; }
+.trail-album-mosaic[data-count="2"] .trail-album-photo-2 { margin: 16px 0; }
+.trail-album-footer { display: flex; align-items: center; justify-content: space-between; gap: 32px; padding-top: 24px; }
+.trail-album-footer > p { margin: 0; max-width: 640px; font-size: 12px; color: var(--muted); line-height: 18px; }
+.trail-album-view-all { display: inline-flex; align-items: center; justify-content: center; gap: 16px; flex-shrink: 0; min-height: 48px; padding: 12px 16px; background: transparent; border: 0; border-radius: 4px; color: var(--green); font: inherit; font-size: 14px; line-height: 22px; cursor: pointer; transition: color var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out); }
+.trail-album-view-all:hover { color: var(--green-hover); background: var(--soft); }
+.trail-album-choice:focus-visible, .trail-album-view-all:focus-visible, .trail-album-photo:focus-visible { outline: 2px solid var(--green-hover); outline-offset: 4px; }
+.trail-album-empty { display: flex; flex-direction: column; align-items: center; padding: 64px 24px; text-align: center; border: 1px dashed var(--line); border-radius: 8px; background: var(--soft); color: var(--muted); }
+.trail-album-empty h3 { margin: 24px 0 8px; font-family: var(--font-editorial); font-size: 32px; line-height: 44px; font-weight: 500; color: var(--green); }
+.trail-album-empty p { margin: 0; font-size: 16px; line-height: 28px; }
+.trail-album-dialog { width: min(1080px, calc(100% - 64px)); max-width: none; max-height: calc(100svh - 48px); padding: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); overflow: auto; box-shadow: 0 32px 96px color-mix(in srgb, var(--ink) 32%, transparent); }
+.trail-album-dialog::backdrop { background: color-mix(in srgb, var(--ink) 84%, transparent); backdrop-filter: blur(8px); }
+.trail-album-lightbox { min-width: 0; }
+.trail-album-lightbox-header { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 24px; }
+.trail-album-lightbox-header h3 { margin: 0; font-family: var(--font-editorial); font-size: 24px; font-weight: 500; line-height: 34px; }
+.trail-album-lightbox-header time { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 18px; }
+.trail-album-icon-button { display: inline-flex; justify-content: center; align-items: center; width: 40px; height: 40px; flex-shrink: 0; padding: 0; border: 1px solid var(--line); border-radius: 4px; background: transparent; color: var(--green); cursor: pointer; transition: background var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out); }
+.trail-album-icon-button:hover { background: var(--soft); color: var(--green-hover); }
+.trail-album-icon-button:disabled { opacity: .35; cursor: default; }
+.trail-album-icon-button:focus-visible { outline: 2px solid var(--green-hover); outline-offset: 4px; }
+.trail-album-lightbox-image { position: relative; display: flex; align-items: center; justify-content: center; min-height: 160px; background: var(--ink); }
+.trail-album-lightbox-image img { display: block; width: 100%; height: min(65svh, 680px); object-fit: contain; }
+.trail-album-lightbox-footer { display: flex; align-items: center; justify-content: space-between; gap: 32px; padding: 24px; }
+.trail-album-lightbox-caption { min-width: 0; }
+.trail-album-lightbox-caption p { margin: 0 0 8px; color: var(--ink); font-size: 16px; line-height: 28px; }
+.trail-album-lightbox-caption > span { font-size: 12px; line-height: 18px; color: var(--muted); letter-spacing: .04em; }
+.trail-album-lightbox-controls { display: flex; flex-shrink: 0; gap: 8px; }
+.trail-album-compact { padding-block: 64px; }
+.trail-album-compact .trail-album-heading h2 { font-size: 32px; line-height: 44px; }
+@media (max-width: 900px) {
+  .trail-album-container { width: calc(100% - 64px); }
+  .trail-album-mosaic { gap: 12px; }
+  .trail-album-photo-2 { margin-top: 12px; }
+  .trail-album-photo-3 { margin-bottom: 12px; }
+  .trail-album-photo-bottom, .trail-album-photo-1 .trail-album-photo-bottom { padding: 48px 24px 24px; }
+}
+@media (max-width: 600px) {
+  .trail-album-section { padding-block: 64px; }
+  .trail-album-container { width: calc(100% - 48px); }
+  .trail-album-heading { align-items: flex-start; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+  .trail-album-heading h2 { font-size: 32px; line-height: 44px; }
+  .trail-album-heading > p { font-size: 16px; line-height: 28px; }
+  .trail-album-heading > p br { display: none; }
+  .trail-album-selector { flex-wrap: nowrap; overflow-x: auto; padding: 4px 4px 12px; margin: -4px -4px 24px; }
+  .trail-album-choice { flex-shrink: 0; min-height: 64px; padding-inline: 24px; }
+  .trail-album-choice > span { max-width: 210px; white-space: normal; }
+  .trail-album-meta { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .trail-album-meta > div { gap: 12px; }
+  .trail-album-mosaic { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto auto; aspect-ratio: auto; gap: 12px; }
+  .trail-album-photo { aspect-ratio: 1 / 1; }
+  .trail-album-photo-1 { grid-column: span 2; grid-row: auto; aspect-ratio: 3 / 2; }
+  .trail-album-photo-2, .trail-album-photo-3 { margin: 0; }
+  .trail-album-photo-bottom, .trail-album-photo-1 .trail-album-photo-bottom { padding: 32px 16px 16px; gap: 8px; }
+  .trail-album-photo-bottom > span > span { font-size: 14px; line-height: 22px; }
+  .trail-album-photo-1 .trail-album-photo-bottom > span > span { font-size: 24px; line-height: 34px; }
+  .trail-album-photo-bottom > svg { width: 16px; height: 16px; }
+  .trail-album-demo { top: 12px; left: 12px; padding: 4px 8px; }
+  .trail-album-mosaic[data-count="1"] { grid-template-columns: 1fr; grid-template-rows: auto; aspect-ratio: 3 / 2; }
+  .trail-album-mosaic[data-count="1"] .trail-album-photo-1 { grid-column: auto; }
+  .trail-album-mosaic[data-count="2"] { grid-template-columns: 1fr; grid-template-rows: auto auto; }
+  .trail-album-mosaic[data-count="2"] .trail-album-photo { aspect-ratio: 3 / 2; }
+  .trail-album-mosaic[data-count="2"] .trail-album-photo-1 { grid-column: auto; }
+  .trail-album-mosaic[data-count="2"] .trail-album-photo-2 { margin: 0; }
+  .trail-album-footer { flex-direction: column; align-items: flex-start; gap: 8px; padding-top: 16px; }
+  .trail-album-view-all { padding-left: 0; }
+  .trail-album-dialog { width: calc(100% - 24px); max-height: calc(100svh - 24px); }
+  .trail-album-lightbox-header, .trail-album-lightbox-footer { padding: 16px; gap: 16px; }
+  .trail-album-lightbox-image img { height: 56svh; }
+  .trail-album-lightbox-header h3 { font-size: 24px; line-height: 34px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trail-album-section *, .trail-album-section *::before, .trail-album-section *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+  .trail-album-photo:hover img { transform: none; }
+}

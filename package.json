@@ -1,0 +1,30 @@
+{
+  "name": "chuanheng-mountaineering",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": { "node": ">=24.0.0" },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
+    "dev:web": "vite --host 127.0.0.1 --port 5173 --strictPort",
+    "dev:api": "node --watch server/index.mjs",
+    "build": "tsc -b && vite build",
+    "start": "vite preview --host 127.0.0.1 --port 5173 --strictPort",
+    "start:api": "node server/index.mjs",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.1",
+    "lucide-react": "^0.468.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@types/node": "^24.0.0",
+    "@vitejs/plugin-react": "^5.0.4",
+    "typescript": "~5.9.3",
+    "vite": "^7.1.9"
+  }
+}
