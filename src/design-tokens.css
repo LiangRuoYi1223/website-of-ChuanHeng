@@ -1,21 +1,21 @@
 :root {
-  /* 川衡：山野杂志；登山队以冷静高山色板扩展。 */
-  --paper: #f8f3e8;
-  --surface: #fffcf5;
-  --soft: #eee7d8;
-  --green: #4f5940;
-  --green-hover: #3e4932;
-  --ink: #273226;
-  --muted: #606a58;
-  --lime: #d4a65c;
-  --line: #dcd5c6;
-  --alpine: #18262a;
-  --alpine-surface: #24363b;
+  /* 川衡：冷白 × 岩松绿；登山队延展为同色相的深松绿。 */
+  --paper: #f5f6f4;
+  --surface: #fcfdfc;
+  --soft: #e7ebe6;
+  --green: #315447;
+  --green-hover: #244236;
+  --ink: #202923;
+  --muted: #606b63;
+  --lime: var(--ice); /* 保留旧组件的浅色强调变量兼容性。 */
+  --line: #d6ded8;
+  --alpine: #17241f;
+  --alpine-surface: #22332c;
   --alpine-ink: #f2f5f3;
-  --alpine-muted: #b6c6c9;
-  --ice: #bdd2d8;
-  --ice-hover: #d0e0e3;
-  --alpine-line: #41555b;
+  --alpine-muted: #b7c8bf;
+  --ice: #b3cbc0;
+  --ice-hover: #c7dbd0;
+  --alpine-line: #3e5449;
 
   --font-body: 'DM Sans', 'Chuanheng Han Sans CN', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --font-editorial: 'Chuanheng Han Serif SC', 'Songti SC', 'SimSun', serif;

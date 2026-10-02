@@ -13,7 +13,7 @@
 .activity-preparation-reset:focus-visible { outline: 2px solid var(--green-hover); outline-offset: 4px; }
 .activity-preparation-progress { height: 4px; overflow: hidden; background: var(--line); border-radius: 4px; margin-bottom: 24px; }
 .activity-preparation-progress > span { height: 100%; display: block; background: var(--green); border-radius: inherit; transition: width var(--motion-panel) var(--ease-out); }
-.activity-preparation-notice { margin-bottom: 24px; padding-left: 16px; border-left: 2px solid var(--lime); font-size: 16px; line-height: 28px; color: var(--muted); white-space: pre-line; }
+.activity-preparation-notice { margin-bottom: 24px; padding-left: 16px; border-left: 2px solid var(--green); font-size: 16px; line-height: 28px; color: var(--muted); white-space: pre-line; }
 .activity-preparation-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px; }
 .activity-preparation-item { position: relative; display: flex; align-items: flex-start; gap: 16px; min-width: 0; padding: 24px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); cursor: pointer; transition: background var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out); }
 .activity-preparation-item:hover { border-color: var(--green); }

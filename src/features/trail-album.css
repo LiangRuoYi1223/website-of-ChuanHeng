@@ -3,7 +3,7 @@
 .trail-album-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; margin-bottom: 32px; }
 .trail-album-eyebrow { display: block; font-size: 12px; line-height: 18px; font-weight: 500; color: var(--muted); letter-spacing: .12em; }
 .trail-album-heading h2 { margin-top: 16px; font-family: var(--font-editorial); font-size: 48px; font-weight: 500; line-height: 60px; letter-spacing: -.02em; }
-.trail-album-heading h2 > span { color: var(--lime); }
+.trail-album-heading h2 > span { color: var(--green); }
 .trail-album-heading > p { margin: 0; color: var(--muted); font-size: 18px; line-height: 32px; }
 .trail-album-selector { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 32px; }
 .trail-album-choice { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-height: 64px; padding: 8px 24px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; text-align: left; font: inherit; transition: background var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out); }
@@ -29,7 +29,7 @@
 .trail-album-photo-bottom > span { display: grid; gap: 8px; }
 .trail-album-photo-bottom small { font-size: 12px; line-height: 18px; color: var(--surface); letter-spacing: .08em; }
 .trail-album-photo-bottom > span > span { font-size: 16px; font-weight: 400; line-height: 28px; }
-.trail-album-photo-bottom > svg { flex-shrink: 0; color: var(--lime); }
+.trail-album-photo-bottom > svg { flex-shrink: 0; color: var(--ice); }
 .trail-album-photo-1 .trail-album-photo-bottom { padding: 64px 32px 32px; }
 .trail-album-photo-1 .trail-album-photo-bottom > span > span { font-family: var(--font-editorial); font-size: 24px; line-height: 34px; font-weight: 500; }
 .trail-album-mosaic[data-count="1"] { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr); aspect-ratio: 3 / 2; }
