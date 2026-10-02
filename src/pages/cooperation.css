@@ -1,0 +1,196 @@
+.cooperation-page { overflow: clip; }
+.coop-hero { position: relative; min-height: 500px; background: var(--surface); }
+.coop-hero-image, .coop-hero-wash { position: absolute; inset: 0; }
+.coop-hero-image { left: 35%; overflow: hidden; }
+.coop-hero-image img { object-position: 76% 38%; filter: saturate(.65) brightness(1.12); }
+.coop-hero-wash { background: linear-gradient(90deg, var(--surface) 0%, var(--surface) 35%, color-mix(in srgb, var(--surface) 88%, transparent) 49%, transparent 76%); }
+.coop-hero-content { position: relative; min-height: 500px; padding-block: 48px 56px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
+.coop-hero .eyebrow { color: var(--muted); }
+.coop-hero h1 { max-width: 980px; margin-block: 24px; font: 500 clamp(3.25rem, 5.55vw, var(--text-hero))/var(--leading-hero) var(--font-editorial); letter-spacing: -.025em; }
+.coop-hero-content > p { color: var(--green); font-size: 24px; line-height: 1.5; }
+.coop-hero-actions { display: flex; gap: 24px; margin-top: 32px; }
+.coop-hero-caption { position: absolute; right: var(--page-gutter); bottom: 24px; color: var(--surface); font-size: var(--text-caption); padding: 4px 8px; background: color-mix(in srgb, var(--alpine) 72%, transparent); border-radius: var(--radius-button); }
+.coop-chapters { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: center; padding-block: 32px; border-bottom: 1px solid var(--line); }
+.coop-chapters a { display: flex; flex-direction: column; gap: 4px; padding-inline: 32px 12px; font-size: var(--text-ui); font-weight: 500; line-height: var(--leading-ui); }
+.coop-chapters a:first-child { padding-left: 0; }
+.coop-chapters a + a { border-left: 1px solid var(--line); }
+.coop-chapters a span { font-size: var(--text-caption); color: var(--muted); font-variant-numeric: tabular-nums; }
+.coop-chapters a:hover { color: var(--green); text-decoration: underline; text-underline-offset: 6px; }
+.coop-section { padding-block: var(--section-space); }
+.coop-section-heading h2, .coop-handbook-copy h2 { margin-top: 16px; font: 500 var(--text-section)/var(--leading-section) var(--font-editorial); letter-spacing: -.02em; }
+.coop-section-heading > p { color: var(--muted); margin-top: 16px; max-width: 65ch; }
+.coop-qualification-layout { display: grid; grid-template-columns: .92fr 1fr; gap: 96px; align-items: center; }
+.coop-section-heading h2.preserve-lines { line-height: var(--leading-section); }
+.coop-identity { margin-top: 24px; font-size: var(--text-intro); font-weight: 500; }
+.coop-training-focus { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 0; padding: 0; margin: 32px 0 0; font-size: var(--text-ui); font-weight: 500; }
+.coop-training-focus li + li::before { content: '/'; padding-inline: 8px; color: var(--muted); }
+.coop-qualification-evidence h3 { font-size: var(--text-intro); font-weight: 500; margin-bottom: 24px; }
+.coop-qualification-evidence h3 span { font-size: var(--text-ui); color: var(--muted); }
+.coop-table-wrap { width: 100%; }
+.coop-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: var(--text-ui); line-height: var(--leading-ui); border: 1px solid var(--line); }
+.coop-table th, .coop-table td { text-align: left; padding: 16px 24px; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); overflow-wrap: anywhere; vertical-align: middle; }
+.coop-table th:last-child, .coop-table td:last-child { border-right: 0; }
+.coop-table thead th { background: var(--soft); font-weight: 500; font-size: var(--text-caption); }
+.coop-table tbody th { font-weight: 500; }
+.coop-table td { color: var(--muted); }
+.qualification-table th:first-child { width: 20%; }
+.qualification-table th:nth-child(2) { width: 47%; }
+.qualification-table td:last-child { font-size: var(--text-caption); }
+.coop-data-note { margin-top: 16px; color: var(--muted); font-size: var(--text-caption); line-height: var(--leading-caption); }
+.coop-project-section { padding-block: 64px; background: var(--soft); }
+.coop-heading-row { display: flex; align-items: center; justify-content: space-between; gap: 64px; margin-bottom: 32px; }
+.coop-heading-row > p { color: var(--muted); max-width: 500px; font-size: var(--text-body); line-height: var(--leading-body); }
+.coop-project-list { margin: 0; padding: 0; list-style: none; }
+.coop-project-row { display: grid; grid-template-columns: .46fr .54fr; gap: 32px; padding-block: 24px; align-items: center; }
+.coop-project-row + .coop-project-row { border-top: 1px solid var(--line); }
+.coop-project-photo { position: relative; aspect-ratio: 2.5; overflow: hidden; border-radius: var(--radius-image); }
+.coop-project-photo img { transition: transform var(--motion-image) var(--ease-out); }
+.coop-project-photo:hover img { transform: scale(1.025); }
+.coop-project-photo > span { position: absolute; bottom: 12px; left: 16px; color: var(--surface); font-size: var(--text-caption); padding: 2px 6px; background: color-mix(in srgb, var(--alpine) 78%, transparent); border-radius: var(--radius-button); }
+.coop-project-copy { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 24px; align-items: start; }
+.coop-project-number { color: var(--green); font-size: var(--text-module); line-height: var(--leading-module); font-weight: 400; font-variant-numeric: tabular-nums; }
+.coop-project-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.coop-project-heading h3 { font: 500 var(--text-card)/var(--leading-card) var(--font-editorial); }
+.coop-project-heading h3 a:hover { color: var(--green); }
+.coop-project-heading .demo-badge { background: var(--paper); font-size: 11px; padding: 2px 6px; }
+.coop-project-more { margin-left: auto; font-size: var(--text-caption); white-space: nowrap; border-bottom: 1px solid var(--green); gap: 8px; }
+.coop-project-summary { margin-block: 12px 20px; font-size: var(--text-ui); color: var(--muted); }
+.coop-project-facts { display: grid; gap: 8px; margin: 0; font-size: var(--text-ui); color: var(--muted); }
+.coop-project-facts > div { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px; }
+.coop-project-facts dt { color: var(--ink); }
+.coop-project-facts dd { margin: 0; }
+.coop-empty { padding: 32px 0; color: var(--muted); }
+.coop-empty h3 { font-size: var(--text-card); font-family: var(--font-editorial); color: var(--ink); font-weight: 500; margin-bottom: 16px; }
+.coop-empty .text-link { margin-top: 24px; }
+.coop-benefits-heading { display: grid; grid-template-columns: .62fr 1fr; gap: 64px; align-items: center; margin-bottom: 32px; }
+.coop-support-content > p { font-size: var(--text-body); color: var(--muted); margin-bottom: 32px; }
+.coop-support-ways { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.coop-support-ways li { display: flex; gap: 12px; align-items: flex-start; }
+.coop-support-ways svg { flex-shrink: 0; color: var(--green); }
+.coop-support-ways h3 { font-weight: 500; font-size: var(--text-ui); margin-bottom: 8px; }
+.coop-support-ways p { font-size: var(--text-caption); color: var(--muted); line-height: 1.7; }
+.benefits-table th:first-child { width: 23%; }
+.benefits-table th:nth-child(2) { width: 45%; }
+.benefits-table th, .benefits-table td { padding-block: 12px; }
+.coop-process-section { background: var(--soft); padding-block: 64px; }
+.coop-process-layout { display: grid; grid-template-columns: .64fr 1fr; gap: 64px; align-items: center; }
+.coop-process { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; list-style: none; padding: 0; margin: 0; }
+.coop-process li { position: relative; }
+.coop-process li:not(:last-child)::after { content: ''; height: 1px; position: absolute; top: 23px; left: 48px; width: calc(100% - 24px); background: var(--green); }
+.coop-step-number { display: flex; width: 48px; height: 48px; align-items: center; justify-content: center; background: var(--green); color: var(--surface); border-radius: var(--radius-pill); font-size: var(--text-caption); font-variant-numeric: tabular-nums; }
+.coop-process h3 { font-size: var(--text-ui); font-weight: 500; margin-block: 20px 8px; }
+.coop-process p { color: var(--muted); font-size: var(--text-caption); line-height: 1.7; }
+.coop-contact-section { display: grid; grid-template-columns: .64fr 1fr; gap: 64px; align-items: center; padding-block: 64px 96px; }
+.coop-contact-details h3 { font-size: var(--text-intro); font-weight: 500; }
+.coop-contact-details > p { color: var(--muted); margin-top: 16px; font-size: var(--text-ui); }
+.coop-contact-channels { display: flex; flex-wrap: wrap; gap: 24px 48px; margin: 24px 0 0; font-size: var(--text-ui); }
+.coop-contact-channels > div { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+.coop-contact-channels dt { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+.coop-contact-channels dd { margin: 0; color: var(--muted); overflow-wrap: anywhere; }
+.coop-contact-channels a { color: var(--green); text-decoration: underline; text-underline-offset: 5px; }
+.coop-contact-details > .coop-copy-feedback { margin-top: 8px; min-height: 0; font-size: var(--text-caption); }
+.coop-copy-feedback:empty { display: none; }
+.coop-handbook-section { background: var(--alpine); color: var(--alpine-ink); position: relative; padding-block: 64px 72px; scroll-margin-top: var(--space-24); }
+.coop-handbook-layout { display: grid; grid-template-columns: .58fr .42fr; gap: 64px; min-height: 300px; }
+.coop-handbook-copy { position: relative; z-index: 1; }
+.coop-handbook-copy .eyebrow { color: var(--ice); }
+.coop-handbook-copy h2 { color: var(--alpine-ink); }
+.coop-handbook-copy > p { color: var(--alpine-muted); font-size: var(--text-ui); margin-top: 24px; max-width: 54ch; }
+.coop-download-button { margin-top: 32px; min-width: 260px; background: var(--ice); color: var(--alpine); }
+.coop-download-button:hover { background: var(--ice-hover); }
+.coop-handbook-section a:focus-visible { outline-color: var(--ice); }
+.coop-handbook-copy > .coop-handbook-meta { font-size: var(--text-caption); margin-top: 16px; }
+.coop-handbook-meta span { display: block; margin-top: 4px; }
+.coop-handbook-stage { position: relative; min-height: 300px; perspective: 1400px; }
+.coop-handbook-book { position: absolute; top: -112px; right: 8px; width: 350px; aspect-ratio: 210 / 297; transform: rotateX(5deg) rotateY(-17deg) rotateZ(12deg); transition: transform var(--motion-image) var(--ease-out); }
+.coop-handbook-book:hover { transform: translateY(-8px) rotateX(3deg) rotateY(-13deg) rotateZ(9deg); }
+.coop-book-cover { position: relative; z-index: 2; width: 100%; height: 100%; object-fit: cover; border-radius: 1px; box-shadow: -12px 28px 44px rgb(0 0 0 / .28); }
+.coop-book-pages { position: absolute; inset: 4px -8px -5px 5px; background: repeating-linear-gradient(0deg, #e1e6e1 0px, #e1e6e1 1px, #f6f7f4 1px, #f6f7f4 3px); border: 1px solid #c6cfc8; border-radius: 1px; }
+.coop-book-spine { position: absolute; inset: 0 auto 0 -7px; width: 9px; background: #bbc6be; transform-origin: right; transform: rotateY(-62deg); }
+.team-cooperation-link { padding-top: 32px; display: flex; align-items: center; gap: 32px; justify-content: space-between; border-top: 1px solid var(--alpine-line); }
+.team-cooperation-link p { color: var(--alpine-muted); font-size: var(--text-body); }
+.team-cooperation-link .button { background: var(--ice); color: var(--alpine); flex-shrink: 0; }
+
+@media (max-width: 1150px) {
+  .coop-qualification-layout { gap: 48px; }
+  .coop-section-heading h2, .coop-handbook-copy h2 { font-size: 40px; }
+  .coop-chapters a { padding-left: 20px; }
+  .coop-project-copy { gap: 12px; grid-template-columns: 36px minmax(0, 1fr); }
+  .coop-project-more { margin-left: 0; }
+  .coop-benefits-heading { grid-template-columns: .55fr 1fr; gap: 40px; }
+  .coop-support-ways { gap: 16px; }
+  .coop-support-ways li { display: block; }
+  .coop-support-ways svg { margin-bottom: 12px; }
+  .coop-process-layout, .coop-contact-section { gap: 40px; grid-template-columns: .55fr 1fr; }
+  .coop-handbook-layout { gap: 32px; grid-template-columns: .6fr .4fr; }
+  .coop-handbook-book { width: 300px; top: -72px; right: 0; }
+}
+@media (max-width: 760px) {
+  .coop-hero, .coop-hero-content { min-height: 520px; }
+  .coop-hero-content { padding-block: 40px 48px; justify-content: flex-start; }
+  .coop-hero h1 { font-size: clamp(2.35rem, 7vw, 3.25rem); margin-block: 24px; }
+  .coop-hero-image { left: 0; top: 180px; }
+  .coop-hero-image img { object-position: 65% 40%; }
+  .coop-hero-wash { background: linear-gradient(180deg, var(--surface) 0%, var(--surface) 33%, color-mix(in srgb, var(--surface) 92%, transparent) 57%, color-mix(in srgb, var(--surface) 28%, transparent) 100%); }
+  .coop-hero-content > p { font-size: var(--text-body); }
+  .coop-hero-actions { gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+  .coop-hero-actions .button { padding-inline: 16px; gap: 8px; }
+  .coop-hero-caption { right: 20px; bottom: 16px; }
+  .coop-chapters { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 0; padding-block: 24px; }
+  .coop-chapters a { font-size: 12px; padding-left: 16px; }
+  .coop-chapters a:nth-child(4) { padding-left: 0; border-left: 0; }
+  .coop-section { padding-block: 56px; }
+  .coop-qualification-layout { grid-template-columns: 1fr; gap: 40px; }
+  .coop-section-heading h2, .coop-handbook-copy h2 { font-size: 32px; }
+  .coop-identity { font-size: var(--text-body); }
+  .coop-section-heading > p { font-size: var(--text-ui); }
+  .coop-training-focus { font-size: var(--text-caption); margin-top: 24px; }
+  .coop-training-focus li + li::before { padding-inline: 5px; }
+  .coop-qualification-evidence h3 { font-size: var(--text-body); margin-bottom: 16px; }
+  .coop-table th, .coop-table td { padding: 12px 10px; }
+  .coop-table { font-size: 12px; line-height: 1.7; }
+  .coop-table thead th { font-size: 11px; }
+  .coop-project-section { padding-block: 48px; }
+  .coop-heading-row { display: block; margin-bottom: 16px; }
+  .coop-heading-row > p { margin-top: 24px; font-size: var(--text-ui); }
+  .coop-project-row { grid-template-columns: 1fr; gap: 24px; padding-block: 24px 32px; }
+  .coop-project-photo { aspect-ratio: 16 / 10; }
+  .coop-project-copy { grid-template-columns: 32px minmax(0, 1fr); gap: 16px; }
+  .coop-project-number { font-size: 28px; }
+  .coop-project-heading h3 { font-size: 22px; }
+  .coop-project-heading .demo-badge { font-size: 10px; }
+  .coop-project-heading { gap: 8px; }
+  .coop-project-more { flex-basis: 100%; width: fit-content; border-bottom: 0; padding-top: 4px; }
+  .coop-project-summary { font-size: var(--text-ui); }
+  .coop-project-facts { font-size: var(--text-caption); }
+  .coop-project-facts > div { grid-template-columns: 56px minmax(0, 1fr); gap: 8px; }
+  .coop-benefits-heading { grid-template-columns: 1fr; gap: 24px; }
+  .coop-support-content > p { font-size: var(--text-ui); margin-bottom: 24px; }
+  .coop-support-ways { gap: 16px; }
+  .coop-support-ways h3 { font-size: 13px; }
+  .coop-support-ways p { font-size: 12px; }
+  .benefits-table th:first-child { width: 23%; }
+  .benefits-table th:nth-child(2) { width: 39%; }
+  .coop-process-section { padding-block: 48px; }
+  .coop-process-layout { grid-template-columns: 1fr; gap: 32px; }
+  .coop-process { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 24px; }
+  .coop-process li:nth-child(2)::after { display: none; }
+  .coop-process h3 { margin-top: 16px; }
+  .coop-contact-section { grid-template-columns: 1fr; gap: 32px; padding-block: 48px 88px; }
+  .coop-contact-details h3 { font-size: var(--text-body); }
+  .coop-contact-details > p { font-size: var(--text-ui); }
+  .coop-contact-channels { gap: 16px 24px; font-size: var(--text-caption); }
+  .coop-handbook-section { padding-block: 48px 40px; scroll-margin-top: 0; }
+  .coop-handbook-layout { grid-template-columns: 1fr; gap: 40px; }
+  .coop-handbook-copy > p { font-size: var(--text-ui); }
+  .coop-desktop-break { display: none; }
+  .coop-download-button { width: 100%; min-width: 0; }
+  .coop-handbook-stage { min-height: 380px; }
+  .coop-handbook-book { top: 0; right: auto; left: calc(50% - 128px); width: 256px; }
+  .team-cooperation-link { flex-direction: column; align-items: flex-start; gap: 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coop-project-photo img, .coop-handbook-book { transition: none; }
+  .coop-project-photo:hover img { transform: none; }
+  .coop-handbook-book:hover { transform: rotateX(5deg) rotateY(-17deg) rotateZ(12deg); }
+}

@@ -28,5 +28,38 @@ export interface SiteSettings {
   growthSteps: { title: string; description: string }[];
   revision?: number;
 }
-export interface PublicContent { settings: SiteSettings; activities: Activity[]; projects: Project[]; }
+export interface CooperationContent {
+  title: string;
+  intro: string;
+  qualificationTitle: string;
+  qualificationDescription: string;
+  trainingFocus: string[];
+  qualifications: {
+    id: string;
+    name: string;
+    qualification: string;
+    description: string;
+    isDemo: boolean;
+  }[];
+  supportWays: { id: string; title: string; description: string }[];
+  benefits: { id: string; direction: string; content: string; confirmation: string }[];
+  process: { id: string; title: string; description: string }[];
+  contact: { name: string; email: string; wechat: string; isDemo: boolean };
+  handbook: {
+    title: string;
+    subtitle: string;
+    filename: string;
+    coverImage: string;
+    pages: number;
+    versionLabel: string;
+    updatedAt: string;
+  };
+  demoNotice: string;
+}
+export interface PublicContent {
+  settings: SiteSettings;
+  activities: Activity[];
+  projects: Project[];
+  cooperation?: CooperationContent;
+}
 export interface User { id: string; username: string; displayName: string; role: 'admin' | 'editor'; mustChangePassword?: boolean; }

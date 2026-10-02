@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-02T00:00:00+08:00",
+  "title": "Design System: 川衡网站",
+  "extensions": {
+    "motion": [
+      { "name": "micro-interaction", "value": "200ms cubic-bezier(.22,1,.36,1)", "purpose": "现有按钮与导航状态" },
+      { "name": "reveal", "value": "650ms cubic-bezier(.22,1,.36,1)", "purpose": "现有内容入场；减少动画时关闭" }
+    ],
+    "breakpoints": [{ "name": "mobile", "value": "760px" }]
+  },
+  "components": [
+    {
+      "name": "Primary Button", "kind": "button", "refersTo": "button-primary",
+      "description": "浅色区域的主要操作",
+      "html": "<button class=\"ds-button\">了解合作</button>",
+      "css": ".ds-button{background:var(--green);color:var(--surface);border:1px solid transparent;border-radius:4px;min-height:48px;padding:12px 24px;font:500 14px var(--font-body);cursor:pointer}.ds-button:hover{background:var(--green-hover)}.ds-button:focus-visible{outline:3px solid var(--green);outline-offset:5px}"
+    },
+    {
+      "name": "Outline Button", "kind": "button",
+      "description": "浅色区域的次要操作",
+      "html": "<button class=\"ds-outline\">获取合作手册</button>",
+      "css": ".ds-outline{background:transparent;color:var(--green);border:1px solid var(--green);border-radius:4px;min-height:48px;padding:12px 24px;font:500 14px var(--font-body);cursor:pointer}.ds-outline:hover{background:var(--soft)}.ds-outline:focus-visible{outline:3px solid var(--green);outline-offset:5px}"
+    },
+    {
+      "name": "Navigation", "kind": "nav", "description": "主要页面导航",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\">川衡登山队</a><a href=\"#\" aria-current=\"page\">合作</a></nav>",
+      "css": ".ds-nav{display:flex;gap:32px;font:500 14px var(--font-body);color:var(--ink)}.ds-nav a{color:inherit;text-decoration:none;padding:12px 0;border-bottom:2px solid transparent}.ds-nav a:hover,.ds-nav a[aria-current]{border-color:var(--green)}.ds-nav a:focus-visible{outline:3px solid var(--green);outline-offset:5px}"
+    },
+    {
+      "name": "Demo Badge", "kind": "chip", "description": "明确区分示例资料",
+      "html": "<span class=\"ds-demo\">示意内容</span>",
+      "css": ".ds-demo{display:inline-block;padding:4px 8px;border-radius:4px;color:var(--muted);background:var(--soft);font:400 12px var(--font-body)}"
+    },
+    {
+      "name": "Section Heading", "kind": "custom", "description": "沿用现有杂志章节标题",
+      "html": "<h2 class=\"ds-heading\">扎实的准备，<br>是合作的起点。</h2>",
+      "css": ".ds-heading{font:500 48px/1.25 var(--font-editorial);color:var(--ink);letter-spacing:-.02em;margin:0}"
+    }
+  ],
+  "narrative": {
+    "northStar": "既有山野杂志视觉",
+    "overview": "保留冷白、岩松绿与深松绿，延续已有字体、照片叙事和留白。",
+    "keyCharacteristics": ["冷白阅读背景", "岩松绿操作", "横向图文叙事", "示例标识"],
+    "rules": [],
+    "dos": ["延用现有字体、色板与间距。"],
+    "donts": ["不把示例资质表现为真实认证。"]
+  }
+}

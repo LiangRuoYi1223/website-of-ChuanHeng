@@ -1,0 +1,96 @@
+{
+  "kind": "approved-reference-composition-metadata",
+  "measurementMethod": "Read image dimensions and major background transitions with System.Drawing; visually estimate interior geometry. No browser execution or fidelity pass is claimed.",
+  "reference": {
+    "page": "../mocks/cooperation-a.png",
+    "pagePixels": [760, 2070],
+    "download": "../mocks/cooperation-b.png",
+    "downloadPixels": [786, 2001]
+  },
+  "siteConstraints": {
+    "maxContentWidth": 1296,
+    "minDesktopGutter": 48,
+    "palette": "cold-white and pine-green from DESIGN_TOKENS.md",
+    "bodyFont": "local Source Han Sans",
+    "headings": "local Source Han Serif",
+    "englishAndNumerals": "DM Sans"
+  },
+  "aPageGeometry": {
+    "contentX": [34, 727],
+    "suggestedScaleAtMaxContentWidth": 1.87,
+    "header": {"y": [0, 54], "layout": "logo left; compact nav and solid CTA right"},
+    "hero": {
+      "y": [54, 321],
+      "desktopHeightEstimate": 500,
+      "layout": "full bleed mountain photograph with pale left gradient; eyebrow then large two-line serif title; subtitle and two CTAs below",
+      "leftTextX": 33,
+      "titleMaxWidthFraction": 0.67,
+      "buttonYEstimate": 265,
+      "subjectPosition": "mountain mass across right half; lower-right photo credit"
+    },
+    "sectionIndex": {"y": [321, 385], "desktopHeightEstimate": 120, "layout": "six equal columns, small number above label, thin vertical separators"},
+    "qualification": {
+      "y": [385, 662],
+      "desktopHeightEstimate": 518,
+      "layout": "two columns, heading and introduction left, evidence heading and table right",
+      "leftWidthFraction": 0.45,
+      "rightStartXEstimate": 371,
+      "rightTableWidthEstimate": 354,
+      "tableColumns": ["name", "qualification or training", "example background"]
+    },
+    "projects": {
+      "yEstimate": [662, 1225],
+      "layout": "soft pale-green opening; section title left and summary right; three full-width horizontal project rows; photographs consistently left, text right",
+      "introHeightEstimate": 118,
+      "rowHeightEstimate": 144,
+      "imageXEstimate": [34, 351],
+      "imageAspectEstimate": 2.45,
+      "numberXEstimate": 371,
+      "descriptionXEstimate": 416,
+      "imageWidthFraction": 0.455,
+      "rowDividers": "thin light lines spanning the full content width",
+      "ctaPlacement": "small underlined project link at far right, aligned with project title"
+    },
+    "benefits": {
+      "yEstimate": [1225, 1530],
+      "layout": "heading in left 36%; intro and three partnership directions in right 59%; full-width 3-column benefits table underneath; disclosure below table",
+      "tableColumnFractions": [0.22, 0.46, 0.32]
+    },
+    "process": {
+      "y": [1530, 1676],
+      "desktopHeightEstimate": 273,
+      "layout": "full pale-green band; left title takes about 33%; right horizontal 4-step timeline",
+      "timelineStartXEstimate": 287,
+      "timelineEndXEstimate": 663,
+      "nodeDiameterEstimate": 31,
+      "nodeStyle": "pine circles with white two-digit numbers; thin continuous connector; labels and compact descriptions below"
+    },
+    "contact": {
+      "y": [1676, 1810],
+      "desktopHeightEstimate": 250,
+      "layout": "white two-column section: title left; example contact, explanatory paragraph, email and WeChat status in right"
+    }
+  },
+  "bDownloadGeometry": {
+    "bandY": [1734, 1939],
+    "bandHeight": 205,
+    "coverBoundingBoxEstimate": [500, 1688, 770, 1958],
+    "coverQuadEstimate": [[584, 1688], [770, 1707], [708, 1958], [500, 1917]],
+    "coverProtrudesAboveBand": 46,
+    "coverOverlapsFooter": 19,
+    "desktopCoverBoundingSizeEstimate": [500, 505],
+    "desktopCoverProtrusionEstimate": 85,
+    "layout": "dark pine full-width band; title, body, download CTA and A4 detail on left; oversized physical book on right",
+    "coverTreatment": "white actual handbook cover; mountain image in lower half; clockwise tilt approximately 12–15 degrees plus mild perspective; visible light page thickness along bottom and left; soft dark cast shadow",
+    "integrationAdvice": "Use A's section eyebrow/title language and overall grid, applying B's protruding cover, left-aligned download CTA, perspective, book thickness and overlap. Keep cover inside viewport on compact screens; preserve downloadable link.",
+    "assetAdvice": "Export the real PDF first page for the cover image so webpage book and downloadable handbook match."
+  },
+  "contentGuardrails": [
+    "Generated Chinese text is visual reference only. Do not transcribe malformed glyphs or awkward project descriptions.",
+    "Use only the three approved sample project categories: snow-mountain climbing, ice-climbing specialty, and year-round training with leader development.",
+    "Names, qualifications, projects and contact placeholders must visibly remain examples. Do not imply independently verified certifications or expedition achievements.",
+    "Use exact team/school names from the existing repository data, not generated cover/footer glyphs.",
+    "Do not treat an outdoor first-aid training example or rope-skill training example as a formal credential.",
+    "Amounts, quantities, delivery dates, display rights and equipment usage authorization remain subject to discussion."
+  ]
+}

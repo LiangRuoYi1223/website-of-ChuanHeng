@@ -1,0 +1,141 @@
+import type { CooperationContent, Project } from './types';
+
+// Public display content shared by the cooperation page and its PDF handbook.
+// Replace these examples with approved public records when formal details exist.
+export const cooperationContent: CooperationContent = {
+  title: '一起，让下一次攀登发生。',
+  intro: '项目合作 · 装备支持 · 全年训练',
+  qualificationTitle: '扎实的准备，\n是合作的起点。',
+  qualificationDescription: '川衡登山协会成立于 2018 年，是南方科技大学的学生组织。登山队以雪山攀登、专业领队与攀冰为培养方向，通过持续训练、评估与选拔，为专业攀登做准备。',
+  trainingFocus: ['体能与耐力', '绳结与保护', '路线规划', '团队协作'],
+  qualifications: [
+    {
+      id: 'demo-qualification-zhang',
+      name: '张三',
+      qualification: '初级户外指导员',
+      description: '示例人员与资质，用于展示领队培养方向；正式人员与证书资料待替换。',
+      isDemo: true,
+    },
+    {
+      id: 'demo-qualification-li',
+      name: '李四',
+      qualification: '户外急救培训',
+      description: '示例培训条目，用于展示训练资料的整理方式；不代表已取得急救认证。',
+      isDemo: true,
+    },
+    {
+      id: 'demo-qualification-wang',
+      name: '王五',
+      qualification: '绳索技术训练',
+      description: '示例训练条目，用于展示技术学习方向；正式培训记录与证明待补充。',
+      isDemo: true,
+    },
+  ],
+  supportWays: [
+    {
+      id: 'project-support',
+      title: '单次项目支持',
+      description: '围绕具体攀登或训练项目，沟通项目经费、行程保障与专项资源支持。',
+    },
+    {
+      id: 'equipment-support',
+      title: '技术装备支持',
+      description: '依据训练与攀登的实际需求，交流专业装备、器材与使用支持。',
+    },
+    {
+      id: 'annual-training',
+      title: '全年训练合作',
+      description: '围绕持续的体能、技术与领队培养，讨论适合长期合作的训练支持。',
+    },
+  ],
+  benefits: [
+    { id: 'brand-display', direction: '品牌展示', content: '项目页面与内容展示', confirmation: '位置与授权' },
+    { id: 'content-creation', direction: '内容共创', content: '训练与攀登内容记录', confirmation: '选题与交付' },
+    { id: 'equipment-feedback', direction: '装备反馈', content: '使用体验与反馈整理', confirmation: '试用与反馈范围' },
+    { id: 'campus-sharing', direction: '校园分享', content: '校园交流与教育共建', confirmation: '主题与组织安排' },
+  ],
+  process: [
+    {
+      id: 'initial-conversation',
+      title: '初步沟通',
+      description: '交流合作意向、目标与资源，确认适合的项目或训练方向。',
+    },
+    {
+      id: 'co-develop-plan',
+      title: '方案共拟',
+      description: '共同细化支持方式、合作内容与实施安排，金额和数量在沟通中确定。',
+    },
+    {
+      id: 'written-confirmation',
+      title: '书面确认',
+      description: '书面明确双方职责、权益、交付与授权范围，形成双方确认的合作方案。',
+    },
+    {
+      id: 'delivery-review',
+      title: '执行与复盘',
+      description: '按确认方案开展合作，整理执行记录与反馈，共同回顾后续合作方向。',
+    },
+  ],
+  contact: { name: '张三', email: '', wechat: '', isDemo: true },
+  handbook: {
+    title: '川衡登山队合作手册',
+    subtitle: '资质 · 项目 · 权益 · 流程 · 联系方式',
+    filename: '/docs/chuanheng-partnership-handbook.pdf',
+    coverImage: '/images/handbook-cover.png',
+    pages: 8,
+    versionLabel: '示例版',
+    updatedAt: '2026-10-02',
+  },
+  demoNotice: '人员、资质与项目为示例，待正式资料替换。',
+};
+
+export const cooperationProjects: Project[] = [
+  {
+    id: 'demo-snow-climb',
+    title: '雪山攀登计划',
+    mountain: '目标山峰待确认',
+    elevation: '',
+    plannedDate: '',
+    duration: '',
+    summary: '围绕雪山攀登目标，把训练、准备与专项支持连接起来。',
+    description: '此为雪山攀登合作项目示例，并非已确认的攀登计划或已完成的成果。目标山峰、路线、海拔、时间与参与安排，待正式项目资料发布。',
+    trainingPlan: '以体能与耐力、绳结与保护、路线规划和团队协作为准备方向。具体训练内容、参与条件与评估安排，随正式项目计划确认。',
+    supportNeeds: '可围绕项目经费、专业装备与行程保障交流支持。实际所需物资、支持金额和数量，由双方依据正式计划共同确定。',
+    cooperationValue: '可讨论品牌展示、训练与攀登内容记录，以及项目交流分享。展示位置、交付内容与授权范围，以双方书面确认的方案为准。',
+    image: '/images/cooperation-snow.webp',
+    status: 'published',
+    isDemo: true,
+  },
+  {
+    id: 'demo-ice-special',
+    title: '攀冰专项计划',
+    mountain: '训练场地待确认',
+    elevation: '',
+    plannedDate: '',
+    duration: '',
+    summary: '以攀冰与绳索学习为方向，交流技术训练和装备支持。',
+    description: '此为攀冰专项合作项目示例，用于说明技术训练方向。训练场地、组织人员、时间、参与要求及具体内容，待正式资料确认。',
+    trainingPlan: '围绕攀冰与绳索技术开展系统学习和练习。训练安排、技术指导与评估方式，按正式项目说明确认。',
+    supportNeeds: '可交流攀冰和绳索相关器材、专业装备及训练资源支持。装备配置、使用方式与数量，依据正式训练需求共同确定。',
+    cooperationValue: '可讨论训练内容共创、装备使用体验与反馈整理。选题、试用安排、反馈范围及使用授权，均在合作方案中书面确认。',
+    image: '/images/cooperation-ice.webp',
+    status: 'published',
+    isDemo: true,
+  },
+  {
+    id: 'demo-annual-training',
+    title: '全年训练与领队培养',
+    mountain: '训练安排待确认',
+    elevation: '',
+    plannedDate: '',
+    duration: '',
+    summary: '把长期支持放进日常训练，让体能、技术与队伍培养持续生长。',
+    description: '此为全年训练与领队培养合作项目示例。以持续训练和队伍成长为方向，具体训练周期、场地、人员及评估安排，待正式方案确认。',
+    trainingPlan: '围绕体能与耐力、基础技术、路线规划、队伍组织和团队协作开展培养。依据训练表现与队伍要求，形成正式评估和选拔安排。',
+    supportNeeds: '可围绕日常训练器材、专业装备与培养资源讨论长期支持。合作周期、资源安排、金额及数量，随双方确认的方案明确。',
+    cooperationValue: '可讨论训练内容记录、品牌展示、装备反馈与校园交流。合作主题、组织安排、内容交付和授权范围，由双方书面确定。',
+    image: '/images/cooperation-training.webp',
+    status: 'published',
+    isDemo: true,
+  },
+];

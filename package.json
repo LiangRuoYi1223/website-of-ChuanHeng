@@ -8,7 +8,9 @@
     "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
     "dev:web": "vite --host 127.0.0.1 --port 5173 --strictPort",
     "dev:api": "node --watch server/index.mjs",
-    "build": "tsc -b && vite build",
+    "build": "node scripts/check-handbook.mjs && tsc -b && vite build",
+    "handbook": "node scripts/build-handbook.mjs",
+    "handbook:check": "node scripts/check-handbook.mjs",
     "start": "vite preview --host 127.0.0.1 --port 5173 --strictPort",
     "start:api": "node server/index.mjs",
     "test": "node --test tests/*.test.mjs"

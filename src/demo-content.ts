@@ -1,4 +1,5 @@
 import type { Activity, PublicContent } from './types';
+import { cooperationContent, cooperationProjects } from './cooperation-content.ts';
 
 const walkingPreparation: Activity['preparation'] = {
   notice: '以下是演示核对清单。该次活动的装备、交通和集合安排，以公众号正式通知为准。',
@@ -91,5 +92,6 @@ export const demoContent: PublicContent = {
     { ...activityDefaults, id: 'demo-forest-walk', title: '森林里的慢行时光 · 示例', category: '森林徒步', kind: 'past', date: '2026-09-20', timeCommitment: 'half-day', experience: 'relaxed', preparation: walkingPreparation, album: forestAlbum, registrationStatus: '回顾版式示例', summary: '树影、山风和一起同行的伙伴。此内容为活动回顾版式示例，待替换真实记录。', image: '/images/forest.webp' },
     { ...activityDefaults, id: 'demo-climbing', title: '第一次攀岩体验 · 示例', category: '攀岩体验', kind: 'past', date: '2026-09-13', timeCommitment: 'half-day', experience: 'skills', preparation: skillsPreparation, album: climbingAlbum, registrationStatus: '回顾版式示例', summary: '在岩壁上找到新的支点，在伙伴间建立信任。此内容为活动回顾示例。', image: '/images/alpine.webp' },
   ],
-  projects: [],
+  projects: cooperationProjects,
+  cooperation: cooperationContent,
 };

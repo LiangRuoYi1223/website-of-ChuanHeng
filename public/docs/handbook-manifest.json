@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "title": "川衡登山队合作手册",
+  "version": "示例版",
+  "updatedAt": "2026-10-02",
+  "contentSha256": "730990ac28eaab1a962d53ae818071a99c701f8888cc766f6874949e5c5d8978",
+  "sourceAssets": {
+    "/images/alpine.webp": "391cc3258ae7449890b0775ba021130e633f2645eb3bf4ed121262628b865490",
+    "/images/cooperation-ice.webp": "8b603ab4de2bc51b95924b5f83e98e2d16e863a92ad337b848a3c25482d097bf",
+    "/images/cooperation-snow.webp": "c04b71487c883a24ad9377ca8a57ba8a91495cc7d8c51d110100af887f1f698e",
+    "/images/cooperation-training.webp": "72df306a344c3509a9b255727015ae4ea07127774b595b0672ab43812eba506d"
+  },
+  "pdfSha256": "f197eb68f7180040ac854889e443523e2f9284e4555631221dd493e480ec2961",
+  "coverSha256": "f814b376e37389f5c077fb39b883cb7589fc8e189ab1758164f3d37a18c6936c",
+  "pageCount": 8,
+  "projectCount": 3,
+  "typography": {
+    "chinese": "HarmonyOS Sans SC",
+    "headings": "SimSun",
+    "latin": "DM Sans Regular",
+    "embeddedChinese": true
+  },
+  "pdfBytes": 1502646
+}
