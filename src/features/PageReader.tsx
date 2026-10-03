@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowDown, ArrowUp } from 'lucide-react';
+import { Diamond } from 'lucide-react';
 import { useContent } from '../App';
 import { Footer } from '../components';
 import { BoundaryWheelGate } from './activity-reader-navigation';
@@ -10,6 +10,7 @@ export type PageChapter = { id: string; title: string; content: ReactNode };
 type Edge = 'start' | 'end';
 const boundaryOf = (panel: HTMLElement) => ({ atStart: panel.scrollTop <= 2, atEnd: panel.scrollHeight - panel.clientHeight - panel.scrollTop <= 2 });
 const decodeHash = (hash: string) => { try { return decodeURIComponent(hash.replace(/^#/, '')); } catch { return ''; } };
+const normalizeFooterHash = (id: string) => id === 'page-chapter-explore' || id === 'activity-chapter-explore' ? 'explore' : id;
 
 function nestedCanScroll(target: EventTarget | null, panel: HTMLElement, direction: number) {
   for (let element = target instanceof Element ? target : null; element && element !== panel; element = element.parentElement) {
@@ -23,14 +24,19 @@ function nestedCanScroll(target: EventTarget | null, panel: HTMLElement, directi
 
 export default function PageReader({ title, className = '', chapters: pageChapters }: { title: string; className?: string; chapters: PageChapter[] }) {
   const { settings } = useContent();
-  const chapters = [...pageChapters, { id: 'explore', title: '继续探索', content: <Footer settings={settings}/> }];
+  const chapters = pageChapters;
   const { pathname, hash, key } = useLocation();
   const navigate = useNavigate();
-  const [activeIndex, setActiveIndex] = useState(() => Math.max(0, chapters.findIndex(chapter => chapter.id === decodeHash(hash))));
+  const [selectedIndex, setActiveIndex] = useState(() => {
+    const id = normalizeFooterHash(decodeHash(hash));
+    return id === 'explore' ? chapters.length - 1 : Math.max(0, chapters.findIndex(chapter => chapter.id === id));
+  });
+  const activeIndex = Math.min(selectedIndex, chapters.length - 1);
   const [headerHeight, setHeaderHeight] = useState(89);
-  const [boundary, setBoundary] = useState({ atStart: true, atEnd: false });
   const stageRef = useRef<HTMLDivElement>(null);
   const panelRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const navListRef = useRef<HTMLOListElement>(null);
+  const navButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const activeRef = useRef(activeIndex);
   const chaptersRef = useRef(chapters);
   const pendingEdge = useRef<Edge | null>(null);
@@ -38,13 +44,6 @@ export default function PageReader({ title, className = '', chapters: pageChapte
   const readerNavigationHash = useRef<string | null>(null);
   const wheelGate = useRef(new BoundaryWheelGate());
   chaptersRef.current = chapters;
-
-  const readBoundary = useCallback(() => {
-    const panel = panelRefs.current[activeRef.current];
-    if (!panel) return;
-    const next = boundaryOf(panel);
-    setBoundary(previous => previous.atStart === next.atStart && previous.atEnd === next.atEnd ? previous : next);
-  }, []);
 
   const positionPanel = useCallback((panel: HTMLDivElement, edge: Edge, targetId: string | null) => {
     panel.scrollTop = edge === 'end' ? panel.scrollHeight : 0;
@@ -54,6 +53,7 @@ export default function PageReader({ title, className = '', chapters: pageChapte
   }, []);
 
   const chapterForHash = useCallback((id: string) => {
+    if (normalizeFooterHash(id) === 'explore') return chaptersRef.current.length - 1;
     const index = chaptersRef.current.findIndex(chapter => chapter.id === id || `page-chapter-${chapter.id}` === id || `activity-chapter-${chapter.id}` === id);
     if (index >= 0) return index;
     const panel = document.getElementById(id)?.closest<HTMLDivElement>('.page-reader-panel');
@@ -70,7 +70,6 @@ export default function PageReader({ title, className = '', chapters: pageChapte
       if (panel) positionPanel(panel, edge, targetId);
       pendingEdge.current = null;
       pendingTarget.current = null;
-      readBoundary();
     } else {
       activeRef.current = index;
       setActiveIndex(index);
@@ -79,9 +78,10 @@ export default function PageReader({ title, className = '', chapters: pageChapte
       readerNavigationHash.current = `#${targetId || chapter.id}`;
       navigate({ pathname, hash: readerNavigationHash.current }, { replace: true, preventScrollReset: true });
     }
-  }, [navigate, pathname, positionPanel, readBoundary]);
+  }, [navigate, pathname, positionPanel]);
 
   useLayoutEffect(() => {
+    activeRef.current = activeIndex;
     const panel = panelRefs.current[activeIndex];
     if (!panel) return;
     if (pendingEdge.current) {
@@ -89,14 +89,15 @@ export default function PageReader({ title, className = '', chapters: pageChapte
       pendingEdge.current = null;
       pendingTarget.current = null;
     }
-    readBoundary();
-    const resize = new ResizeObserver(readBoundary);
-    resize.observe(panel);
-    if (panel.firstElementChild) resize.observe(panel.firstElementChild);
-    const mutation = new MutationObserver(readBoundary);
-    mutation.observe(panel, { childList: true, subtree: true });
-    return () => { resize.disconnect(); mutation.disconnect(); };
-  }, [activeIndex, positionPanel, readBoundary]);
+    const list = navListRef.current;
+    const button = navButtonRefs.current[activeIndex];
+    if (list && button) {
+      const listRect = list.getBoundingClientRect();
+      const buttonRect = button.getBoundingClientRect();
+      if (buttonRect.top < listRect.top) list.scrollTop -= listRect.top - buttonRect.top;
+      else if (buttonRect.bottom > listRect.bottom) list.scrollTop += buttonRect.bottom - listRect.bottom;
+    }
+  }, [activeIndex, positionPanel]);
 
   useLayoutEffect(() => {
     document.documentElement.classList.add('page-reader-open');
@@ -112,7 +113,7 @@ export default function PageReader({ title, className = '', chapters: pageChapte
   useEffect(() => {
     if (readerNavigationHash.current === hash) { readerNavigationHash.current = null; return; }
     readerNavigationHash.current = null;
-    const id = decodeHash(hash);
+    const id = normalizeFooterHash(decodeHash(hash));
     if (id === 'main-content') { panelRefs.current[activeRef.current]?.focus({ preventScroll: true }); return; }
     const index = id ? chapterForHash(id) : 0;
     if (index >= 0) { wheelGate.current.reset(); activate(index, 'start', false, id || null); }
@@ -175,7 +176,7 @@ export default function PageReader({ title, className = '', chapters: pageChapte
       if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
       const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a[href^="#"]') : null;
       if (!link) return;
-      const id = decodeHash(link.getAttribute('href') || '');
+      const id = normalizeFooterHash(decodeHash(link.getAttribute('href') || ''));
       if (id === 'main-content') { event.preventDefault(); panelRefs.current[activeRef.current]?.focus({ preventScroll: true }); return; }
       const index = chapterForHash(id);
       if (index < 0) return;
@@ -197,15 +198,19 @@ export default function PageReader({ title, className = '', chapters: pageChapte
   }, [activate, chapterForHash]);
 
   const jump = (index: number) => { wheelGate.current.reset(); activate(index); };
+  const onNavKey = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
+    const next = event.key === 'ArrowDown' ? Math.min(index + 1, chapters.length - 1) : event.key === 'ArrowUp' ? Math.max(index - 1, 0) : event.key === 'Home' ? 0 : event.key === 'End' ? chapters.length - 1 : -1;
+    if (next < 0) return;
+    event.preventDefault();
+    navButtonRefs.current[next]?.focus();
+  };
   return <div className={`page-reader ${className}`} style={{ '--page-reader-header-height': `${headerHeight}px` } as CSSProperties} data-active-chapter={chapters[activeIndex].id}>
-    <div className="page-reader-stage" ref={stageRef}>
-      {chapters.map((chapter, index) => <div key={chapter.id} id={`page-chapter-${chapter.id}`} className={`page-reader-panel page-reader-panel--${chapter.id}`} ref={element => { panelRefs.current[index] = element; }} hidden={index !== activeIndex} inert={index !== activeIndex} role="region" aria-label={chapter.title} tabIndex={0} onScroll={readBoundary}>{chapter.content}</div>)}
-    </div>
-    <nav className="page-reader-toolbar" aria-label={`${title}板块导航`}>
-      <div className="page-reader-picker"><span>{title}</span><select aria-label={`选择${title}板块`} value={activeIndex} onChange={event => jump(Number(event.target.value))}>{chapters.map((chapter, index) => <option value={index} key={chapter.id}>{String(index + 1).padStart(2, '0')} / {chapter.title}</option>)}</select></div>
-      <p className="page-reader-hint">{boundary.atEnd ? activeIndex === chapters.length - 1 ? '已读到最后一个板块' : `继续向下滚动，进入${chapters[activeIndex + 1].title}` : '在本板块内继续向下浏览'}</p>
-      <div className="page-reader-controls"><button type="button" aria-label="上一板块" disabled={activeIndex === 0} onClick={() => jump(activeIndex - 1)}><ArrowUp size={16}/><span>上一板块</span></button><button type="button" aria-label="下一板块" disabled={activeIndex === chapters.length - 1} onClick={() => jump(activeIndex + 1)}><span>下一板块</span><ArrowDown size={16}/></button></div>
+    <nav className="page-reader-nav" aria-label={`${title}板块导航`}>
+      <ol ref={navListRef} className="page-reader-nav-list">{chapters.map((chapter, index) => <li key={chapter.id}><button type="button" ref={element => { navButtonRefs.current[index] = element; }} className={index === activeIndex ? 'is-active' : ''} aria-label={`跳到${chapter.title}`} aria-current={index === activeIndex ? 'step' : undefined} aria-controls={`page-chapter-${chapter.id}`} title={chapter.title} onClick={() => jump(index)} onKeyDown={event => onNavKey(event, index)}><span className="page-reader-marker" aria-hidden="true"><Diamond size={6} fill="currentColor" strokeWidth={0}/></span><span className="page-reader-nav-label">{chapter.title}</span></button></li>)}</ol>
     </nav>
+    <div className="page-reader-stage" ref={stageRef}>
+      {chapters.map((chapter, index) => <div key={chapter.id} id={`page-chapter-${chapter.id}`} className={`page-reader-panel page-reader-panel--${chapter.id}`} ref={element => { panelRefs.current[index] = element; }} hidden={index !== activeIndex} inert={index !== activeIndex} role="region" aria-label={chapter.title} tabIndex={0}>{chapter.content}{index === chapters.length - 1 && <div id="explore" className="page-reader-footer"><Footer settings={settings}/></div>}</div>)}
+    </div>
     <span className="page-reader-announcement" aria-live="polite" aria-atomic="true">第 {activeIndex + 1} 个板块，共 {chapters.length} 个：{chapters[activeIndex].title}</span>
   </div>;
 }
