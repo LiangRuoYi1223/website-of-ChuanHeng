@@ -17,7 +17,7 @@ export function Header({ settings }: { settings: SiteSettings }) {
 }
 
 export function Footer({ settings }: { settings: SiteSettings }) {
-  return <footer className="site-footer"><div className="footer-top container"><div className="footer-brand">{settings.logoUrl ? <img className="brand-logo" src={settings.logoUrl} alt=""/> : <Mark/>}<h2>山野很远，<br/>同路人很近。</h2><p>{settings.clubName} · {settings.school}</p></div><div className="footer-links"><div><span>继续探索</span><Link to="/">活动与足迹</Link><Link to="/about">认识川衡</Link><Link to="/team">川衡登山队</Link><Link to="/cooperation">合作</Link></div><div><span>找到我们</span><Link to="/about#join">加入川衡</Link><Link to="/cooperation">合作与支持</Link>{settings.contactEmail ? <a href={`mailto:${settings.contactEmail}`}>联系协会</a> : <Link to="/about#join">公众号报名</Link>}</div></div></div><div className="footer-bottom container"><span>© {new Date().getFullYear()} 川衡登山协会</span>{settings.demoMode !== false && <span className="footer-note">演示版本 · AI 生成示意影像</span>}</div></footer>;
+  return <footer className="site-footer" role="contentinfo"><div className="footer-top container"><div className="footer-brand">{settings.logoUrl ? <img className="brand-logo" src={settings.logoUrl} alt=""/> : <Mark/>}<h2>山野很远，<br/>同路人很近。</h2><p>{settings.clubName} · {settings.school}</p></div><div className="footer-links"><div><span>继续探索</span><Link to="/">活动与足迹</Link><Link to="/about">认识川衡</Link><Link to="/team">川衡登山队</Link><Link to="/cooperation">合作</Link></div><div><span>找到我们</span><Link to="/about#join">加入川衡</Link><Link to="/cooperation">合作与支持</Link>{settings.contactEmail ? <a href={`mailto:${settings.contactEmail}`}>联系协会</a> : <Link to="/about#join">公众号报名</Link>}</div></div></div><div className="footer-bottom container"><span>© {new Date().getFullYear()} 川衡登山协会</span>{settings.demoMode !== false && <span className="footer-note">演示版本 · AI 生成示意影像</span>}</div></footer>;
 }
 
 export function Reveal({ children, className = '', delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
@@ -65,13 +65,3 @@ export function Contact({ settings }: { settings: SiteSettings }) {
 }
 
 export function usePageTitle(title: string) { useEffect(() => { document.title = `${title} · 川衡登山协会`; }, [title]); }
-
-export function ScrollReset() {
-  const { pathname, hash } = useLocation();
-  useEffect(() => {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (hash) { const id = decodeURIComponent(hash.slice(1)); let count = 0; const timer = setInterval(() => { const target = document.getElementById(id); if (target) { target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); clearInterval(timer); } else if (++count > 30) clearInterval(timer); }, 100); return () => clearInterval(timer); }
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [pathname, hash]);
-  return null;
-}

@@ -194,3 +194,102 @@
   .coop-project-photo:hover img { transform: none; }
   .coop-handbook-book:hover { transform: rotateX(5deg) rotateY(-17deg) rotateZ(12deg); }
 }
+
+/* Each partnership chapter occupies the reader; long content scrolls inside it. */
+.page-reader.cooperation-page { overflow: hidden; }
+.page-reader.cooperation-page .coop-introduction { min-height: 100%; display: flex; flex-direction: column; }
+.page-reader.cooperation-page .coop-hero { flex: 1; min-height: max(360px, calc(var(--page-panel-height) - 80px)); }
+.page-reader.cooperation-page .coop-hero-content { min-height: inherit; padding-block: 24px; }
+.page-reader.cooperation-page .coop-hero h1 { font-size: clamp(40px, 4.7vw, 64px); line-height: 1.2; margin-block: 16px; }
+.page-reader.cooperation-page .coop-hero-content > p { max-width: 52ch; font-size: 20px; }
+.page-reader.cooperation-page .coop-hero-actions { margin-top: 24px; gap: 16px; }
+.page-reader.cooperation-page .coop-chapters { padding-block: 16px; }
+.page-reader.cooperation-page .coop-chapters a { min-height: 44px; padding-inline: 24px 12px; }
+.page-reader.cooperation-page .coop-chapters a:first-child { padding-left: 0; }
+.page-reader.cooperation-page .coop-section,
+.page-reader.cooperation-page .coop-project-section,
+.page-reader.cooperation-page .coop-process-section,
+.page-reader.cooperation-page .coop-contact-section { min-height: 100%; padding-block: 32px; }
+.page-reader.cooperation-page .coop-section-heading h2,
+.page-reader.cooperation-page .coop-handbook-copy h2 { font-size: 40px; line-height: 1.25; margin-top: 12px; }
+.page-reader.cooperation-page .coop-section-heading h2.preserve-lines { line-height: 1.25; }
+.page-reader.cooperation-page .coop-qualification-layout { gap: 48px; }
+.page-reader.cooperation-page .coop-qualification-layout > *,
+.page-reader.cooperation-page .coop-benefits-heading > *,
+.page-reader.cooperation-page .coop-handbook-layout > * { min-width: 0; }
+.page-reader.cooperation-page .coop-training-focus { margin-top: 24px; }
+.page-reader.cooperation-page .coop-qualification-evidence h3 { margin-bottom: 16px; }
+.page-reader.cooperation-page .coop-table-wrap { overflow-x: auto; scrollbar-color: var(--green) var(--soft); }
+.page-reader.cooperation-page .coop-table th,
+.page-reader.cooperation-page .coop-table td { padding: 12px 16px; }
+.page-reader.cooperation-page .coop-heading-row { gap: 48px; margin-bottom: 24px; }
+.page-reader.cooperation-page .coop-project-row { padding-block: 20px; }
+.page-reader.cooperation-page .coop-project-photo { aspect-ratio: 2.8; }
+.page-reader.cooperation-page .coop-project-summary { margin-block: 8px 12px; }
+.page-reader.cooperation-page .coop-benefits-heading { gap: 48px; margin-bottom: 24px; }
+.page-reader.cooperation-page .coop-support-content > p { margin-bottom: 24px; }
+.page-reader.cooperation-page .coop-process-section { display: flex; align-items: center; }
+.page-reader.cooperation-page .coop-process-layout { width: min(var(--content-width), calc(100% - 2 * var(--page-gutter))); gap: 48px; }
+.page-reader.cooperation-page .coop-contact-section { gap: 48px; }
+.page-reader.cooperation-page .coop-handbook-section { min-height: 100%; display: flex; align-items: center; padding-block: 32px; scroll-margin-top: 0; }
+.page-reader.cooperation-page .coop-handbook-layout { width: min(var(--content-width), calc(100% - 2 * var(--page-gutter))); min-height: 0; align-items: center; gap: 48px; }
+.page-reader.cooperation-page .coop-handbook-stage { min-height: max(380px, calc(var(--page-panel-height) - 64px)); }
+.page-reader.cooperation-page .coop-handbook-book { top: 50%; right: auto; left: 50%; width: clamp(240px, 23vw, 320px); transform: translate(-50%, -50%) rotateX(5deg) rotateY(-17deg) rotateZ(12deg); }
+.page-reader.cooperation-page .coop-handbook-book:hover { transform: translate(-50%, -50%) translateY(-8px) rotateX(3deg) rotateY(-13deg) rotateZ(9deg); }
+.page-reader.cooperation-page .coop-handbook-copy > p { margin-top: 16px; }
+.page-reader.cooperation-page .coop-download-button { margin-top: 24px; }
+
+@media (max-width: 1150px) {
+  .page-reader.cooperation-page .coop-chapters a { padding-left: 16px; }
+  .page-reader.cooperation-page .coop-qualification-layout,
+  .page-reader.cooperation-page .coop-benefits-heading,
+  .page-reader.cooperation-page .coop-process-layout,
+  .page-reader.cooperation-page .coop-contact-section,
+  .page-reader.cooperation-page .coop-handbook-layout { gap: 32px; }
+}
+@media (max-width: 760px) {
+  .page-reader.cooperation-page .coop-hero { min-height: max(440px, calc(var(--page-panel-height) - 136px)); }
+  .page-reader.cooperation-page .coop-hero-content { padding-block: 24px; justify-content: center; }
+  .page-reader.cooperation-page .coop-hero h1 { font-size: clamp(32px, 7.5vw, 44px); }
+  .page-reader.cooperation-page .coop-hero-content > p { font-size: var(--text-body); }
+  .page-reader.cooperation-page .coop-hero-actions { gap: 12px; }
+  .page-reader.cooperation-page .coop-chapters { gap: 16px 0; padding-block: 16px; }
+  .page-reader.cooperation-page .coop-chapters a { font-size: 12px; padding-left: 12px; }
+  .page-reader.cooperation-page .coop-chapters a:nth-child(4) { padding-left: 0; }
+  .page-reader.cooperation-page .coop-section,
+  .page-reader.cooperation-page .coop-project-section,
+  .page-reader.cooperation-page .coop-process-section,
+  .page-reader.cooperation-page .coop-contact-section { padding-block: 24px; }
+  .page-reader.cooperation-page .coop-section-heading h2,
+  .page-reader.cooperation-page .coop-handbook-copy h2 { font-size: 30px; line-height: 1.3; margin-top: 8px; }
+  .page-reader.cooperation-page .coop-qualification-layout,
+  .page-reader.cooperation-page .coop-benefits-heading,
+  .page-reader.cooperation-page .coop-process-layout,
+  .page-reader.cooperation-page .coop-contact-section,
+  .page-reader.cooperation-page .coop-handbook-layout { gap: 24px; }
+  .page-reader.cooperation-page .coop-table th,
+  .page-reader.cooperation-page .coop-table td { padding: 12px 10px; }
+  .page-reader.cooperation-page .coop-heading-row { margin-bottom: 16px; }
+  .page-reader.cooperation-page .coop-heading-row > p { margin-top: 16px; }
+  .page-reader.cooperation-page .coop-project-row { gap: 16px; padding-block: 24px; }
+  .page-reader.cooperation-page .coop-project-photo { aspect-ratio: 16 / 10; }
+  .page-reader.cooperation-page .coop-handbook-section { padding-block: 24px 40px; }
+  .page-reader.cooperation-page .coop-handbook-stage { min-height: 380px; }
+  .page-reader.cooperation-page .coop-handbook-book { width: 220px; }
+}
+@media (max-width: 600px) {
+  .page-reader.cooperation-page .coop-table { min-width: 520px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-reader.cooperation-page .coop-handbook-book:hover { transform: translate(-50%, -50%) rotateX(5deg) rotateY(-17deg) rotateZ(12deg); }
+}
+@media print {
+  .page-reader.cooperation-page .coop-introduction,
+  .page-reader.cooperation-page .coop-hero,
+  .page-reader.cooperation-page .coop-section,
+  .page-reader.cooperation-page .coop-project-section,
+  .page-reader.cooperation-page .coop-process-section,
+  .page-reader.cooperation-page .coop-contact-section,
+  .page-reader.cooperation-page .coop-handbook-section { min-height: 0; }
+  .page-reader.cooperation-page .coop-table-wrap { overflow: visible; }
+}

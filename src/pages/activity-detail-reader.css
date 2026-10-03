@@ -1,0 +1,17 @@
+.page-reader.activity-detail-page .detail-header { padding-block: 24px; }
+.page-reader.activity-detail-page .detail-header h1 { margin-block: 16px; font-size: clamp(32px, 3.5vw, 48px); }
+.page-reader.activity-detail-page .detail-facts { margin-top: 24px; }
+.page-reader.activity-detail-page .detail-cover { height: clamp(200px, calc(var(--page-panel-height) - 340px), 360px); aspect-ratio: auto; margin-bottom: 16px; }
+.page-reader.activity-detail-page .detail-columns { padding-block: 32px; min-height: 100%; }
+.page-reader.activity-detail-page .detail-columns .prose { max-width: 70ch; }
+.page-reader.activity-detail-page .detail-preparation { padding-block: 32px 24px; }
+.page-reader.activity-detail-page .activity-preparation-card { margin-block: 0; }
+.page-reader.activity-detail-page .detail-bottom { padding-bottom: 32px; }
+
+@media (max-width: 760px) {
+  .page-reader.activity-detail-page .detail-header { padding-block: 24px; }
+  .page-reader.activity-detail-page .detail-header h1 { font-size: 30px; line-height: 40px; }
+  .page-reader.activity-detail-page .detail-cover { height: 240px; }
+  .page-reader.activity-detail-page .detail-columns { padding-block: 24px; }
+  .page-reader.activity-detail-page .detail-preparation { padding-top: 24px; }
+}

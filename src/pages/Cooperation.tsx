@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUpRight, Mountain, Backpack, Users, Mail, Copy, Check }
 import { useContent } from '../App';
 import { cooperationContent } from '../cooperation-content';
 import { DemoBadge, usePageTitle } from '../components';
+import PageReader from '../features/PageReader';
 import './cooperation.css';
 
 const chapters = [
@@ -33,8 +34,9 @@ export default function CooperationPage() {
     catch { setCopyState('failed'); }
   }
 
-  return <div className="cooperation-page">
-    <section className="coop-hero" aria-labelledby="cooperation-title">
+  return <PageReader title="合作" className="cooperation-page" chapters={[
+    { id: 'cooperation-introduction', title: '合作邀请', content: <div className="coop-introduction">
+    <section className="coop-hero" id="cooperation-introduction" aria-labelledby="cooperation-title">
       <div className="coop-hero-image" aria-hidden="true"><img src={settings.heroTeam} alt="" decoding="async"/></div>
       <div className="coop-hero-wash" aria-hidden="true"/>
       <div className="container coop-hero-content">
@@ -49,12 +51,16 @@ export default function CooperationPage() {
     <nav className="coop-chapters container" aria-label="合作页面章节">
       {chapters.map((chapter, index) => <a key={chapter.id} href={`#${chapter.id}`}><span>{number(index)}</span>{chapter.label}</a>)}
     </nav>
+    </div> },
 
+    { id: 'qualifications', title: '团队与资质', content:
     <section className="coop-section container coop-qualification-layout" id="qualifications" aria-labelledby="qualifications-title">
       <div className="coop-section-heading"><span className="eyebrow">01 / TEAM &amp; QUALIFICATIONS</span><h2 id="qualifications-title" className="preserve-lines">{content.qualificationTitle}</h2><h3 className="coop-identity">{settings.school} · 川衡登山队</h3><p>{content.qualificationDescription}</p><ul className="coop-training-focus" aria-label="训练方向">{content.trainingFocus.map(item => <li key={item}>{item}</li>)}</ul></div>
       <div className="coop-qualification-evidence"><h3>队员资质与训练经历{content.qualifications.some(item => item.isDemo) && <span>（示例）</span>}</h3>{content.qualifications.length ? <div className="coop-table-wrap"><table className="coop-table qualification-table"><caption className="sr-only">登山队人员资质与训练经历清单</caption><thead><tr><th scope="col">姓名</th><th scope="col">资质 / 培训方向</th><th scope="col">资料说明</th></tr></thead><tbody>{content.qualifications.map(item => <tr key={item.id}><th scope="row">{item.name}</th><td>{item.qualification}</td><td><span title={item.description}>{item.isDemo ? '示例资料' : item.description || '资料待核验'}</span><span className="sr-only">{item.isDemo && item.description}</span></td></tr>)}</tbody></table></div> : <p className="coop-empty">人员资质与训练资料待公布。</p>}{hasExamples && <p className="coop-data-note">{content.demoNotice}</p>}</div>
     </section>
+    },
 
+    { id: 'projects', title: '所有项目', content:
     <section className="coop-project-section" id="projects" aria-labelledby="cooperation-projects-title"><div className="container">
       <div className="coop-section-heading coop-heading-row"><div><span className="eyebrow">02 / PROJECTS</span><h2 id="cooperation-projects-title">让每一份支持，<br/>有清晰的去向。</h2></div><p>所有公开项目在这里汇集。<br/>以项目为起点，交流适合的支持方式。</p></div>
       {projects.length ? <ol className="coop-project-list">{projects.map((project, index) => <li key={project.id} className="coop-project-row">
@@ -63,17 +69,26 @@ export default function CooperationPage() {
       </li>)}</ol> : <div className="coop-empty"><h3>新的项目，将在这里公布。</h3><p>具体攀登与训练项目待正式发布。你可以先了解合作方式与全年训练支持。</p><a className="text-link" href="#benefits">了解合作方式 <ArrowDown size={16}/></a></div>}
       {projects.some(project => project.isDemo) && <p className="coop-data-note">以上为项目展示示例，目标、时间与具体安排以正式计划为准。</p>}
     </div></section>
+    },
 
+    { id: 'benefits', title: '合作方式与权益', content:
     <section className="coop-section container" id="benefits" aria-labelledby="benefits-title">
       <div className="coop-benefits-heading"><div className="coop-section-heading"><span className="eyebrow">03 / PARTNERSHIP VALUE</span><h2 id="benefits-title">支持的方式，<br/>可以一起定义。</h2></div><div className="coop-support-content"><p>欢迎户外品牌、赞助方与学校共同参与，<br/>围绕实际项目和训练，找到适合彼此的合作方式。</p><ul className="coop-support-ways">{content.supportWays.map((way, index) => { const Icon = supportIcons[index % supportIcons.length]; return <li key={way.id}><Icon size={32} strokeWidth={1.25} aria-hidden="true"/><div><h3>{way.title}</h3><p>{way.description}</p></div></li>; })}</ul></div></div>
       {content.benefits.length ? <div className="coop-table-wrap"><table className="coop-table benefits-table"><caption className="sr-only">合作权益方向与需要共同确认的事项</caption><thead><tr><th scope="col">权益方向</th><th scope="col">合作内容</th><th scope="col">确认事项</th></tr></thead><tbody>{content.benefits.map(item => <tr key={item.id}><th scope="row">{item.direction}</th><td>{item.content}</td><td>{item.confirmation}</td></tr>)}</tbody></table></div> : <p className="coop-empty">合作权益可根据具体项目共同讨论。</p>}
       <p className="coop-data-note">金额、数量、具体交付与授权范围，洽谈后书面确认。</p>
     </section>
+    },
 
+    { id: 'process', title: '合作流程', content:
     <section className="coop-process-section" id="process" aria-labelledby="process-title"><div className="container coop-process-layout"><div className="coop-section-heading"><span className="eyebrow">04 / HOW WE WORK</span><h2 id="process-title">从想法到同行，<br/>四步开始。</h2></div><ol className="coop-process">{content.process.map((step, index) => <li key={step.id}><span className="coop-step-number" aria-hidden="true">{number(index)}</span><h3>{step.title}</h3><p>{step.description}</p></li>)}</ol></div></section>
+    },
 
+    { id: 'contact', title: '联系我们', content:
     <section className="coop-contact-section container" id="contact" aria-labelledby="contact-title"><div className="coop-section-heading"><span className="eyebrow">05 / CONTACT</span><h2 id="contact-title">从一次沟通，<br/>开始下一段同行。</h2></div><div className="coop-contact-details"><h3>{contact.name || '合作联系人待公布'}{contact.name && contact.isDemo && <span> · 示例联系人</span>}</h3><p>欢迎围绕项目、训练或其他合作形式交流，<br/>一起寻找下一次共同出发的可能。</p><dl className="coop-contact-channels"><div><dt><Mail size={17} aria-hidden="true"/>合作邮箱</dt><dd>{contact.email && !contact.isDemo ? <a href={`mailto:${contact.email}`}>{contact.email}</a> : '待配置'}</dd></div><div><dt>微信</dt><dd>{contact.wechat && !contact.isDemo ? <button className="text-link" onClick={copyWechat}>{copyState === 'copied' ? <Check size={15}/> : <Copy size={15}/>} {copyState === 'copied' ? '已复制微信号' : contact.wechat}</button> : '待配置'}</dd></div></dl><p className="coop-copy-feedback" role="status">{copyState === 'failed' ? '复制失败，请手动复制微信号。' : copyState === 'copied' ? '微信号已复制。' : ''}</p></div></section>
+    },
 
+    { id: 'handbook', title: '合作手册下载', content:
     <section className="coop-handbook-section" id="handbook" aria-labelledby="handbook-title"><div className="container coop-handbook-layout"><div className="coop-handbook-copy"><span className="eyebrow">06 / PARTNERSHIP HANDBOOK</span><h2 id="handbook-title">把合作的可能，<br/>带回去慢慢看。</h2><p>一份完整的合作介绍，包含团队资质、全部项目、<br className="coop-desktop-break"/>合作权益、流程与联系方式，方便转发和进一步交流。</p><a className="button coop-download-button" href={content.handbook.filename} download="川衡登山队合作手册.pdf">下载合作手册 PDF <ArrowDown size={18}/></a><p className="coop-handbook-meta">A4 竖版 · {content.handbook.pages} 页 · {content.handbook.versionLabel}<span>更新于 {content.handbook.updatedAt}</span></p></div><div className="coop-handbook-stage"><a href={content.handbook.filename} className="coop-handbook-book" target="_blank" rel="noopener noreferrer" aria-label="在新窗口预览合作手册 PDF"><span className="coop-book-pages" aria-hidden="true"/><span className="coop-book-spine" aria-hidden="true"/><img className="coop-book-cover" src={content.handbook.coverImage} alt={`${content.handbook.title}实际封面 · ${content.handbook.versionLabel}`} loading="lazy" decoding="async"/></a></div></div></section>
-  </div>;
+    },
+  ]}/>;
 }
