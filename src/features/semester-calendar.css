@@ -2,10 +2,10 @@
 .semester-section button { font: inherit; cursor: pointer; }
 .semester-section button:disabled { cursor: not-allowed; opacity: .35; }
 .semester-section button:focus-visible, .semester-section a:focus-visible, .semester-section summary:focus-visible { outline: 3px solid var(--green); outline-offset: 3px; }
-.semester-section-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; margin-bottom: 32px; }
+.semester-section-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; margin-bottom: 16px; }
 .semester-eyebrow { display: block; font-size: 12px; letter-spacing: .13em; font-weight: 700; line-height: 18px; }
-.semester-section-head h2 { margin: 16px 0 16px; font-family: var(--font-editorial); font-size: 48px; font-weight: 500; letter-spacing: -.025em; line-height: 60px; }
-.semester-section-head p { color: var(--semester-muted); font-size: 18px; line-height: 32px; }
+.semester-section-head h2 { margin: 8px 0; font-family: var(--font-editorial); font-size: 40px; font-weight: 500; letter-spacing: -.025em; line-height: 48px; }
+.semester-section-head p { color: var(--semester-muted); font-size: 16px; line-height: 24px; }
 .semester-term-label { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; border-left: 1px solid var(--semester-line); padding-left: 24px; }
 .semester-term-label > span { font-size: 14px; line-height: 22px; font-weight: 700; }
 .semester-term-label small { font-size: 12px; line-height: 18px; letter-spacing: .04em; color: var(--semester-muted); }
@@ -13,66 +13,67 @@
 .semester-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0fr); gap: 0; align-items: start; transition: grid-template-columns var(--motion-panel) var(--ease-out), gap var(--motion-panel) var(--ease-out); }
 .semester-layout-expanded { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px; }
 .semester-calendar { min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; overflow: hidden; }
-.semester-month-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); background: var(--semester-green); gap: 1px; padding: 12px; }
-.semester-month-tab { border: 0; background: transparent; color: var(--surface); text-align: left; padding: 16px 16px; border-radius: 4px; transition: background var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out); min-width: 0; }
+.semester-month-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); background: var(--semester-green); gap: 1px; padding: 8px; }
+.semester-month-tab { border: 0; background: transparent; color: var(--surface); text-align: left; padding: 8px 16px; border-radius: 4px; transition: background var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out); min-width: 0; }
 .semester-month-tab:hover { background: color-mix(in srgb, var(--surface) 8%, transparent); }
 .semester-month-tab[aria-pressed='true'] { background: var(--semester-ice); color: var(--ink); }
 .semester-section .semester-month-tab:focus-visible { outline-color: var(--ice); outline-offset: -3px; }
 .semester-section .semester-month-tab[aria-pressed='true']:focus-visible { outline-color: var(--green); }
-.semester-month-tab > span { display: block; font-size: 24px; line-height: 34px; font-weight: 500; letter-spacing: -.02em; white-space: nowrap; }
+.semester-month-tab > span { display: block; font-size: 22px; line-height: 26px; font-weight: 500; letter-spacing: -.02em; white-space: nowrap; }
 .semester-month-tab small { font-size: 12px; line-height: 18px; margin-left: 8px; }
 .semester-tab-year { font-size: 12px; line-height: 18px; font-weight: 400; letter-spacing: 0; }
-.semester-month-tab em { display: block; margin-top: 4px; font-size: 12px; line-height: 18px; font-style: normal; white-space: nowrap; }
-.semester-month-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 32px 32px 24px; }
+.semester-month-tab em { display: block; margin-top: 0; font-size: 12px; line-height: 18px; font-style: normal; white-space: nowrap; }
+.semester-month-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 24px; }
 .semester-month-heading .semester-eyebrow { color: var(--semester-muted); font-size: 12px; line-height: 18px; }
-.semester-month-heading h3 { font-size: 32px; line-height: 44px; font-weight: 500; letter-spacing: -.04em; margin-top: 4px; }
+.semester-month-heading h3 { font-size: 28px; line-height: 32px; font-weight: 500; letter-spacing: -.04em; margin-top: 2px; }
 .semester-month-heading h3 > span { font-size: 16px; line-height: 28px; letter-spacing: 0; color: var(--semester-muted); margin-left: 12px; }
 .semester-month-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .semester-month-controls > span { font-size: 12px; line-height: 18px; color: var(--semester-muted); margin-right: 12px; }
 .semester-month-controls > button { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--semester-green); transition: background var(--motion-fast) var(--ease-out); }
 .semester-month-controls > button:hover:not(:disabled) { background: var(--soft); color: var(--green); }
-.semester-weekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); margin: 0 24px; padding-bottom: 12px; color: var(--semester-muted); font-size: 12px; line-height: 18px; text-align: center; }
+.semester-weekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); margin: 0 24px; padding-bottom: 6px; color: var(--semester-muted); font-size: 12px; line-height: 18px; text-align: center; }
 .semester-weekdays > span:nth-last-child(-n+2) { color: var(--green); }
 .semester-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; background: var(--semester-line); border: 1px solid var(--semester-line); margin: 0 24px; }
-.semester-day, .semester-day-blank { background: var(--surface); min-width: 0; min-height: 116px; }
-.semester-day { position: relative; display: flex; flex-direction: column; align-items: flex-start; border: 0; padding: 16px 16px; color: var(--semester-green); text-align: left; transition: background var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out); }
+.semester-day, .semester-day-blank { background: var(--surface); min-width: 0; min-height: 64px; }
+.semester-day { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: 24px 18px; gap: 4px 8px; align-content: start; border: 0; padding: 8px 12px; color: var(--semester-green); text-align: left; transition: background var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out); }
 .semester-day:hover:not(:disabled) { background: var(--soft); }
 .semester-day-blank { background: var(--paper); }
 .semester-day-has-activity { background: color-mix(in srgb, var(--ice) 15%, var(--surface)); }
-.semester-day-number { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 4px; font-size: 24px; font-weight: 500; line-height: 34px; letter-spacing: -.03em; }
+.semester-day-number { grid-column: 1 / -1; grid-row: 1; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 4px; font-size: 20px; font-weight: 500; line-height: 24px; letter-spacing: -.03em; }
+.semester-day-has-activity .semester-day-number { grid-column: 1; }
 .semester-day-number > small { font-size: 12px; line-height: 18px; font-weight: 400; letter-spacing: 0; color: var(--muted); }
 .semester-day-today .semester-day-number::after { content: ''; position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--green); top: 8px; right: 8px; }
-.semester-day-title { font-size: 12px; font-weight: 500; line-height: 18px; margin-top: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
-.semester-day-count { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--green); line-height: 18px; margin-top: auto; padding-top: 8px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.semester-day-title { grid-column: 1 / -1; grid-row: 2; min-width: 0; font-size: 12px; font-weight: 500; line-height: 18px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.semester-day-count { grid-column: 2; grid-row: 1; min-width: 0; display: flex; align-items: center; justify-self: end; gap: 4px; font-size: 12px; color: var(--green); line-height: 18px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .semester-day-count > i, .semester-calendar-foot > span > i { width: 5px; height: 5px; flex: 0 0 5px; background: var(--green); border-radius: 50%; }
 .semester-day[aria-pressed='true'] { background: var(--semester-green); color: var(--surface); }
 .semester-day[aria-pressed='true'] .semester-day-count, .semester-day[aria-pressed='true'] small { color: var(--surface); }
 .semester-day[aria-pressed='true'] .semester-day-count > i { background: var(--semester-ice); }
 .semester-day-today[aria-pressed='true'] .semester-day-number::after { background: var(--ice); }
-.semester-calendar-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 24px; color: var(--semester-muted); font-size: 12px; line-height: 18px; }
+.semester-calendar-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 24px; color: var(--semester-muted); font-size: 12px; line-height: 18px; }
 .semester-calendar-foot > span { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 .semester-calendar-foot > p { font-size: 12px; line-height: 18px; text-align: center; }
-.semester-next { width: 100%; display: flex; align-items: center; gap: 16px; border: 0; border-top: 1px solid var(--semester-line); padding: 16px 24px; background: var(--soft); color: var(--semester-green); text-align: left; transition: background var(--motion-fast) var(--ease-out); }
+.semester-next { width: 100%; display: flex; align-items: center; gap: 16px; border: 0; border-top: 1px solid var(--semester-line); padding: 12px 24px; background: var(--soft); color: var(--semester-green); text-align: left; transition: background var(--motion-fast) var(--ease-out); }
 .semester-next:hover { background: color-mix(in srgb, var(--ice) 24%, var(--soft)); }
 .semester-next > span { font-size: 12px; line-height: 18px; letter-spacing: .04em; color: var(--semester-muted); }
 .semester-next > strong { font-size: 14px; line-height: 22px; font-weight: 700; flex: 1; }
 .semester-next > small { font-size: 12px; line-height: 18px; color: var(--semester-muted); }
 .semester-next > svg { flex-shrink: 0; }
-.semester-layout-expanded .semester-month-tab { padding: 12px 12px; }
-.semester-layout-expanded .semester-month-tab > span { font-size: 24px; line-height: 34px; }
+.semester-layout-expanded .semester-month-tab { padding: 8px 12px; }
+.semester-layout-expanded .semester-month-tab > span { font-size: 22px; line-height: 26px; }
 .semester-layout-expanded .semester-month-tab em { font-size: 12px; line-height: 18px; }
-.semester-layout-expanded .semester-month-heading { padding: 24px 24px 24px; }
-.semester-layout-expanded .semester-month-heading h3 { font-size: 32px; line-height: 44px; }
+.semester-layout-expanded .semester-month-heading { padding: 8px 24px; }
+.semester-layout-expanded .semester-month-heading h3 { font-size: 28px; line-height: 32px; }
 .semester-layout-expanded .semester-month-heading h3 > span { font-size: 14px; line-height: 22px; margin-left: 8px; }
 .semester-layout-expanded .semester-month-controls > span { display: none; }
 .semester-layout-expanded .semester-weekdays { margin-inline: 16px; }
 .semester-layout-expanded .semester-days { margin-inline: 16px; }
-.semester-layout-expanded .semester-day, .semester-layout-expanded .semester-day-blank { min-height: 82px; }
-.semester-layout-expanded .semester-day { padding: 16px 12px; }
-.semester-layout-expanded .semester-day-number { font-size: 16px; line-height: 28px; }
+.semester-layout-expanded .semester-day, .semester-layout-expanded .semester-day-blank { min-height: 64px; }
+.semester-layout-expanded .semester-day { padding: 8px; }
+.semester-layout-expanded .semester-day-number { grid-column: 1 / -1; font-size: 16px; line-height: 24px; }
 .semester-layout-expanded .semester-day-title { display: none; }
-.semester-layout-expanded .semester-day-count { font-size: 12px; line-height: 18px; }
-.semester-layout-expanded .semester-calendar-foot { flex-wrap: wrap; padding: 16px; gap: 12px; }
+.semester-layout-expanded .semester-day-count { grid-column: 1 / -1; grid-row: 2; justify-self: start; font-size: 12px; line-height: 18px; }
+.semester-layout-expanded .semester-calendar-foot { flex-wrap: wrap; padding: 8px 16px; gap: 4px 12px; }
 .semester-layout-expanded .semester-calendar-foot > p { order: 3; width: 100%; text-align: left; }
 .semester-preview { min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; overflow: hidden; animation: semester-panel-in var(--motion-panel) var(--ease-out); }
 .semester-preview-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 24px 24px; border-bottom: 1px solid var(--semester-line); }
@@ -136,15 +137,19 @@
 }
 @media (max-width: 900px) {
   .semester-section { width: calc(100% - 48px); margin-top: 65px; }
-  .semester-section-head { flex-direction: column; gap: 22px; }
-  .semester-term-label { align-items: flex-start; padding: 0; border: 0; }
+  .semester-section-head { flex-direction: column; gap: 12px; }
+  .semester-section-head h2 { line-height: 44px; }
+  .semester-term-label { width: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 4px 12px; padding: 0; border: 0; }
+  .semester-term-label em { grid-column: 1 / -1; }
   .semester-layout-expanded { grid-template-columns: minmax(0, 1fr); }
-  .semester-layout-expanded .semester-month-tab { padding: 14px 15px; }
+  .semester-layout-expanded .semester-month-tab { padding: 8px 15px; }
   .semester-layout-expanded .semester-month-tab > span { font-size: 21px; }
   .semester-layout-expanded .semester-month-tab em { display: block; font-size: 10px; }
   .semester-layout-expanded .semester-day-count { font-size: 10px; }
   .semester-day-title { display: none; }
-  .semester-day, .semester-day-blank { min-height: 99px; }
+  .semester-day-has-activity .semester-day-number { grid-column: 1 / -1; }
+  .semester-day-count { grid-column: 1 / -1; grid-row: 2; justify-self: start; }
+  .semester-day, .semester-day-blank { min-height: 64px; }
   .semester-preview-image { height: 290px; }
   .semester-preview-copy { padding: 27px; }
   .semester-preview-copy h3 { font-size: 28px; }
@@ -153,30 +158,31 @@
 }
 @media (max-width: 600px) {
   .semester-section { width: calc(100% - 32px); margin-top: 50px; }
-  .semester-section-head h2 { font-size: 29px; }
-  .semester-section-head p { font-size: 13px; }
+  .semester-section-head h2 { font-size: 29px; line-height: 38px; }
+  .semester-section-head p { font-size: 13px; line-height: 22px; }
   .semester-month-tabs { padding: 8px; }
-  .semester-month-tab, .semester-layout-expanded .semester-month-tab { padding: 12px 5px; text-align: center; }
+  .semester-month-tab, .semester-layout-expanded .semester-month-tab { min-height: 40px; padding: 8px 5px; text-align: center; }
   .semester-month-tab > span, .semester-layout-expanded .semester-month-tab > span { font-size: 16px; }
   .semester-month-tab small { font-size: 9px; margin-left: 3px; }
   .semester-tab-year { display: none; }
   .semester-month-tab em, .semester-layout-expanded .semester-month-tab em { display: none; }
-  .semester-month-heading, .semester-layout-expanded .semester-month-heading { padding: 22px 15px; }
+  .semester-month-heading, .semester-layout-expanded .semester-month-heading { padding: 8px 15px; }
   .semester-month-heading h3, .semester-layout-expanded .semester-month-heading h3 { font-size: 27px; }
   .semester-month-heading h3 > span { font-size: 11px; margin-left: 7px; }
   .semester-month-controls > span { display: none; }
   .semester-month-controls { gap: 5px; }
-  .semester-month-controls > button { width: 31px; height: 31px; }
+  .semester-month-controls > button { width: 40px; height: 40px; }
   .semester-weekdays, .semester-layout-expanded .semester-weekdays { margin-inline: 10px; }
   .semester-days, .semester-layout-expanded .semester-days { margin-inline: 10px; }
-  .semester-day, .semester-layout-expanded .semester-day { padding: 11px 7px; }
-  .semester-day, .semester-day-blank, .semester-layout-expanded .semester-day, .semester-layout-expanded .semester-day-blank { min-height: 82px; }
-  .semester-day-number, .semester-layout-expanded .semester-day-number { font-size: 15px; }
+  .semester-day, .semester-layout-expanded .semester-day { grid-template-rows: 24px 16px; padding: 6px 4px; }
+  .semester-day, .semester-day-blank, .semester-layout-expanded .semester-day, .semester-layout-expanded .semester-day-blank { min-height: 56px; }
+  .semester-day-number, .semester-layout-expanded .semester-day-number { font-size: 15px; line-height: 24px; }
   .semester-day-number > small { display: none; }
-  .semester-day-count, .semester-layout-expanded .semester-day-count { font-size: 8px; letter-spacing: -.04em; gap: 4px; }
-  .semester-calendar-foot { flex-wrap: wrap; padding: 16px; gap: 10px; }
+  .semester-day-count, .semester-layout-expanded .semester-day-count { font-size: 9px; line-height: 16px; gap: 4px; }
+  .semester-day-count > i { display: none; }
+  .semester-calendar-foot { flex-wrap: wrap; padding: 8px 12px; gap: 4px 10px; }
   .semester-calendar-foot > p { order: 3; width: 100%; text-align: left; }
-  .semester-next { padding: 16px; gap: 12px; flex-wrap: wrap; }
+  .semester-next { padding: 12px; gap: 4px 12px; flex-wrap: wrap; }
   .semester-next > span { width: 100%; }
   .semester-next > small { display: none; }
   .semester-preview-head { padding: 20px; }
