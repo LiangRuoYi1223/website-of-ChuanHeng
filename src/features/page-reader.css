@@ -1,14 +1,17 @@
 html.page-reader-open, html.page-reader-open body { height: 100%; overflow: hidden; }
-.page-reader { --page-panel-height: calc(100dvh - var(--page-reader-header-height)); height: var(--page-panel-height); min-height: 0; display: grid; grid-template-columns: 128px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); background: var(--paper); }
-.page-reader-stage { position: relative; grid-column: 2; grid-row: 1; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-gutter: stable; overscroll-behavior-y: contain; touch-action: pan-y pinch-zoom; outline: none; scrollbar-color: var(--muted) var(--paper); }
+.page-reader { --page-panel-height: calc(100dvh - var(--page-reader-header-height)); --reader-content-inset: 160px; --reader-content-width: min(var(--content-width), calc(100% - var(--reader-content-inset) - var(--page-gutter))); --reader-content-start: max(var(--reader-content-inset), calc((100% - var(--content-width) + var(--reader-content-inset) - var(--page-gutter)) / 2)); --reader-content-end: max(var(--page-gutter), calc((100% - var(--content-width) - var(--reader-content-inset) + var(--page-gutter)) / 2)); position: relative; isolation: isolate; height: var(--page-panel-height); min-height: 0; background: var(--paper); }
+.page-reader-stage { position: relative; width: 100%; height: 100%; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-gutter: stable; overscroll-behavior-y: contain; touch-action: pan-y pinch-zoom; outline: none; scrollbar-color: var(--muted) var(--paper); }
+.page-reader .page-reader-stage :is(.container, .semester-section, .trail-album-container, .footprint-container, .departure-shell) { width: var(--reader-content-width); margin-inline-start: var(--reader-content-start); margin-inline-end: auto; }
+.page-reader.team-page .page-reader-stage .projects-section.container { width: 100%; margin-inline: 0; padding-inline: var(--reader-content-start) var(--reader-content-end); }
 .page-reader-panel { display: flow-root; min-height: var(--page-panel-height); overflow-x: clip; outline: none; }
 .page-reader-stage:focus-visible,
 .page-reader-panel:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }
 html:has(dialog[open], .main-nav.is-open) .page-reader-stage { overflow-y: hidden; }
 .page-reader dialog { overscroll-behavior: contain; }
-.page-reader-nav { grid-column: 1; grid-row: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 32px 8px max(32px, env(safe-area-inset-bottom, 0px)) 16px; color: var(--green); }
+.page-reader-nav { position: absolute; z-index: 12; left: 24px; top: 32px; bottom: max(32px, env(safe-area-inset-bottom, 0px)); width: 112px; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; color: var(--green); pointer-events: none; }
 .page-reader-nav-list { position: relative; max-height: 100%; overflow-y: auto; overscroll-behavior: contain; margin: 0; padding: 0; list-style: none; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
-.page-reader-nav button { position: relative; display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; font-size: 12px; line-height: 20px; text-align: left; cursor: pointer; }
+.page-reader-nav li[data-tone='dark'] { color: var(--ice); }
+.page-reader-nav button { position: relative; display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; font-size: 12px; line-height: 20px; text-align: left; cursor: pointer; pointer-events: auto; }
 .page-reader-marker { position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 8px; height: 44px; }
 .page-reader-nav .is-active .page-reader-marker::before { content: ''; width: 1px; height: 40px; background: currentColor; }
 .page-reader-nav .is-active .page-reader-marker svg { display: none; }
@@ -20,15 +23,13 @@ html:has(dialog[open], .main-nav.is-open) .page-reader-stage { overflow-y: hidde
 .page-reader-announcement { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .page-reader .parallax-image img { transform: scale(1.08); }
 .page-reader-footer { width: 100%; }
-.page-reader.team-page .page-reader-nav { color: var(--ice); }
-.page-reader.cooperation-page[data-active-chapter='handbook'] .page-reader-nav, .page-reader.project-detail-page[data-active-chapter='project-contact'] .page-reader-nav { background: var(--alpine); color: var(--ice); }
 .page-reader.team-page .page-reader-stage { scrollbar-color: var(--alpine-muted) var(--alpine); }
 .page-reader.team-page .page-reader-stage:focus-visible { outline-color: var(--ice); }
 .page-reader .not-found { min-height: var(--page-panel-height); display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding-block: 32px; }
 
 @media (max-width: 760px) {
-  .page-reader { --page-gutter: 20px; grid-template-columns: 44px minmax(0, 1fr); }
-  .page-reader-nav { padding: 12px 0 max(12px, env(safe-area-inset-bottom, 0px)); }
+  .page-reader { --page-gutter: 20px; --reader-content-inset: 64px; }
+  .page-reader-nav { left: 8px; width: 44px; top: 12px; bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
   .page-reader-nav button { justify-content: center; gap: 4px; width: 44px; }
   .page-reader-nav button.is-active { padding-block: 8px; }
   .page-reader-marker { width: 6px; }
@@ -39,6 +40,7 @@ html:has(dialog[open], .main-nav.is-open) .page-reader-stage { overflow-y: hidde
 @media print {
   html.page-reader-open, html.page-reader-open body { height: auto; overflow: visible; }
   .page-reader, .page-reader-stage, .page-reader-panel { height: auto; display: block; overflow: visible; }
+  .page-reader { --reader-content-inset: var(--page-gutter); }
   .page-reader-nav, .page-reader-announcement { display: none; }
   .page-reader .reveal { opacity: 1; transform: none; }
 }

@@ -131,7 +131,7 @@
   .coop-hero h1 { font-size: clamp(2.35rem, 7vw, 3.25rem); margin-block: 24px; }
   .coop-hero-image { left: 0; top: 180px; }
   .coop-hero-image img { object-position: 65% 40%; }
-  .coop-hero-wash { background: linear-gradient(180deg, var(--surface) 0%, var(--surface) 33%, color-mix(in srgb, var(--surface) 92%, transparent) 57%, color-mix(in srgb, var(--surface) 28%, transparent) 100%); }
+  .coop-hero-wash { background: linear-gradient(90deg, color-mix(in srgb, var(--surface) 92%, transparent), color-mix(in srgb, var(--surface) 85%, transparent) 52px, transparent 100px), linear-gradient(180deg, var(--surface) 0%, var(--surface) 33%, color-mix(in srgb, var(--surface) 92%, transparent) 57%, color-mix(in srgb, var(--surface) 28%, transparent) 100%); }
   .coop-hero-content > p { font-size: var(--text-body); }
   .coop-hero-actions { gap: 12px; flex-wrap: wrap; margin-top: 24px; }
   .coop-hero-actions .button { padding-inline: 16px; gap: 8px; }
@@ -229,10 +229,10 @@
 .page-reader.cooperation-page .coop-benefits-heading { gap: 48px; margin-bottom: 24px; }
 .page-reader.cooperation-page .coop-support-content > p { margin-bottom: 24px; }
 .page-reader.cooperation-page .coop-process-section { display: flex; align-items: center; }
-.page-reader.cooperation-page .coop-process-layout { width: min(var(--content-width), calc(100% - 2 * var(--page-gutter))); gap: 48px; }
+.page-reader.cooperation-page .coop-process-layout { width: var(--reader-content-width); gap: 48px; }
 .page-reader.cooperation-page .coop-contact-section { gap: 48px; }
 .page-reader.cooperation-page .coop-handbook-section { min-height: var(--page-panel-height); display: flex; align-items: center; padding-block: 32px; scroll-margin-top: 0; }
-.page-reader.cooperation-page .coop-handbook-layout { width: min(var(--content-width), calc(100% - 2 * var(--page-gutter))); min-height: 0; align-items: center; gap: 48px; }
+.page-reader.cooperation-page .coop-handbook-layout { width: var(--reader-content-width); min-height: 0; align-items: center; gap: 48px; }
 .page-reader.cooperation-page .coop-handbook-stage { min-height: max(380px, calc(var(--page-panel-height) - 64px)); }
 .page-reader.cooperation-page .coop-handbook-book { top: 50%; right: auto; left: 50%; width: clamp(240px, 23vw, 320px); transform: translate(-50%, -50%) rotateX(5deg) rotateY(-17deg) rotateZ(12deg); }
 .page-reader.cooperation-page .coop-handbook-book:hover { transform: translate(-50%, -50%) translateY(-8px) rotateX(3deg) rotateY(-13deg) rotateZ(9deg); }

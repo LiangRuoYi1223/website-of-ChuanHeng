@@ -27,6 +27,7 @@ export default function PageReader({ title, className = '', chapters }: { title:
   const panelRefs = useRef<(HTMLDivElement | null)[]>([]);
   const navListRef = useRef<HTMLOListElement>(null);
   const navButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const navItemRefs = useRef<(HTMLLIElement | null)[]>([]);
   const activeRef = useRef(activeIndex);
   const chaptersRef = useRef(chapters);
   chaptersRef.current = chapters;
@@ -36,9 +37,31 @@ export default function PageReader({ title, className = '', chapters }: { title:
     navigate({ pathname, hash: nextHash }, { replace: true, preventScrollReset: true, state: { pageReaderNavigation: readerId } });
   }, [navigate, pathname, readerId]);
 
+  const updateNavTone = useCallback(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const panels = panelRefs.current.map(panel => panel?.getBoundingClientRect());
+    const footer = document.getElementById('explore')?.getBoundingClientRect();
+    const teamPage = stage.parentElement?.classList.contains('team-page');
+    navItemRefs.current.forEach((item, index) => {
+      const button = navButtonRefs.current[index];
+      if (!item || !button) return;
+      const rect = button.getBoundingClientRect();
+      const y = rect.top + rect.height / 2;
+      const panelIndex = panels.findIndex(panel => panel && panel.top <= y && panel.bottom > y);
+      const chapterId = chaptersRef.current[panelIndex]?.id;
+      const overFooter = footer && footer.top <= y && footer.bottom > y;
+      const image = panelRefs.current[panelIndex]?.querySelector('.activities-hero, .outdoors-story')?.getBoundingClientRect();
+      const overImage = image && image.top <= y && image.bottom > y;
+      const dark = overFooter || overImage || (teamPage && chapterId !== 'projects') || ['handbook', 'project-contact'].includes(chapterId || '');
+      item.dataset.tone = dark ? 'dark' : 'light';
+    });
+  }, []);
+
   const readPosition = useCallback((updateUrl = true) => {
     const stage = stageRef.current;
     if (!stage) return;
+    updateNavTone();
     const stageTop = stage.getBoundingClientRect().top;
     const starts = chaptersRef.current.map((_, index) => (panelRefs.current[index]?.getBoundingClientRect().top ?? stageTop) - stageTop + stage.scrollTop);
     // Native scrolling can quantize fractional positions by less than a CSS pixel.
@@ -49,7 +72,7 @@ export default function PageReader({ title, className = '', chapters }: { title:
     activeRef.current = next.index;
     setReading(previous => previous.index === next.index && Math.abs(previous.progress - next.progress) < .0001 ? previous : next);
     if (changedChapter && updateUrl) replaceHash(`#${chaptersRef.current[next.index].id}`);
-  }, [replaceHash]);
+  }, [replaceHash, updateNavTone]);
 
   const chapterForHash = useCallback((id: string) => {
     if (normalizeFooterHash(id) === 'explore') return chaptersRef.current.length - 1;
@@ -81,7 +104,8 @@ export default function PageReader({ title, className = '', chapters }: { title:
     const buttonRect = button.parentElement!.getBoundingClientRect();
     if (buttonRect.top < listRect.top) list.scrollTop -= listRect.top - buttonRect.top;
     else if (buttonRect.bottom > listRect.bottom) list.scrollTop += buttonRect.bottom - listRect.bottom;
-  }, [activeIndex]);
+    updateNavTone();
+  }, [activeIndex, updateNavTone]);
 
   useLayoutEffect(() => {
     document.documentElement.classList.add('page-reader-open');
@@ -108,11 +132,13 @@ export default function PageReader({ title, className = '', chapters }: { title:
     let frame = 0;
     const schedule = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; readPosition(); }); };
     stage.addEventListener('scroll', schedule, { passive: true });
+    navListRef.current?.addEventListener('scroll', schedule, { passive: true });
     const resize = new ResizeObserver(schedule);
     resize.observe(stage);
     panelRefs.current.forEach(panel => { if (panel) resize.observe(panel); });
     schedule();
-    return () => { stage.removeEventListener('scroll', schedule); resize.disconnect(); cancelAnimationFrame(frame); };
+    const navList = navListRef.current;
+    return () => { stage.removeEventListener('scroll', schedule); navList?.removeEventListener('scroll', schedule); resize.disconnect(); cancelAnimationFrame(frame); };
   }, [chapters.length, headerReady, readPosition]);
 
   useEffect(() => {
@@ -140,7 +166,7 @@ export default function PageReader({ title, className = '', chapters }: { title:
 
   return <div className={`page-reader ${className}`} style={{ '--page-reader-header-height': `${headerHeight}px`, '--chapter-progress': reading.progress } as CSSProperties} data-active-chapter={chapters[activeIndex].id}>
     <nav className="page-reader-nav" aria-label={`${title}板块导航`}>
-      <ol ref={navListRef} className="page-reader-nav-list">{chapters.map((chapter, index) => <li key={chapter.id}>
+      <ol ref={navListRef} className="page-reader-nav-list">{chapters.map((chapter, index) => <li key={chapter.id} ref={element => { navItemRefs.current[index] = element; }}>
         <button type="button" ref={element => { navButtonRefs.current[index] = element; }} className={index === activeIndex ? 'is-active' : ''} aria-label={`跳到${chapter.title}`} aria-current={index === activeIndex ? 'step' : undefined} aria-controls={`page-chapter-${chapter.id}`} title={chapter.title} onClick={() => scrollToChapter(index, null, true)} onKeyDown={event => onNavKey(event, index)}><span className="page-reader-marker" aria-hidden="true"><Diamond size={6} fill="currentColor" strokeWidth={0}/></span><span className="page-reader-nav-label">{chapter.title}</span></button>
         {index === activeIndex && <span className="page-reader-progress" role="progressbar" aria-label={`${chapter.title}阅读进度`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(reading.progress * 100)}><span/></span>}
       </li>)}</ol>

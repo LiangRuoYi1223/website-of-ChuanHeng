@@ -10,7 +10,7 @@
 .page-reader.team-page .support-section { min-height: var(--page-panel-height); margin-block: 0; padding-block: 32px; }
 .page-reader.team-page .team-intro,
 .page-reader.team-page .support-section { display: flex; flex-direction: column; justify-content: center; }
-.page-reader.team-page .support-section > .container { width: min(var(--content-width), calc(100% - 2 * var(--page-gutter))); }
+.page-reader.team-page .support-section > .container { width: var(--reader-content-width); }
 .page-reader.team-page .section-heading { margin-bottom: 24px; gap: 32px; }
 .page-reader.team-page .section-heading h2,
 .page-reader.team-page .training-grid h2 { font-size: clamp(2rem, 3.4vw, 3rem); line-height: 1.25; }
