@@ -5,11 +5,11 @@
 .activity-reader .semester-layout .semester-day { grid-template-rows: 22px 18px; padding-block: 6px; }
 .activity-reader .semester-layout .semester-day-number { line-height: 22px; }
 .activity-reader .calendar-section, .activity-reader .past-section, .activity-reader .trail-album-section, .activity-reader .footprint-section, .activity-reader .home-signup { padding-block: 32px; }
-.activity-reader .past-section, .activity-reader .trail-album-section, .activity-reader .footprint-section { min-height: 100%; }
+.activity-reader .past-section, .activity-reader .trail-album-section, .activity-reader .footprint-section { min-height: var(--page-panel-height); }
 .activity-reader .section-heading, .activity-reader .trail-album-heading, .activity-reader .footprint-heading { margin-bottom: 24px; }
 .activity-reader .section-heading h2, .activity-reader .trail-album-heading h2, .activity-reader .footprint-heading h2 { font-size: 40px; line-height: 48px; margin-top: 8px; }
 .activity-reader .outdoors-story { height: var(--page-panel-height); min-height: 480px; aspect-ratio: auto; }
-.activity-reader .footprint-loading { min-height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 16px; }
+.activity-reader .footprint-loading { min-height: var(--page-panel-height); display: flex; flex-direction: column; justify-content: center; gap: 16px; }
 @media (max-width: 760px) {
   .activity-reader .activities-hero { height: calc(var(--page-panel-height) - 70px); min-height: 580px; }
   .activity-reader .hero-content { min-height: 100%; height: 100%; align-items: stretch; padding-block: 32px 24px; }
