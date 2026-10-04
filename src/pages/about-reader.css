@@ -23,6 +23,7 @@
 .page-reader.about-page .about-intro { display: flex; flex-direction: column; justify-content: center; }
 .page-reader.about-page .about-intro-grid { gap: 48px; }
 .page-reader.about-page .about-intro-grid h2 { font-size: 40px; line-height: 48px; }
+.page-reader.about-page .about-intro-links { display: flex; flex-wrap: wrap; gap: 16px 24px; }
 .page-reader.about-page .values-grid { gap: 32px; margin-top: 32px; padding-top: 24px; }
 .page-reader.about-page .values-grid h3 { margin-block: 16px 8px; }
 

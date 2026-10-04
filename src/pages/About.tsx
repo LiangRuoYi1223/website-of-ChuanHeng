@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, Footprints, HeartHandshake, Compass, ChevronDown } from 'lucide-react';
+import { ArrowUpRight, Footprints, HeartHandshake, Leaf, ChevronDown } from 'lucide-react';
 import { useContent } from '../App';
 import { ParallaxImage, Reveal, Signup, usePageTitle } from '../components';
 import { useId, useRef, useState, type KeyboardEvent } from 'react';
@@ -33,7 +33,26 @@ export default function AboutPage() {
     <section id="about-introduction" className="about-hero"><div className="container about-hero-grid"><div className="about-hero-copy"><span className="eyebrow">HELLO, WE'RE CHUANHENG.</span><h1>山野之间，<br/>找到同路人<span>。</span></h1><p>{settings.intro}</p><a href="#about-us" className="round-scroll" aria-label="了解川衡"><ChevronDown size={23}/></a><div className="about-hero-meta"><span>SINCE {settings.founded?.slice(0,4) || '2018'}</span><span>{settings.school}</span></div></div><div className="about-hero-photo"><ParallaxImage src={settings.heroAbout} alt={settings.demoMode !== false ? '温暖阳光中的森林小径示意影像' : '川衡社团生活影像'}/><span className="photo-stamp">GO OUTSIDE.<br/>COME TOGETHER.</span>{settings.demoMode !== false && <span className="image-caption">AI 生成示意影像</span>}</div></div></section>
     },
     { id: 'about-us', title: '我们是川衡', content:
-    <section id="about-us" className="about-intro container"><Reveal><span className="eyebrow">A STUDENT COMMUNITY, AN OPEN TRAIL.</span><div className="about-intro-grid"><h2>我们是川衡。<br/>在山野中相遇，<br/>在同行中成长。</h2><div><p className="big-paragraph">{settings.aboutDescription}</p><Link to="/" className="text-link">看看我们最近在做什么 <ArrowUpRight size={18}/></Link></div></div></Reveal><div className="values-grid">{[{icon:Footprints, title:'从走出去开始',text:'徒步、登山、攀岩与户外探索，让课余生活多一种可能。'}, {icon:HeartHandshake,title:'一起走，也一起成长',text:'结识同路人，练习协作，在共同经历中建立信任。'}, {icon:Compass,title:'好奇心，也需要准备',text:'逐步学习户外技能、路线规划与团队协作，认真对待每一次出发。'}].map((value, i) => <Reveal key={value.title} delay={i * 80}><value.icon size={29} strokeWidth={1.3}/><h3>{value.title}</h3><p>{value.text}</p></Reveal>)}</div></section>
+    <section id="about-us" className="about-intro container">
+      <Reveal>
+        <span className="eyebrow">A STUDENT COMMUNITY, AN OPEN TRAIL.</span>
+        <div className="about-intro-grid">
+          <h2>我们是川衡。<br/>在山野中相遇，<br/>在同行中成长。</h2>
+          <div>
+            {settings.aboutDescription.split(/\n\s*\n/).map((paragraph, index) => <p key={index} className="big-paragraph">{paragraph}</p>)}
+            <div className="about-intro-links">
+              <Link to="/" className="text-link">看看我们最近在做什么 <ArrowUpRight size={18}/></Link>
+              <Link to="/team" className="text-link">了解川衡登山队 <ArrowUpRight size={18}/></Link>
+            </div>
+          </div>
+        </div>
+      </Reveal>
+      <div className="values-grid">{[
+        { icon: Footprints, title: '从一次出发开始', text: '选择适合自己的活动，感受山野，认识伙伴。' },
+        { icon: HeartHandshake, title: '一起走，也一起担当', text: '学习照顾同伴，也参与活动筹备、摄影记录与团队协作。' },
+        { icon: Leaf, title: '亲近自然，少留痕迹', text: '带走垃圾，不采摘、不干扰野生动物。' },
+      ].map((value, i) => <Reveal key={value.title} delay={i * 80}><value.icon size={29} strokeWidth={1.3}/><h3>{value.title}</h3><p>{value.text}</p></Reveal>)}</div>
+    </section>
     },
     { id: 'first-departure', title: '第一次出发', content: <FirstDepartureGuide settings={settings}/> },
     { id: 'growth-journey', title: '一起成长', content: <Journey/> },
