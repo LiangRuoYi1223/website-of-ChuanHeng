@@ -73,7 +73,8 @@ export default function CooperationPage() {
 
     { id: 'benefits', title: '合作方式与权益', content:
     <section className="coop-section container" id="benefits" aria-labelledby="benefits-title">
-      <div className="coop-benefits-heading"><div className="coop-section-heading"><span className="eyebrow">03 / PARTNERSHIP VALUE</span><h2 id="benefits-title">支持的方式，<br/>可以一起定义。</h2></div><div className="coop-support-content"><p>欢迎户外品牌、赞助方与学校共同参与，<br/>围绕实际项目和训练，找到适合彼此的合作方式。</p><ul className="coop-support-ways">{content.supportWays.map((way, index) => { const Icon = supportIcons[index % supportIcons.length]; return <li key={way.id}><Icon size={32} strokeWidth={1.25} aria-hidden="true"/><div><h3>{way.title}</h3><p>{way.description}</p></div></li>; })}</ul></div></div>
+      <div className="coop-benefits-heading"><div className="coop-section-heading"><span className="eyebrow">03 / PARTNERSHIP VALUE</span><h2 id="benefits-title">支持的方式，<br/>可以一起定义。</h2></div><div className="coop-support-content"><p>欢迎户外品牌、赞助方与学校共同参与，<br/>围绕实际项目和训练，找到适合彼此的合作方式。</p></div></div>
+      <ul className="coop-support-ways">{content.supportWays.map((way, index) => { const Icon = supportIcons[index % supportIcons.length]; return <li key={way.id}><Icon size={32} strokeWidth={1.25} aria-hidden="true"/><div><h3>{way.title}</h3><p>{way.description}</p></div></li>; })}</ul>
       {content.benefits.length ? <div className="coop-table-wrap"><table className="coop-table benefits-table"><caption className="sr-only">合作权益方向与需要共同确认的事项</caption><thead><tr><th scope="col">权益方向</th><th scope="col">合作内容</th><th scope="col">确认事项</th></tr></thead><tbody>{content.benefits.map(item => <tr key={item.id}><th scope="row">{item.direction}</th><td>{item.content}</td><td>{item.confirmation}</td></tr>)}</tbody></table></div> : <p className="coop-empty">合作权益可根据具体项目共同讨论。</p>}
       <p className="coop-data-note">金额、数量、具体交付与授权范围，洽谈后书面确认。</p>
     </section>
