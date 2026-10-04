@@ -1,0 +1,43 @@
+{
+  "checked_client_date": "2026-10-04",
+  "timezone": "Asia/Shanghai",
+  "mode": "read-only file metadata and existing Python package inspection",
+  "blender": {
+    "executable": "D:\\blender\\blender.exe",
+    "file_version": "5.2",
+    "bytes": 113022936,
+    "launcher": "D:\\blender\\blender-launcher.exe",
+    "shortcut": "C:\\Users\\ander\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Blender\\Blender 5.2.lnk",
+    "launched": false,
+    "runtime_verified": false,
+    "gltf_module": "D:\\blender\\5.2\\scripts\\addons_core\\io_scene_gltf2\\__init__.py",
+    "gltf_module_file_exists": true,
+    "gltf_export_verified": false,
+    "bundled_python": "D:\\blender\\5.2\\python\\bin\\python.exe",
+    "bundled_python_file_version": "3.13.13",
+    "new_installation": false
+  },
+  "system_python": {
+    "executable": "C:\\Users\\ander\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+    "version": "3.14.7",
+    "numpy": "2.5.3",
+    "Pillow": "12.3.0",
+    "libtiff_available": true,
+    "rasterio_installed": false,
+    "tifffile_installed": false,
+    "pyproj_installed": false,
+    "new_dependencies_installed": false
+  },
+  "computer_use": {
+    "skill_read": true,
+    "documented_module": "@oai/sky",
+    "node_repl_tool_available": true,
+    "initialized": false,
+    "ui_operated": false,
+    "requires_separate_user_approval": true
+  },
+  "model_created": false,
+  "terrain_payload_downloaded": false,
+  "campus_media_downloaded": false,
+  "website_modified": false
+}

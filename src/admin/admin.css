@@ -46,7 +46,7 @@
 .admin-app .admin-field label { font-weight: 600; color: #354f3e; }
 .admin-app .admin-field input, .admin-app .admin-field textarea, .admin-app .admin-field select { width: 100%; min-width: 0; min-height: 46px; padding: 11px 13px; color: var(--admin-ink); border: 1px solid #bacaba; border-radius: 6px; background: #fff; }
 .admin-app .admin-field textarea { min-height: 110px; resize: vertical; line-height: 1.75; }
-.admin-app .admin-field input::placeholder, .admin-app .admin-field textarea::placeholder { color: #849485; }
+.admin-app .admin-field input::placeholder, .admin-app .admin-field textarea::placeholder { color: #617263; }
 .admin-app .admin-field input:focus, .admin-app .admin-field textarea:focus, .admin-app .admin-field select:focus { outline: 3px solid #d5e3ce; outline-offset: 1px; border-color: #64885f; }
 .admin-app .admin-field input:disabled, .admin-app .admin-field textarea:disabled, .admin-app .admin-field select:disabled { background: #f0f3ee; color: #778477; }
 .admin-app .admin-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 18px; border: 1px solid transparent; border-radius: 6px; font-size: 16px; font-weight: 600; line-height: 1.5; text-decoration: none; white-space: nowrap; }
@@ -103,6 +103,27 @@
 .admin-app .admin-modal-card > h2 { margin-bottom: 24px; }
 .admin-app .admin-modal-card > .admin-toolbar { margin-bottom: 26px; }
 .admin-app .admin-modal-card .admin-actions { margin-top: 8px; justify-content: flex-end; }
+.admin-app ::selection { color: #fff; background: var(--admin-green); }
+.admin-app input, .admin-app textarea { caret-color: var(--admin-green); }
+.admin-app input[type='checkbox']:focus-visible { outline: 3px solid #64885f; outline-offset: 3px; }
+.admin-app .admin-permission-note { margin-top: 20px; margin-bottom: 0; }
+.admin-app .admin-role-table { min-width: 0; }
+.admin-app .admin-role-table tbody th { background: #fff; border-top: 1px solid var(--admin-line); width: 185px; }
+.admin-app .admin-role-table tbody th .admin-status { margin-left: 10px; }
+.admin-app .admin-role-table tr[data-current='true'] th, .admin-app .admin-role-table tr[data-current='true'] td { background: #f1f6ed; }
+.admin-app .admin-table-permissions { display: block; margin-top: 5px; max-width: 34ch; color: var(--admin-muted); line-height: 1.7; }
+.admin-app .admin-user-form-heading { margin-top: 30px; }
+.admin-app .admin-form-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.admin-app .admin-permission-fieldset { min-width: 0; margin: 28px 0 0; padding: 20px; border: 1px solid var(--admin-line); border-radius: 7px; }
+.admin-app .admin-permission-fieldset legend { padding-inline: 8px; font-weight: 600; }
+.admin-app .admin-permission-fieldset > p { margin-bottom: 16px; }
+.admin-app .admin-permission-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 26px; }
+.admin-app .admin-permission-option { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; min-height: 44px; }
+.admin-app .admin-permission-option > input { width: 19px; height: 19px; margin: 3px 0 0; flex: 0 0 19px; accent-color: var(--admin-green); }
+.admin-app .admin-permission-option > span { min-width: 0; }
+.admin-app .admin-permission-option strong { display: block; font-weight: 600; }
+.admin-app .admin-permission-option small, .admin-app .admin-registration-help { display: block; margin-top: 4px; color: var(--admin-muted); line-height: 1.7; font-size: 14px; }
+.admin-app .admin-table-wrap, .admin-app .admin-modal-card, .admin-app .admin-sidebar nav { scrollbar-width: thin; scrollbar-color: #a3b6a0 #edf3e9; }
 @media (max-width: 1050px) {
   .admin-app .admin-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-app .admin-content { padding: 24px; }
@@ -133,6 +154,11 @@
   .admin-app .admin-modal-card { padding: 20px; border-radius: 9px; max-height: calc(100svh - 40px); }
   .admin-app .admin-login-card { padding: 28px 24px; }
   .admin-app .admin-image-field img { width: 100%; }
+  .admin-app .admin-role-table tbody th { width: 112px; padding: 12px; }
+  .admin-app .admin-role-table tbody th .admin-status { display: flex; width: fit-content; margin: 6px 0 0; }
+  .admin-app .admin-role-table td { padding: 12px; }
+  .admin-app .admin-permission-options { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .admin-app .admin-permission-fieldset { padding: 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .admin-app *, .admin-app *::before, .admin-app *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }

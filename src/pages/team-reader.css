@@ -13,12 +13,12 @@
 .page-reader.team-page .support-section > .container { width: var(--reader-content-width); }
 .page-reader.team-page .section-heading { margin-bottom: 24px; gap: 32px; }
 .page-reader.team-page .section-heading h2,
-.page-reader.team-page .training-grid h2 { font-size: clamp(2rem, 3.4vw, 3rem); line-height: 1.25; }
+.page-reader.team-page .training-grid h2 { font-size: 40px; line-height: 48px; }
 .page-reader.team-page .section-heading h2 { margin-top: 12px; }
 .page-reader.team-page .team-disciplines { margin-top: 16px; }
 .page-reader.team-page .team-disciplines > div { padding-block: 24px; }
 .page-reader.team-page .discipline-top { margin-bottom: 16px; }
-.page-reader.team-page .team-disciplines h3 { margin-block: 8px 12px; }
+.page-reader.team-page .team-disciplines h3 { font-size: 20px; line-height: 28px; margin-block: 8px 12px; }
 .page-reader.team-page .team-training { display: flex; align-items: center; }
 .page-reader.team-page .training-grid { gap: 48px; }
 .page-reader.team-page .training-grid h2 { margin-block: 12px 24px; }
@@ -48,15 +48,15 @@
 .page-reader.project-detail-page .project-overview { min-height: var(--page-panel-height); display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1fr); gap: 48px; align-items: center; padding-block: 32px; }
 .page-reader.project-detail-page .detail-header { min-width: 0; padding: 0; }
 .page-reader.project-detail-page .back-link { margin-bottom: 24px; min-height: 40px; }
-.page-reader.project-detail-page .detail-header h1 { font-size: clamp(2rem, 3.4vw, 3rem); line-height: 1.25; margin-block: 16px; }
+.page-reader.project-detail-page .detail-header h1 { font-size: 40px; line-height: 48px; margin-block: 16px; }
 .page-reader.project-detail-page .detail-lead { font-size: 1rem; line-height: 1.75; }
 .page-reader.project-detail-page .detail-facts { margin-top: 24px; gap: 16px 24px; }
 .page-reader.project-detail-page .detail-cover { width: 100%; height: min(560px, calc(var(--page-panel-height) - 64px)); min-height: 280px; aspect-ratio: auto; }
 .page-reader.project-detail-page .demo-note { margin-top: 24px; padding: 12px 16px; }
 .page-reader.project-detail-page .project-detail-content { min-height: var(--page-panel-height); padding-block: 48px; display: flex; align-items: center; }
 .page-reader.project-detail-page .project-detail-content > .reveal { width: 100%; }
-.page-reader.project-detail-page .prose h2 { margin-block: 16px 24px; font-size: clamp(1.75rem, 3vw, 2.5rem); }
-.page-reader.project-detail-page .prose .preserve-lines { max-width: 72ch; line-height: 1.85; }
+.page-reader.project-detail-page .prose h2 { margin-block: 16px 24px; font-size: 28px; line-height: 38px; }
+.page-reader.project-detail-page .prose .preserve-lines { max-width: 72ch; font-size: 16px; line-height: 28px; }
 .page-reader.project-detail-page .support-section { min-height: var(--page-panel-height); padding-block: 32px; display: flex; align-items: center; }
 .page-reader.project-detail-page .contact-box { max-width: 850px; }
 .page-reader.project-detail-page .not-found { min-height: var(--page-panel-height); display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 24px; padding-block: 32px; }
@@ -79,7 +79,7 @@
   .page-reader.team-page .projects-section,
   .page-reader.team-page .support-section { padding-block: 24px; }
   .page-reader.team-page .section-heading h2,
-  .page-reader.team-page .training-grid h2 { font-size: 2rem; }
+  .page-reader.team-page .training-grid h2 { font-size: 30px; line-height: 40px; }
   .page-reader.team-page .team-disciplines { margin-top: 8px; }
   .page-reader.team-page .team-disciplines > div { padding-block: 16px !important; border-color: var(--alpine-line); }
   .page-reader.team-page .discipline-top { margin-bottom: 8px; }
@@ -94,10 +94,10 @@
   .page-reader.team-page .team-cooperation-link { flex-direction: column; align-items: flex-start; gap: 16px; }
   .page-reader.project-detail-page .project-overview { grid-template-columns: 1fr; gap: 24px; padding-block: 24px; }
   .page-reader.project-detail-page .back-link { margin-bottom: 16px; }
-  .page-reader.project-detail-page .detail-header h1 { font-size: 2rem; }
+  .page-reader.project-detail-page .detail-header h1 { font-size: 30px; line-height: 40px; }
   .page-reader.project-detail-page .detail-facts { margin-top: 16px; }
   .page-reader.project-detail-page .detail-cover { height: clamp(220px, 36vh, 340px); min-height: 0; }
   .page-reader.project-detail-page .project-detail-content { padding-block: 32px; }
-  .page-reader.project-detail-page .prose h2 { font-size: 1.75rem; margin-bottom: 16px; }
+  .page-reader.project-detail-page .prose h2 { font-size: 24px; line-height: 34px; margin-bottom: 16px; }
   .page-reader.project-detail-page .support-section { padding-block: 24px; }
 }

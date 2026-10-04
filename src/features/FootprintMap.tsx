@@ -1,7 +1,7 @@
 import { useId, useState } from 'react';
 import { Footprints, MapPin, ArrowUpRight } from 'lucide-react';
 import { footprintPoints } from './footprint-data';
-import { CHINA_VIEWBOX, chinaProvinces, southSeaPaths, projectChinaPoint } from './map-data/china-paths';
+import { chinaProvinces, southSeaPaths, projectChinaPoint } from './map-data/china-paths';
 import './footprint-map.css';
 
 export function FootprintMap() {
@@ -22,7 +22,8 @@ export function FootprintMap() {
       <div className="footprint-layout">
         <figure className="footprint-map-panel">
           <div className="footprint-map-topline"><span><Footprints size={17} aria-hidden="true"/> 山野之间，留下连接</span><span>CHINA / 地点示例</span></div>
-          <svg className="footprint-map-svg" viewBox={`0 0 ${CHINA_VIEWBOX.width} ${CHINA_VIEWBOX.height}`} role="group" aria-labelledby={`${uid}-map-title ${uid}-map-description`}>
+          {/* 收紧原始画布的留白，保留全部省界、点位及南海区域。 */}
+          <svg className="footprint-map-svg" viewBox="112 8 788 604" role="group" aria-labelledby={`${uid}-map-title ${uid}-map-description`}>
             <title id={`${uid}-map-title`}>中国地图中的四个演示地点</title>
             <desc id={`${uid}-map-description`}>地图包含省界、台湾、海南和南海区域。点位为深圳、韶关、桂林和成都的位置示例，并非协会真实活动记录。可使用 Tab 聚焦点位，按 Enter 或空格选择，也可使用地图旁的地点列表。</desc>
             <g aria-hidden="true" className="footprint-provinces">
@@ -47,7 +48,7 @@ export function FootprintMap() {
                 <text className="footprint-marker-label" x={point.labelOffset[0]} y={point.labelOffset[1]} textAnchor={point.labelOffset[0] < 0 ? 'end' : 'start'} aria-hidden="true">{point.city}<tspan className="footprint-marker-number"> / 0{index + 1}</tspan></text>
               </g>;
             })}
-            <text className="footprint-map-watermark" x="45" y="617" aria-hidden="true">A TRAIL BEGINS WITH A STEP.</text>
+            <text className="footprint-map-watermark" x="145" y="600" aria-hidden="true">A TRAIL BEGINS WITH A STEP.</text>
           </svg>
           <figcaption className="footprint-map-caption"><div className="footprint-legend"><span><i className="footprint-legend-point"/>演示点位</span><span><i className="footprint-legend-region"/>当前所选地区</span></div><span>地图或地点列表均可选择</span></figcaption>
         </figure>

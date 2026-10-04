@@ -1,5 +1,5 @@
 import { lazy, Suspense, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useLocation, useParams } from 'react-router-dom';
 import { ArrowDown, ArrowUpRight, CalendarDays, MapPin, Mountain, Footprints, ChevronLeft, Clock3, Compass } from 'lucide-react';
 import { useContent } from '../App';
 import type { Activity } from '../types';
@@ -11,6 +11,9 @@ import SemesterCalendar from '../features/SemesterCalendar';
 import { ActivityFilters, filterActivities, initialActivityFilters } from '../features/ActivityFilters';
 import ActivityPreparation from '../features/ActivityPreparation';
 import TrailAlbum from '../features/TrailAlbum';
+import ActivityRegistration from '../auth/ActivityRegistration';
+import { useAuth } from '../auth/AuthContext';
+import { canViewMemberActivities } from '../auth/permissions';
 
 const FootprintMap = lazy(() => import('../features/FootprintMap'));
 
@@ -57,13 +60,19 @@ export function ActivitiesPage() {
 
 export function ActivityDetail() {
   const { id } = useParams();
+  const location = useLocation();
+  const { user, checking } = useAuth();
   const { activities, settings } = useContent();
   const activity = activities.find(a => a.id === id);
   usePageTitle(activity?.title || '活动详情');
+  if (activity?.kind === 'upcoming') {
+    if (checking) return <div className="auth-loading" role="status">正在检查登录状态…</div>;
+    if (!canViewMemberActivities(user)) return <Navigate replace to={`/login?membership=required&redirect=${encodeURIComponent(location.pathname + location.search + location.hash)}`}/>;
+  }
   if (!activity) return <PageReader title="活动详情" className="activity-detail-page" chapters={[{ id: 'unavailable', title: '活动暂未公开', content: <div className="not-found container"><h1>活动暂未公开。</h1><p>这项活动可能正在筹备或已下架。</p><Link className="button button-green" to="/">浏览公开活动</Link></div> }]}/>;
   return <PageReader title={activity.title} className="detail-page activity-detail-page" chapters={[
     { id: 'activity-overview', title: '活动概览', content: <section><div className="container detail-header"><Link to="/" className="back-link"><ChevronLeft size={16}/> 活动与足迹</Link><div className="detail-tags"><span className="eyebrow">{activity.kind === 'past' ? 'TRAIL JOURNAL / 活动回顾' : 'NEXT ADVENTURE / 活动预告'}</span>{activity.isDemo && <DemoBadge/>}</div><h1>{activity.title}</h1><p className="detail-lead">{activity.summary}</p><div className="detail-facts"><span><CalendarDays size={18}/>{dateParts(activity.date).full}</span><span><MapPin size={18}/>{activity.location}</span><span><Mountain size={18}/>{activity.difficulty}</span></div></div><div className="detail-cover container"><img src={activity.image || settings.heroActivities} alt={`${activity.title}的${activity.isDemo ? '示意' : ''}影像`}/></div></section> },
-    { id: 'activity-plan', title: activity.kind === 'past' ? '活动回顾' : '活动安排与报名', content: <div className="detail-columns container"><section className="prose"><span className="eyebrow">{activity.kind === 'past' ? 'OUR EXPERIENCE' : 'THE PLAN'}</span><h2>{activity.kind === 'past' ? '一起走过的这一天' : '这次，我们这样出发'}</h2><div className="preserve-lines">{activity.description}</div>{activity.isDemo && <div className="demo-note">此活动为版式演示，日期、地点与安排均为示意。请以公众号正式发布的活动信息为准。</div>}</section><aside><h3>{activity.kind === 'past' ? '下一次，和我们一起' : '准备好一起出发了吗？'}</h3><p>活动报名及正式安排通过协会公众号公布。</p><Signup settings={settings} signupUrl={activity.signupUrl} qrImage={activity.qrImage} compact/></aside></div> },
+    { id: 'activity-plan', title: activity.kind === 'past' ? '活动回顾' : '活动安排与报名', content: <div className="detail-columns container"><section className="prose"><span className="eyebrow">{activity.kind === 'past' ? 'OUR EXPERIENCE' : 'THE PLAN'}</span><h2>{activity.kind === 'past' ? '一起走过的这一天' : '这次，我们这样出发'}</h2><div className="preserve-lines">{activity.description}</div>{activity.isDemo && <div className="demo-note">此活动为版式演示，日期、地点与安排均为示意。请以公众号正式发布的活动信息为准。</div>}</section><aside>{activity.kind === 'past' ? <><h3>下一次，和我们一起</h3><p>正式活动安排通过协会公众号公布。</p><Signup settings={settings} signupUrl={activity.signupUrl} qrImage={activity.qrImage} compact/></> : <ActivityRegistration key={activity.id} activity={activity}/>}</aside></div> },
     { id: 'activity-preparation', title: activity.kind === 'past' ? '准备清单回顾' : '出发准备', content: <><div className="container detail-preparation"><ActivityPreparation key={activity.id} activity={activity}/></div><div className="container detail-bottom"><Link className="text-link" to="/">返回全部活动 <ArrowUpRight size={17}/></Link></div></> },
   ]}/>;
 }

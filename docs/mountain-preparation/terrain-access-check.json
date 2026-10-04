@@ -1,0 +1,73 @@
+{
+  "checked_client_date": "2026-10-04",
+  "method": "HTTP HEAD only; no terrain payload downloaded",
+  "dataset": "Copernicus GLO-30 AWS public 2021 release",
+  "entries": [
+    {
+      "region": "campus_tanglang",
+      "tile": "N22_00_E113_00",
+      "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N22_00_E113_00_DEM/Copernicus_DSM_COG_10_N22_00_E113_00_DEM.tif",
+      "downloaded": false,
+      "status": 200,
+      "bytes": 36641041,
+      "content_type": "image/tiff",
+      "last_modified": "Mon, 09 May 2022 14:09:26 GMT",
+      "head_check": "passed"
+    },
+    {
+      "region": "campus_tanglang",
+      "tile": "N22_00_E114_00",
+      "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N22_00_E114_00_DEM/Copernicus_DSM_COG_10_N22_00_E114_00_DEM.tif",
+      "downloaded": false,
+      "status": 200,
+      "bytes": 25030462,
+      "content_type": "image/tiff",
+      "last_modified": "Mon, 09 May 2022 14:09:26 GMT",
+      "head_check": "passed"
+    },
+    {
+      "region": "wutai",
+      "tile": "N38_00_E113_00",
+      "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N38_00_E113_00_DEM/Copernicus_DSM_COG_10_N38_00_E113_00_DEM.tif",
+      "downloaded": false,
+      "status": 200,
+      "bytes": 44132239,
+      "content_type": "image/tiff",
+      "last_modified": "Mon, 09 May 2022 14:20:06 GMT",
+      "head_check": "passed"
+    },
+    {
+      "region": "wutai",
+      "tile": "N39_00_E113_00",
+      "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N39_00_E113_00_DEM/Copernicus_DSM_COG_10_N39_00_E113_00_DEM.tif",
+      "downloaded": false,
+      "status": 200,
+      "bytes": 40603040,
+      "content_type": "image/tiff",
+      "last_modified": "Mon, 09 May 2022 14:20:49 GMT",
+      "head_check": "passed"
+    },
+    {
+      "region": "muztagh_ata",
+      "tile": "N38_00_E074_00",
+      "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N38_00_E074_00_DEM/Copernicus_DSM_COG_10_N38_00_E074_00_DEM.tif",
+      "downloaded": false,
+      "status": 200,
+      "bytes": 38023450,
+      "content_type": "image/tiff",
+      "last_modified": "Mon, 09 May 2022 14:19:56 GMT",
+      "head_check": "passed"
+    },
+    {
+      "region": "muztagh_ata",
+      "tile": "N38_00_E075_00",
+      "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N38_00_E075_00_DEM/Copernicus_DSM_COG_10_N38_00_E075_00_DEM.tif",
+      "downloaded": false,
+      "status": 200,
+      "bytes": 40363569,
+      "content_type": "image/tiff",
+      "last_modified": "Mon, 09 May 2022 14:19:56 GMT",
+      "head_check": "passed"
+    }
+  ]
+}

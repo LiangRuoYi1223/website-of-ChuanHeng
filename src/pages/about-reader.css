@@ -23,6 +23,7 @@
 .page-reader.about-page .about-intro { display: flex; flex-direction: column; justify-content: center; }
 .page-reader.about-page .about-intro-grid { gap: 48px; }
 .page-reader.about-page .about-intro-grid h2 { font-size: 40px; line-height: 48px; }
+.page-reader.about-page .big-paragraph { font-size: 16px; line-height: 28px; }
 .page-reader.about-page .about-intro-links { display: flex; flex-wrap: wrap; gap: 16px 24px; }
 .page-reader.about-page .values-grid { gap: 32px; margin-top: 32px; padding-top: 24px; }
 .page-reader.about-page .values-grid h3 { margin-block: 16px 8px; }
@@ -32,7 +33,8 @@
 .page-reader.about-page .departure-header h2 { font-size: 40px; line-height: 48px; margin-top: 8px; }
 .page-reader.about-page .departure-step { padding-block: 16px 24px; }
 .page-reader.about-page .departure-step-top { margin-bottom: 16px; }
-.page-reader.about-page .departure-step-title { font-size: 22px; line-height: 30px; }
+.page-reader.about-page .departure-header > p { font-size: 16px; line-height: 28px; }
+.page-reader.about-page .departure-step-title { font-size: 20px; line-height: 28px; }
 .page-reader.about-page .departure-step-arrow { bottom: 24px; }
 .page-reader.about-page .departure-detail { min-height: 0; }
 .page-reader.about-page .departure-detail-inner { gap: 32px; padding: 24px 32px; }
@@ -53,12 +55,12 @@
 .page-reader.about-page .journey-step:hover { background: color-mix(in srgb, var(--ice) 18%, var(--soft)); }
 .page-reader.about-page .journey-step.active:hover { background: color-mix(in srgb, var(--ice) 36%, var(--soft)); }
 .page-reader.about-page .journey-step:focus-visible { outline: 3px solid var(--green); outline-offset: -3px; }
-.page-reader.about-page .journey-step-title { display: block; font-size: 22px; line-height: 30px; font-weight: 500; }
+.page-reader.about-page .journey-step-title { display: block; font-size: 20px; line-height: 28px; font-weight: 500; }
 .page-reader.about-page .journey-step-description { display: block; padding-right: 16px; margin-top: 6px; color: var(--muted); font-size: 16px; line-height: 28px; }
 .page-reader.about-page .journey-step.active .journey-step-description { color: var(--ink); }
 .page-reader.about-page .step-number { flex-shrink: 0; padding-top: 6px; font-variant-numeric: tabular-nums; }
 .page-reader.about-page .step-indicator { display: block; right: 12px; top: 25px; }
-.page-reader.about-page .journey-photo-label strong { font-variant-numeric: tabular-nums; }
+.page-reader.about-page .journey-photo-label strong { font-size: 40px; font-variant-numeric: tabular-nums; }
 
 .page-reader.about-page .about-team-preview { display: flex; align-items: center; }
 .page-reader.about-page .about-team-preview > .reveal { width: 100%; }
@@ -102,6 +104,7 @@
   .page-reader.about-page .departure-header { gap: 16px; }
   .page-reader.about-page .departure-step { padding: 16px 16px 24px; }
   .page-reader.about-page .departure-step-title { font-size: 18px; line-height: 28px; }
+  .page-reader.about-page .departure-step-hint { font-size: 14px; line-height: 22px; }
   .page-reader.about-page .departure-step-arrow { right: 16px; }
   .page-reader.about-page .departure-detail-inner { gap: 24px; padding: 24px; }
   .page-reader.about-page .departure-detail-copy h3 { font-size: 24px; line-height: 34px; }

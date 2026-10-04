@@ -5,7 +5,7 @@
   "type": "module",
   "engines": { "node": ">=24.0.0" },
   "scripts": {
-    "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
+    "dev": "node scripts/dev.mjs",
     "dev:web": "vite --host 127.0.0.1 --port 5173 --strictPort",
     "dev:api": "node --watch server/index.mjs",
     "build": "node scripts/check-handbook.mjs && tsc -b && vite build",

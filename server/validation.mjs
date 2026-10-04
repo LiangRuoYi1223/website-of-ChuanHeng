@@ -1,3 +1,5 @@
+import { roles, contentPermissions } from './permissions.mjs';
+
 export class HttpError extends Error {
   constructor(status, message, code) { super(message); this.status = status; this.code = code; }
 }
@@ -36,6 +38,7 @@ export function settings(value) {
   result.logoUrl = url(input.logoUrl ?? '', '社团标志');
   if (input.demoMode !== undefined && typeof input.demoMode !== 'boolean') fail(400, '演示模式标记格式不正确。');
   result.demoMode = input.demoMode ?? true;
+  for (const field of ['semesterName', 'semesterStart', 'semesterEnd']) if (input[field] !== undefined) result[field] = string(input[field], field, { max: 100 });
   for (const field of textFields) result[field] = string(input[field], field, { required: ['clubName', 'school'].includes(field) });
   for (const field of urlFields) result[field] = url(input[field], field);
   result.contactEmail = string(input.contactEmail, '联系邮箱', { max: 254 });
@@ -63,6 +66,31 @@ export function activity(value) {
   result.date = date;
   for (const field of ['category', 'location', 'difficulty']) result[field] = string(input[field], field, { max: 200 });
   result.signupUrl = url(input.signupUrl, '报名链接'); result.qrImage = url(input.qrImage, '报名二维码');
+  if (input.registrationOpen !== undefined && typeof input.registrationOpen !== 'boolean') fail(400, '报名开放状态格式不正确。');
+  result.registrationOpen = input.registrationOpen ?? false;
+  for (const field of ['duration', 'cost', 'meetingPoint', 'beginnerFriendly', 'registrationStatus']) if (input[field] !== undefined) result[field] = string(input[field], field, { max: 500 });
+  for (const [field, values] of [['timeCommitment', ['half-day', 'full-day', 'multi-day']], ['experience', ['relaxed', 'scenic', 'skills']]]) {
+    if (input[field] !== undefined) {
+      if (!values.includes(input[field])) fail(400, `${field}格式不正确。`);
+      result[field] = input[field];
+    }
+  }
+  if (input.preparation !== undefined) {
+    const preparation = object(input.preparation);
+    if (!Array.isArray(preparation.items) || preparation.items.length > 30) fail(400, '准备清单须为最多 30 项的列表。');
+    result.preparation = {
+      notice: string(preparation.notice ?? '', '准备说明', { max: 2000 }),
+      items: preparation.items.map(value => { const item = object(value); return { id: id(item.id), title: string(item.title, '准备项标题', { required: true, max: 200 }), description: string(item.description, '准备项说明', { max: 2000 }) }; }),
+    };
+  }
+  if (input.album !== undefined) {
+    if (!Array.isArray(input.album) || input.album.length > 100) fail(400, '相册须为最多 100 张图片的列表。');
+    result.album = input.album.map(value => {
+      const photo = object(value);
+      if (photo.isDemo !== undefined && typeof photo.isDemo !== 'boolean') fail(400, '照片示例标记格式不正确。');
+      return { id: id(photo.id), src: url(photo.src, '相册图片'), alt: string(photo.alt, '图片说明', { required: true, max: 500 }), caption: string(photo.caption, '相册文字', { max: 2000 }), ...(photo.isDemo !== undefined ? { isDemo: photo.isDemo } : {}) };
+    });
+  }
   return result;
 }
 export function project(value) {
@@ -80,6 +108,12 @@ export function username(value) {
   return value.toLowerCase();
 }
 export function role(value) {
-  if (!['admin', 'editor'].includes(value)) fail(400, '账号角色格式不正确。');
+  if (!roles.includes(value)) fail(400, '账号角色格式不正确。');
   return value;
+}
+
+export function permissions(value = [], accountRole) {
+  if (!Array.isArray(value) || value.some(permission => !contentPermissions.includes(permission))) fail(400, '接口权限格式不正确。');
+  if (accountRole !== 'admin' && value.length) fail(400, '仅管理员需要分配接口权限。');
+  return contentPermissions.filter(permission => value.includes(permission));
 }

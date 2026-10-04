@@ -3,13 +3,18 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, mkdir, writeFile, readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
+import { createHash, scryptSync } from 'node:crypto';
 import { createApp } from '../server/index.mjs';
+import { contentPermissions } from '../server/permissions.mjs';
+import { initialSettings, legacyAboutDescription } from '../server/seed.mjs';
 
 const initialPassword = 'test-initial-only-24-characters';
 const readyPassword = 'test-ready-password-1234';
 async function fixture(t, options = {}) {
   const root = await mkdtemp(path.join(os.tmpdir(), 'chuanheng-backend-test-'));
   const config = { dataDir: path.join(root, 'data'), uploadDir: path.join(root, 'uploads'), distDir: path.join(root, 'dist'), initialPassword, ...options };
+  if (options.beforeCreate) await options.beforeCreate(config);
   let app = createApp(config);
   let origin;
   async function listen() {
@@ -54,9 +59,14 @@ test('public seed exposes demonstration markers and never exposes account creden
   assert.equal(result.body.settings.revision, 1);
   assert.equal(result.body.settings.demoMode, true);
   assert.equal(result.body.settings.logoUrl, '');
-  assert.equal(result.body.activities.length, 4);
+  assert.equal(result.body.activities.length, 7);
   assert.ok(result.body.activities.every(item => item.isDemo && item.title.includes('示例') && item.revision === 1));
-  assert.deepEqual(result.body.projects, []);
+  assert.equal(result.body.projects.length, 3);
+  assert.ok(result.body.projects.every(item => item.status === 'published' && item.isDemo));
+  assert.equal(result.body.settings.semesterName, '2026 秋季学期');
+  assert.ok(result.body.activities.every(item => item.preparation?.items.length));
+  assert.ok(result.body.activities.some(item => item.album?.length));
+  assert.ok(result.body.cooperation?.qualifications.length);
   assert.equal(JSON.stringify(result.body).includes(initialPassword), false);
   const me = await client.request('/api/auth/me');
   assert.deepEqual(me.body, { user: null });
@@ -69,7 +79,8 @@ test('authentication protects writes, rejects cross-origin requests, and logout 
   assert.equal((await client.request('/api/auth/login', { method: 'POST', body: { username: 'admin', password: initialPassword }, originOverride: 'https://untrusted.example' })).status, 403);
   assert.equal((await client.request('/api/auth/login', { method: 'POST', body: { username: 'admin', password: 'wrong' } })).status, 401);
   const { cookie, body } = await login(client);
-  assert.equal(body.user.role, 'admin');
+  assert.equal(body.user.role, 'founder');
+  assert.deepEqual(body.user.permissions, contentPermissions);
   assert.equal(body.user.mustChangePassword, true);
   assert.equal((await client.request('/api/auth/me', { cookie })).body.user.username, 'admin');
   const logout = await client.request('/api/auth/logout', { method: 'POST', cookie });
@@ -125,28 +136,42 @@ test('settings use optimistic locking and validate contact links', async t => {
 
 test('projects can be added later, published, updated, and deleted', async t => {
   const client = await fixture(t), { cookie } = await loginReady(client);
+  const initialCount = (await client.request('/api/content')).body.projects.length;
   const project = { title: '待定项目示例', mountain: '待定', elevation: '', plannedDate: '', duration: '', summary: '计划待定', description: '', trainingPlan: '按项目更新', supportNeeds: '按项目更新', cooperationValue: '按协议确定', image: '/images/alpine.webp', status: 'draft', isDemo: true };
   const created = await client.request('/api/admin/projects', { method: 'POST', body: project, cookie });
   assert.equal(created.status, 201);
-  assert.deepEqual((await client.request('/api/content')).body.projects, []);
+  assert.equal((await client.request('/api/content')).body.projects.length, initialCount);
   const updated = await client.request(`/api/admin/projects/${created.body.project.id}`, { method: 'PUT', cookie, body: { ...created.body.project, status: 'published' } });
   assert.equal(updated.status, 200); assert.equal(updated.body.project.revision, 2);
-  assert.equal((await client.request('/api/content')).body.projects.length, 1);
+  assert.equal((await client.request('/api/content')).body.projects.length, initialCount + 1);
   assert.equal((await client.request(`/api/admin/projects/${created.body.project.id}`, { method: 'DELETE', cookie })).status, 200);
 });
 
-test('editors publish content but cannot manage accounts; the final admin cannot be disabled or demoted', async t => {
+test('admins only write granted interfaces; only founders manage accounts and cannot remove the final founder', async t => {
   const client = await fixture(t), { cookie: adminCookie, body: admin } = await loginReady(client);
-  const editor = await client.request('/api/admin/users', { method: 'POST', cookie: adminCookie, body: { username: 'editor.one', displayName: '维护同学', password: 'editor-password-1234', role: 'editor' } });
+  const editor = await client.request('/api/admin/users', { method: 'POST', cookie: adminCookie, body: { username: 'editor.one', displayName: '维护同学', password: 'editor-password-1234', role: 'admin' } });
   assert.equal(editor.status, 201);
-  const { cookie: editorCookie } = await loginReady(client, 'editor.one', 'editor-password-1234', 'editor-ready-password-1234');
+  assert.deepEqual(editor.body.user.permissions, []);
+  let { cookie: editorCookie } = await loginReady(client, 'editor.one', 'editor-password-1234', 'editor-ready-password-1234');
   assert.equal((await client.request('/api/admin/content', { cookie: editorCookie })).status, 200);
   const settings = (await client.request('/api/content')).body.settings;
+  assert.equal((await client.request('/api/admin/settings', { method: 'PUT', cookie: editorCookie, body: { ...settings, intro: '维护者已更新' } })).status, 403);
+  assert.equal((await client.request('/api/admin/upload', { method: 'POST', cookie: editorCookie, body: {} })).status, 403);
+  assert.equal((await client.request('/api/admin/projects', { method: 'POST', cookie: editorCookie, body: {} })).status, 403);
+  assert.equal((await client.request(`/api/admin/users/${editor.body.user.id}`, { method: 'PUT', cookie: adminCookie, body: { permissions: ['settings:write'] } })).status, 200);
+  assert.equal((await client.request('/api/auth/me', { cookie: editorCookie })).body.user, null);
+  editorCookie = (await login(client, 'editor.one', 'editor-ready-password-1234')).cookie;
+  assert.deepEqual((await client.request('/api/auth/me', { cookie: editorCookie })).body.user.permissions, ['settings:write']);
   assert.equal((await client.request('/api/admin/settings', { method: 'PUT', cookie: editorCookie, body: { ...settings, intro: '维护者已更新' } })).status, 200);
+  assert.equal((await client.request('/api/admin/activities', { method: 'POST', cookie: editorCookie, body: {} })).status, 403);
   assert.equal((await client.request('/api/admin/users', { cookie: editorCookie })).status, 403);
   assert.equal((await client.request('/api/admin/users', { method: 'POST', cookie: editorCookie, body: {} })).status, 403);
   assert.equal((await client.request(`/api/admin/users/${admin.user.id}`, { method: 'DELETE', cookie: adminCookie })).status, 400);
-  assert.equal((await client.request(`/api/admin/users/${admin.user.id}`, { method: 'PUT', cookie: adminCookie, body: { role: 'editor' } })).status, 400);
+  assert.equal((await client.request(`/api/admin/users/${admin.user.id}`, { method: 'PUT', cookie: adminCookie, body: { role: 'admin' } })).status, 400);
+  assert.equal((await client.request(`/api/admin/users/${editor.body.user.id}`, { method: 'PUT', cookie: adminCookie, body: { permissions: [] } })).status, 200);
+  assert.equal((await client.request('/api/admin/content', { cookie: editorCookie })).status, 401);
+  editorCookie = (await login(client, 'editor.one', 'editor-ready-password-1234')).cookie;
+  assert.equal((await client.request('/api/admin/settings', { method: 'PUT', cookie: editorCookie, body: {} })).status, 403);
   assert.equal((await client.request(`/api/admin/users/${editor.body.user.id}`, { method: 'DELETE', cookie: adminCookie })).status, 200);
   assert.equal((await client.request('/api/admin/content', { cookie: editorCookie })).status, 401);
   assert.equal((await client.request('/api/auth/login', { method: 'POST', body: { username: 'editor.one', password: 'editor-password-1234' } })).status, 401);
@@ -185,7 +210,7 @@ test('production static fallback only applies to known routes, never missing API
   const client = await fixture(t, { production: true });
   await mkdir(client.config.distDir, { recursive: true });
   await writeFile(path.join(client.config.distDir, 'index.html'), '<html>川衡</html>');
-  for (const route of ['/', '/activities', '/activities/demo-forest-walk', '/about', '/team', '/admin', '/projects/example-project']) {
+  for (const route of ['/', '/activities', '/activities/demo-forest-walk', '/about', '/team', '/cooperation', '/login', '/account', '/admin', '/projects/example-project']) {
     const result = await client.request(route);
     assert.equal(result.status, 200);
     assert.match(result.headers.get('content-type'), /text\/html/);
@@ -222,7 +247,7 @@ test('temporary passwords cannot edit or upload until changed; password resets r
   const changed = await client.request('/api/auth/password', { method: 'POST', cookie, body: { currentPassword: initialPassword, newPassword: readyPassword } });
   assert.equal(changed.status, 200);
   assert.equal((await client.request('/api/admin/settings', { method: 'PUT', cookie, body: settings })).status, 200);
-  const user = await client.request('/api/admin/users', { method: 'POST', cookie, body: { username: 'reset.test', displayName: '密码重置测试', password: 'reset-first-password', role: 'editor' } });
+  const user = await client.request('/api/admin/users', { method: 'POST', cookie, body: { username: 'reset.test', displayName: '密码重置测试', password: 'reset-first-password', role: 'admin', permissions: ['projects:write'] } });
   const ready = await loginReady(client, 'reset.test', 'reset-first-password', 'reset-ready-password');
   assert.equal((await client.request('/api/admin/content', { cookie: ready.cookie })).status, 200);
   assert.equal((await client.request(`/api/admin/users/${user.body.user.id}`, { method: 'PUT', cookie, body: { password: 'reset-new-password' } })).status, 200);
@@ -230,4 +255,154 @@ test('temporary passwords cannot edit or upload until changed; password resets r
   const reset = await login(client, 'reset.test', 'reset-new-password');
   assert.equal(reset.body.user.mustChangePassword, true);
   assert.equal((await client.request('/api/admin/projects', { method: 'POST', cookie: reset.cookie, body: {} })).body.code, 'PASSWORD_CHANGE_REQUIRED');
+});
+
+async function createAccount(client, founderCookie, role, username = `${role}.test`, permissions = []) {
+  const password = `${username}-first-password`;
+  const created = await client.request('/api/admin/users', { method: 'POST', cookie: founderCookie, body: { username, displayName: `${role}测试账号`, role, permissions, password } });
+  assert.equal(created.status, 201);
+  const ready = await loginReady(client, username, password, `${username}-ready-password`);
+  return { ...ready, user: created.body.user };
+}
+
+test('members and viewers cannot access management; account grants reject unknown and misplaced permissions', async t => {
+  const client = await fixture(t), founder = await loginReady(client);
+  for (const role of ['member', 'viewer']) {
+    const account = await createAccount(client, founder.cookie, role);
+    assert.equal(account.body.user.role, role);
+    assert.deepEqual(account.body.user.permissions, []);
+    for (const [route, method] of [['/api/admin/content', 'GET'], ['/api/admin/users', 'GET'], ['/api/admin/users', 'POST'], ['/api/admin/settings', 'PUT'], ['/api/admin/activities', 'POST'], ['/api/admin/projects/arbitrary', 'DELETE'], ['/api/admin/upload', 'POST']]) {
+      assert.equal((await client.request(route, { method, cookie: account.cookie, ...(method === 'GET' ? {} : { body: {} }) })).status, 403);
+    }
+    assert.equal((await client.request('/api/content', { cookie: account.cookie })).status, 200);
+    assert.equal((await client.request(`/api/admin/users/${account.user.id}`, { method: 'PUT', cookie: founder.cookie, body: { permissions: ['settings:write'] } })).status, 400);
+  }
+  const common = { username: 'bad.permissions', displayName: '无效权限', password: 'bad-permission-password' };
+  assert.equal((await client.request('/api/admin/users', { method: 'POST', cookie: founder.cookie, body: { ...common, role: 'admin', permissions: ['users:write'] } })).status, 400);
+  assert.equal((await client.request('/api/admin/users', { method: 'POST', cookie: founder.cookie, body: { ...common, role: 'editor' } })).status, 400);
+  assert.equal((await client.request('/api/admin/users', { method: 'POST', cookie: founder.cookie, body: { ...common, role: 'viewer', permissions: ['settings:write'] } })).status, 400);
+  const admin = await createAccount(client, founder.cookie, 'admin');
+  assert.equal((await client.request(`/api/admin/users/${admin.user.id}`, { method: 'PUT', cookie: admin.cookie, body: { role: 'founder', permissions: contentPermissions } })).status, 403);
+  assert.equal((await client.request(`/api/admin/users/${admin.user.id}`, { method: 'PUT', cookie: founder.cookie, body: { role: 'member' } })).status, 200);
+  assert.equal((await client.request('/api/auth/me', { cookie: admin.cookie })).body.user, null);
+});
+
+test('draft visibility follows the granted content interface and activity rich fields survive edits', async t => {
+  const client = await fixture(t), founder = await loginReady(client), admin = await createAccount(client, founder.cookie, 'admin', 'scoped.admin', ['activities:write']);
+  const seed = (await client.request('/api/content')).body.activities.find(activity => activity.album?.length);
+  const created = await client.request('/api/admin/activities', { method: 'POST', cookie: founder.cookie, body: { ...seed, id: '', status: 'draft', title: '仅活动管理员可见' } });
+  assert.equal(created.status, 201);
+  assert.deepEqual(created.body.activity.album, seed.album);
+  assert.deepEqual(created.body.activity.preparation, seed.preparation);
+  assert.equal(created.body.activity.timeCommitment, seed.timeCommitment);
+  const draftId = created.body.activity.id;
+  assert.ok((await client.request('/api/admin/content', { cookie: admin.cookie })).body.activities.some(item => item.id === draftId));
+  assert.equal((await client.request(`/api/admin/activities/${draftId}`, { method: 'PUT', cookie: admin.cookie, body: { ...created.body.activity, title: '授权编辑成功' } })).status, 200);
+  await client.request(`/api/admin/users/${admin.user.id}`, { method: 'PUT', cookie: founder.cookie, body: { permissions: ['settings:write'] } });
+  assert.equal((await client.request('/api/auth/me', { cookie: admin.cookie })).body.user, null);
+  admin.cookie = (await login(client, 'scoped.admin', 'scoped.admin-ready-password')).cookie;
+  assert.ok(!(await client.request('/api/admin/content', { cookie: admin.cookie })).body.activities.some(item => item.id === draftId));
+  assert.equal((await client.request(`/api/admin/activities/${draftId}`, { method: 'DELETE', cookie: admin.cookie })).status, 403);
+});
+
+test('a founder keeps inherent access and the current session when updating their display name', async t => {
+  const client = await fixture(t), founder = await loginReady(client);
+  const saved = await client.request(`/api/admin/users/${founder.body.user.id}`, { method: 'PUT', cookie: founder.cookie, body: { role: 'founder', permissions: [], displayName: '修改后创始者' } });
+  assert.equal(saved.status, 200);
+  assert.deepEqual(saved.body.user.permissions, contentPermissions);
+  assert.equal((await client.request('/api/auth/me', { cookie: founder.cookie })).body.user.displayName, '修改后创始者');
+});
+
+test('site registrations persist and belong to the signed-in participant; viewers cannot register', async t => {
+  const client = await fixture(t), founder = await loginReady(client);
+  const member = await createAccount(client, founder.cookie, 'member'), other = await createAccount(client, founder.cookie, 'member', 'other.member');
+  const admin = await createAccount(client, founder.cookie, 'admin'), viewer = await createAccount(client, founder.cookie, 'viewer');
+  const seed = (await client.request('/api/content')).body.activities.find(item => item.kind === 'upcoming');
+  const created = await client.request('/api/admin/activities', { method: 'POST', cookie: founder.cookie, body: { ...seed, id: '', title: '开放报名测试活动', date: '2099-10-18', isDemo: false, registrationOpen: true } });
+  assert.equal(created.status, 201);
+  const activityId = created.body.activity.id;
+  assert.equal((await client.request('/api/registrations', { method: 'POST', body: { activityId } })).status, 401);
+  assert.equal((await client.request('/api/registrations', { cookie: viewer.cookie })).status, 403);
+  assert.equal((await client.request('/api/registrations', { method: 'POST', cookie: viewer.cookie, body: { activityId } })).status, 403);
+  assert.equal((await client.request('/api/registrations', { method: 'POST', cookie: member.cookie, body: { activityId }, originOverride: 'https://untrusted.example' })).status, 403);
+  for (const account of [member, admin, founder]) {
+    const registered = await client.request('/api/registrations', { method: 'POST', cookie: account.cookie, body: { activityId, userId: other.user.id } });
+    assert.equal(registered.status, 201);
+    assert.equal(registered.body.registration.activityId, activityId);
+    assert.ok(!('userId' in registered.body.registration));
+    assert.equal((await client.request('/api/registrations', { method: 'POST', cookie: account.cookie, body: { activityId } })).status, 409);
+  }
+  assert.deepEqual((await client.request('/api/registrations', { cookie: other.cookie })).body.registrations, []);
+  assert.equal((await client.request(`/api/registrations/${activityId}`, { method: 'DELETE', cookie: other.cookie })).status, 404);
+  await client.restart();
+  const registrations = (await client.request('/api/registrations', { cookie: member.cookie })).body.registrations;
+  assert.equal(registrations.length, 1);
+  assert.equal(registrations[0].activityId, activityId);
+  assert.equal((await client.request(`/api/registrations/${activityId}`, { method: 'DELETE', cookie: member.cookie })).status, 200);
+  assert.deepEqual((await client.request('/api/registrations', { cookie: member.cookie })).body.registrations, []);
+  assert.equal((await client.request('/api/registrations', { cookie: admin.cookie })).body.registrations.length, 1);
+  assert.equal((await client.request(`/api/admin/activities/${activityId}`, { method: 'DELETE', cookie: founder.cookie })).status, 200);
+  assert.deepEqual((await client.request('/api/registrations', { cookie: admin.cookie })).body.registrations, []);
+});
+
+test('registration requires an explicitly open real future activity and a changed temporary password', async t => {
+  const client = await fixture(t), founder = await loginReady(client), member = await createAccount(client, founder.cookie, 'member');
+  const seed = (await client.request('/api/content')).body.activities.find(item => item.kind === 'upcoming');
+  for (const [changes, expected] of [[{ registrationOpen: false }, 400], [{ isDemo: true }, 400], [{ kind: 'past' }, 400], [{ date: '2000-01-01' }, 400], [{ status: 'draft' }, 404]]) {
+    const created = await client.request('/api/admin/activities', { method: 'POST', cookie: founder.cookie, body: { ...seed, id: '', date: '2099-10-18', isDemo: false, registrationOpen: true, ...changes } });
+    assert.equal(created.status, 201);
+    assert.equal((await client.request('/api/registrations', { method: 'POST', cookie: member.cookie, body: { activityId: created.body.activity.id } })).status, expected);
+  }
+  const created = await client.request('/api/admin/users', { method: 'POST', cookie: founder.cookie, body: { username: 'temporary.member', displayName: '临时社员', role: 'member', password: 'temporary-first-password' } });
+  assert.equal(created.status, 201);
+  const temporary = await login(client, 'temporary.member', 'temporary-first-password');
+  assert.equal((await client.request('/api/registrations', { method: 'POST', cookie: temporary.cookie, body: { activityId: seed.id } })).body.code, 'PASSWORD_CHANGE_REQUIRED');
+});
+
+test('legacy accounts migrate without changing credentials; old editors gain no permissions and deleted content stays deleted', async t => {
+  const salt = 'legacy-test-salt', hash = `${salt}:${scryptSync(initialPassword, salt, 32).toString('hex')}`, token = 'f'.repeat(64);
+  const client = await fixture(t, { async beforeCreate(config) {
+    await mkdir(config.dataDir, { recursive: true });
+    const legacy = new DatabaseSync(path.join(config.dataDir, 'chuanheng.sqlite'));
+    legacy.exec(`CREATE TABLE users (id TEXT PRIMARY KEY, username TEXT NOT NULL UNIQUE, display_name TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','editor')), password_hash TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1, must_change_password INTEGER NOT NULL DEFAULT 1);
+      CREATE TABLE sessions (token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, expires_at INTEGER NOT NULL);
+      CREATE TABLE site_settings (id INTEGER PRIMARY KEY CHECK(id = 1), payload TEXT NOT NULL, revision INTEGER NOT NULL);
+      CREATE TABLE activities (id TEXT PRIMARY KEY, payload TEXT NOT NULL, revision INTEGER NOT NULL);
+      CREATE TABLE projects (id TEXT PRIMARY KEY, payload TEXT NOT NULL, revision INTEGER NOT NULL);`);
+    legacy.prepare('INSERT INTO users VALUES (?, ?, ?, ?, ?, 1, 0)').run('old-founder', 'admin', '原管理员', 'admin', hash);
+    legacy.prepare('INSERT INTO users VALUES (?, ?, ?, ?, ?, 1, 0)').run('old-editor', 'legacy.editor', '原维护者', 'editor', hash);
+    legacy.prepare('INSERT INTO sessions VALUES (?, ?, ?)').run(createHash('sha256').update(token).digest('hex'), 'old-editor', Date.now() + 60_000);
+    legacy.prepare('INSERT INTO site_settings VALUES (1, ?, 5)').run(JSON.stringify({ clubName: '用户已编辑协会名称', intro: '保存用户编辑内容', aboutDescription: legacyAboutDescription }));
+    legacy.prepare('INSERT INTO activities VALUES (?, ?, 4)').run('demo-autumn-hike', JSON.stringify({ id: 'demo-autumn-hike', title: '用户已编辑活动标题', isDemo: true, status: 'published', kind: 'upcoming', date: '2099-10-18' }));
+    legacy.close();
+  } });
+  const founder = await login(client);
+  assert.equal(founder.body.user.id, 'old-founder');
+  assert.equal(founder.body.user.role, 'founder');
+  assert.equal(founder.body.user.mustChangePassword, false);
+  const editorCookie = `chuanheng_session=${token}`;
+  const editor = (await client.request('/api/auth/me', { cookie: editorCookie })).body.user;
+  assert.equal(editor.id, 'old-editor'); assert.equal(editor.role, 'admin'); assert.deepEqual(editor.permissions, []);
+  assert.equal((await client.request('/api/admin/settings', { method: 'PUT', cookie: editorCookie, body: {} })).status, 403);
+  const content = (await client.request('/api/content')).body;
+  assert.equal(content.settings.clubName, '用户已编辑协会名称'); assert.equal(content.settings.revision, 5);
+  assert.equal(content.settings.semesterName, '2026 秋季学期');
+  assert.equal(content.settings.aboutDescription, initialSettings.aboutDescription);
+  assert.equal(content.activities.length, 4);
+  const editedActivity = content.activities.find(activity => activity.id === 'demo-autumn-hike');
+  assert.equal(editedActivity.title, '用户已编辑活动标题'); assert.equal(editedActivity.revision, 4);
+  assert.ok(editedActivity.preparation.items.length);
+  assert.ok(!content.activities.some(activity => activity.id === 'demo-forest-walk'));
+  assert.equal(content.projects.length, 3);
+  const projectId = content.projects[0].id;
+  assert.equal((await client.request(`/api/admin/projects/${projectId}`, { method: 'DELETE', cookie: founder.cookie })).status, 200);
+  assert.equal((await client.request('/api/admin/activities/demo-november-trail', { method: 'DELETE', cookie: founder.cookie })).status, 200);
+  await client.restart();
+  assert.equal((await client.request('/api/content')).body.projects.length, 2);
+  assert.equal((await client.request('/api/content')).body.activities.length, 3);
+  assert.equal((await client.request('/api/auth/me', { cookie: editorCookie })).body.user.role, 'admin');
+  const db = new DatabaseSync(path.join(client.config.dataDir, 'chuanheng.sqlite'));
+  assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(), []);
+  db.close();
+  assert.equal((await login(client, 'legacy.editor')).body.user.role, 'admin');
 });

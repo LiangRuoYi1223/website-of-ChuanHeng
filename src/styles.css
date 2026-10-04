@@ -45,6 +45,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .main-nav .nav-join { display: inline-flex; align-items: center; gap: 16px; padding: 0 24px; background: var(--green); color: var(--surface); border-radius: var(--radius-button); line-height: 48px; }
 .main-nav .nav-join:hover { background: var(--green-hover); }
 .mobile-menu { display: none; background: transparent; border: 0; padding: 8px; color: var(--green); }
+.activities-hero, .about-hero, .team-hero { --text-section: 3rem; --text-module: 2rem; --text-card: 1.5rem; --leading-section: 1.25; --leading-module: 1.375; --leading-card: 1.4167; }
 .activities-hero { height: auto; min-height: 560px; color: var(--surface); position: relative; overflow: hidden; aspect-ratio: var(--ratio-hero); }
 .parallax-image { position: relative; overflow: hidden; height: 100%; }
 .parallax-image img { transform: translateY(var(--parallax, 0px)) scale(1.14); will-change: transform; }

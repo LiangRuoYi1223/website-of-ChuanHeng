@@ -5,6 +5,7 @@ export interface Activity {
   status: 'draft' | 'published'; isDemo: boolean; revision?: number;
   duration?: string; cost?: string; meetingPoint?: string;
   beginnerFriendly?: string; registrationStatus?: string;
+  registrationOpen?: boolean;
   timeCommitment?: 'half-day' | 'full-day' | 'multi-day';
   experience?: 'relaxed' | 'scenic' | 'skills';
   album?: { id: string; src: string; alt: string; caption: string; isDemo?: boolean }[];
@@ -62,4 +63,10 @@ export interface PublicContent {
   projects: Project[];
   cooperation?: CooperationContent;
 }
-export interface User { id: string; username: string; displayName: string; role: 'admin' | 'editor'; mustChangePassword?: boolean; }
+export type UserRole = 'founder' | 'admin' | 'member' | 'viewer';
+export type ContentPermission = 'settings:write' | 'activities:write' | 'projects:write' | 'uploads:write';
+export interface User {
+  id: string; username: string; displayName: string; role: UserRole;
+  permissions: string[]; mustChangePassword?: boolean; active?: boolean;
+}
+export interface Registration { id: string; activityId: string; createdAt: string; }

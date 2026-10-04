@@ -13,18 +13,18 @@ function dataUrl(file: File): Promise<string> {
     reader.readAsDataURL(file);
   });
 }
-function UploadField({ label, value, onChange, onError, onBusy }: { label: string; value: string; onChange: (url: string) => void; onError: (message: string) => void; onBusy: (busy: boolean) => void }) {
+function UploadField({ label, value, onChange, onError, onBusy, canUpload }: { label: string; value: string; onChange: (url: string) => void; onError: (message: string) => void; onBusy: (busy: boolean) => void; canUpload: boolean }) {
   const [uploading, setUploading] = useState(false);
   const picker = useRef<HTMLInputElement>(null);
   return <div className="admin-field admin-image-field">
     <label>{label}<input value={value} placeholder="图片路径或 https:// 链接" onChange={event => onChange(event.target.value)} disabled={uploading} /></label>
     {value && <img src={value} alt={`${label}预览`} style={{ width: 130, height: 78, objectFit: 'cover', borderRadius: 4 }} />}
-    <button type="button" className="admin-button admin-secondary" disabled={uploading} onClick={() => picker.current?.click()}>
+    {canUpload && <><button type="button" className="admin-button admin-secondary" disabled={uploading} onClick={() => picker.current?.click()}>
       {uploading ? '上传中…' : '选择并上传图片'}
     </button>
       <input ref={picker} type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading} style={{ display: 'none' }} onChange={async event => {
         const input = event.currentTarget, file = input.files?.[0];
-        if (!file) return;
+        if (!file || !canUpload) return;
         if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || !file.size || file.size > 8 * 1024 * 1024) {
           onError('请选择不超过 8 MB 的 JPEG、PNG 或 WebP 图片。'); input.value = ''; return;
         }
@@ -32,19 +32,19 @@ function UploadField({ label, value, onChange, onError, onBusy }: { label: strin
         try { const result = await api<{ url: string }>('/admin/upload', { method: 'POST', body: JSON.stringify({ filename: file.name, dataUrl: await dataUrl(file) }) }); onChange(result.url); }
         catch (error) { onError(errorText(error)); }
         finally { setUploading(false); onBusy(false); input.value = ''; }
-      }} />
-    <span className="admin-help">JPEG、PNG、WebP，最大 8 MB；上传后保存本页生效。</span>
+      }} /></>}
+    <span className="admin-help">{canUpload ? 'JPEG、PNG、WebP，最大 8 MB；上传后保存本页生效。' : '图片上传尚未授权，可以填写已有图片地址。'}</span>
   </div>;
 }
 
-export function AdminSettings({ settings, onSaved, onError }: { settings: SiteSettings; onSaved: (settings: SiteSettings) => void; onError: (message: string) => void }) {
+export function AdminSettings({ settings, onSaved, onError, canUpload }: { settings: SiteSettings; onSaved: (settings: SiteSettings) => void; onError: (message: string) => void; canUpload: boolean }) {
   const [form, setForm] = useState<SiteSettings>(settings), [saving, setSaving] = useState(false), [uploads, setUploads] = useState(0), [saved, setSaved] = useState(false), [dirty, setDirty] = useState(false);
   useEffect(() => { setForm(settings); setDirty(false); }, [settings]);
   const update = (key: TextKey, value: string) => { setDirty(true); setSaved(false); setForm(current => ({ ...current, [key]: value })); };
   const text = (key: TextKey, label: string, multiline = false, required = false) => <label className="admin-field" key={key}>{label}
     {multiline ? <textarea rows={4} value={form[key] ?? ''} onChange={event => update(key, event.target.value)} /> : <input type={key === 'contactEmail' ? 'email' : 'text'} required={required} value={form[key] ?? ''} onChange={event => update(key, event.target.value)} />}
   </label>;
-  const image = (key: TextKey, label: string) => <UploadField key={key} label={label} value={form[key] ?? ''} onChange={value => update(key, value)} onError={onError} onBusy={busy => { if (busy) setDirty(true); setUploads(count => count + (busy ? 1 : -1)); }} />;
+  const image = (key: TextKey, label: string) => <UploadField key={key} canUpload={canUpload} label={label} value={form[key] ?? ''} onChange={value => update(key, value)} onError={onError} onBusy={busy => { if (busy) setDirty(true); setUploads(count => count + (busy ? 1 : -1)); }} />;
   async function submit(event: FormEvent) {
     event.preventDefault(); if (saving || uploads) return;
     setSaving(true); setSaved(false);
