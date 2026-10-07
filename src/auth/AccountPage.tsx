@@ -3,12 +3,11 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { ArrowUpRight, ChevronLeft, LogOut, ShieldCheck } from 'lucide-react';
 import { useAuth } from './AuthContext';
-import { canManageContent, canRegister, permissionLabels, roleDescriptions, roleLabels } from './permissions';
-import type { ContentPermission, Registration, User } from '../types';
+import { canManageContent, canRegister, roleDescriptions, userRoleLabel } from './permissions';
+import type { Registration, User } from '../types';
 import { api } from '../api';
 import { useContent } from '../App';
 import { usePageTitle } from '../components';
-import RoleOverview from './RoleOverview';
 
 function PersonalPassword({ user, onSaved }: { user: User; onSaved: (user: User) => void }) {
   const [currentPassword, setCurrent] = useState(''), [newPassword, setNext] = useState(''), [confirmation, setConfirmation] = useState('');
@@ -72,10 +71,10 @@ export default function AccountPage() {
   if (checking) return <div className="auth-loading" role="status">正在检查登录状态…</div>;
   if (!user) return <Navigate to="/login?redirect=/account" replace/>;
   return <div className="auth-page account-page container"><Link to="/" className="auth-back"><ChevronLeft size={16}/>返回活动与足迹</Link>
-    <header className="account-heading"><div><h1>{user.displayName}</h1><p>@{user.username} <span className="account-role"><ShieldCheck size={15}/>{roleLabels[user.role]}</span></p></div><button className="button button-outline" disabled={!!busy} onClick={signOut}><LogOut size={17}/>{busy === 'logout' ? '正在退出…' : '退出登录'}</button></header>
+    <header className="account-heading"><div><h1>{user.displayName}</h1><p>@{user.username} <span className="account-role"><ShieldCheck size={15}/>{userRoleLabel(user)}</span></p></div><button className="button button-outline" disabled={!!busy} onClick={signOut}><LogOut size={17}/>{busy === 'logout' ? '正在退出…' : '退出登录'}</button></header>
     <div className="account-layout"><div>
       <section className="account-section account-access"><h2>你的权限</h2><p>{roleDescriptions[user.role]}</p>
-        {user.role === 'admin' && <p>{user.permissions.length ? `已授权：${user.permissions.map(key => permissionLabels[key as ContentPermission] || key).join('、')}。` : '暂未开放编辑接口。创始者授权后，相应编辑功能会显示在内容管理中。'}</p>}
+        {user.role === 'admin' && user.isPresident && <p>你具有社长标记，可以在内容管理中暂停或恢复网站服务；每次操作都需确认自己的密码。</p>}
         {canManageContent(user) && !user.mustChangePassword && <Link className="button button-green" to="/admin">进入内容管理 <ArrowUpRight size={17}/></Link>}
       </section>
       {user.mustChangePassword && <p className="auth-alert" role="status">首次登录或密码重置后，请先修改临时密码。</p>}
@@ -85,6 +84,6 @@ export default function AccountPage() {
         return <li key={item.id}><div>{activity ? <Link to={`/activities/${activity.id}`}>{activity.title}<ArrowUpRight size={15}/></Link> : <strong>活动暂未公开</strong>}<small>{activity ? `${activity.date} · ${[activityCity(activity),activityRoute(activity)].filter(Boolean).join(' · ')}` : '原活动已下架，报名记录仍保留。'}</small></div><button className="text-link" disabled={!!busy} onClick={() => cancel(item.activityId)}>{busy === item.activityId ? '正在取消…' : '取消报名'}</button></li>;
       })}</ul> : <div className="account-empty"><p>还没有报名记录，选一次喜欢的出发吧。</p><Link className="text-link" to="/#calendar">浏览活动预告 <ArrowUpRight size={16}/></Link></div>}</section>}
       <PersonalPassword key={user.id} user={user} onSaved={next => { if (latestScope.current === scope) setUser(next); }}/>
-    </div><RoleOverview currentRole={user.role}/></div>
+    </div></div>
   </div>;
 }

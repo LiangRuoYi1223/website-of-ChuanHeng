@@ -1,0 +1,19 @@
+.maintenance-page { min-height: 100dvh; background: var(--paper); color: var(--ink); }
+.maintenance-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px max(32px, calc((100vw - 1296px) / 2)); border-bottom: 1px solid var(--line); background: var(--surface); }
+.maintenance-brand { display: inline-flex; align-items: center; gap: 14px; }
+.maintenance-brand strong, .maintenance-brand small { display: block; }
+.maintenance-brand strong { font-size: 20px; line-height: 28px; }
+.maintenance-brand small { margin-top: 4px; font-size: 11px; line-height: 18px; letter-spacing: .08em; }
+.maintenance-message { min-height: calc(100dvh - 101px); padding: 64px 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.maintenance-message h1 { margin: 20px 0 16px; font-family: var(--font-editorial); font-size: clamp(28px, 3.2vw, 44px); font-weight: 500; line-height: 1.45; }
+.maintenance-message p { max-width: 36ch; font-size: 16px; line-height: 28px; color: var(--muted); }
+.maintenance-message .button { margin-top: 24px; }
+.maintenance-page .auth-back { display: none; }
+@media (max-width: 600px) {
+  .maintenance-header { padding: 18px 20px; gap: 12px; }
+  .maintenance-brand { gap: 8px; }
+  .maintenance-brand svg { width: 29px; }
+  .maintenance-brand strong { font-size: 16px; line-height: 22px; }
+  .maintenance-brand small { font-size: 9px; }
+  .maintenance-message .eyebrow { font-size: 10px; line-height: 18px; letter-spacing: .07em; }
+}

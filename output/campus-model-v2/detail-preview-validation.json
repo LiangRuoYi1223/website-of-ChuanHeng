@@ -1,0 +1,363 @@
+{
+  "status": "passed",
+  "started_at": "2026-10-07T13:11:20+08:00",
+  "finished_at": "2026-10-07T13:11:30+08:00",
+  "blender_version": "5.2.2 LTS",
+  "source_scene_opened_read_only": true,
+  "save_or_export_performed": false,
+  "protected_files_unchanged": true,
+  "protected_before": [
+    {
+      "path": "output/campus-model-v2/sustech_campus_v2.blend",
+      "bytes": 47710606,
+      "sha256": "21797b160f9f388511095e6d2cbc0f92218ff1f99c311c9bf25828e2e1ebec86"
+    },
+    {
+      "path": "output/campus-model-v2/sustech_campus_v2.glb",
+      "bytes": 65523840,
+      "sha256": "47b81ea7936f3aeea90a21d29aedb7ec3a0f67fa6c240654af9aec2fef7eae5d"
+    },
+    {
+      "path": "output/campus-model-v2/campus_aerial.png",
+      "bytes": 3602659,
+      "sha256": "1907b8453285f07168d8ca897ae14362d0eac8feb9419ac6426a81ab02a70fe6"
+    },
+    {
+      "path": "output/campus-model-v2/gate_inward.png",
+      "bytes": 2166571,
+      "sha256": "a373eb13030766802de6614d0eac4b8c8ff84b91d735f698a8f7ab9fcc009896"
+    },
+    {
+      "path": "output/campus-model-v2/campus_overview_labeled.png",
+      "bytes": 3374661,
+      "sha256": "71cbf8c32f37bb1ccc4133e3cdae68428836fe609d1a03dca8937ea67f9abe14"
+    }
+  ],
+  "protected_after": [
+    {
+      "path": "output/campus-model-v2/sustech_campus_v2.blend",
+      "bytes": 47710606,
+      "sha256": "21797b160f9f388511095e6d2cbc0f92218ff1f99c311c9bf25828e2e1ebec86"
+    },
+    {
+      "path": "output/campus-model-v2/sustech_campus_v2.glb",
+      "bytes": 65523840,
+      "sha256": "47b81ea7936f3aeea90a21d29aedb7ec3a0f67fa6c240654af9aec2fef7eae5d"
+    },
+    {
+      "path": "output/campus-model-v2/campus_aerial.png",
+      "bytes": 3602659,
+      "sha256": "1907b8453285f07168d8ca897ae14362d0eac8feb9419ac6426a81ab02a70fe6"
+    },
+    {
+      "path": "output/campus-model-v2/gate_inward.png",
+      "bytes": 2166571,
+      "sha256": "a373eb13030766802de6614d0eac4b8c8ff84b91d735f698a8f7ab9fcc009896"
+    },
+    {
+      "path": "output/campus-model-v2/campus_overview_labeled.png",
+      "bytes": 3374661,
+      "sha256": "71cbf8c32f37bb1ccc4133e3cdae68428836fe609d1a03dca8937ea67f9abe14"
+    }
+  ],
+  "views": [
+    {
+      "name": "science",
+      "title": "理学院",
+      "feature_ids": [
+        "relation/18716462"
+      ],
+      "target_objects": [
+        "理学院 · 建筑体量",
+        "理学院 · 建筑体量.001",
+        "理学院 · 建筑体量.002"
+      ],
+      "target_bounds_m": [
+        [
+          299.196533203125,
+          1237.1285400390625,
+          30.65282440185547
+        ],
+        [
+          509.8592834472656,
+          1442.485107421875,
+          72.50282287597656
+        ]
+      ],
+      "camera_position_m": [
+        792.7764282226562,
+        772.3666381835938,
+        619.01806640625
+      ],
+      "camera_target_m": [
+        404.52789306640625,
+        1339.806884765625,
+        51.577823638916016
+      ],
+      "orthographic_width_m": 330.4032287597656,
+      "image": {
+        "path": "output/campus-model-v2/detail-science.png",
+        "bytes": 699721,
+        "sha256": "9bda687848d7ad9052e6bd80a958a3fae2041273eaee2afcaea9eae828b02c1b"
+      }
+    },
+    {
+      "name": "engineering",
+      "title": "工学院 · 南北楼",
+      "feature_ids": [
+        "way/695571961",
+        "way/695571962"
+      ],
+      "target_objects": [
+        "工学院南楼 · 建筑体量",
+        "工学院北楼 · 建筑体量"
+      ],
+      "target_bounds_m": [
+        [
+          -22.404617309570312,
+          1869.689453125,
+          48.86792755126953
+        ],
+        [
+          180.12559509277344,
+          2178.7373046875,
+          95.21792602539062
+        ]
+      ],
+      "camera_position_m": [
+        534.9483032226562,
+        1357.62353515625,
+        843.8838500976562
+      ],
+      "camera_target_m": [
+        78.86048889160156,
+        2024.21337890625,
+        72.04292297363281
+      ],
+      "orthographic_width_m": 498.9032897949219,
+      "image": {
+        "path": "output/campus-model-v2/detail-engineering.png",
+        "bytes": 663954,
+        "sha256": "803cc6027602494bd2eb3ca52c7b93f2e7763291b8386488e254214adbdc254f"
+      }
+    },
+    {
+      "name": "business",
+      "title": "商学院",
+      "feature_ids": [
+        "way/703098307"
+      ],
+      "target_objects": [
+        "商学院 · 建筑体量",
+        "商学院 · 建筑体量.001",
+        "商学院 · 建筑体量.002",
+        "商学院 · 建筑体量.003",
+        "商学院 · 建筑体量.004",
+        "商学院 · 建筑体量.005",
+        "商学院 · 建筑体量.006",
+        "商学院 · 建筑体量.007"
+      ],
+      "target_bounds_m": [
+        [
+          496.52294921875,
+          1447.97314453125,
+          35.847618103027344
+        ],
+        [
+          611.8707275390625,
+          1566.07568359375,
+          58.247615814208984
+        ]
+      ],
+      "camera_position_m": [
+        865.3411254882812,
+        1783.59716796875,
+        323.6203308105469
+      ],
+      "camera_target_m": [
+        554.1968383789062,
+        1507.0244140625,
+        47.04761505126953
+      ],
+      "orthographic_width_m": 201.18267822265625,
+      "image": {
+        "path": "output/campus-model-v2/detail-business.png",
+        "bytes": 659137,
+        "sha256": "9bc6155837c33948057c5e1dd16782ec796704251141cdcd42d305f5e60572c3"
+      }
+    },
+    {
+      "name": "zhihua",
+      "title": "智华楼",
+      "feature_ids": [
+        "way/703098306"
+      ],
+      "target_objects": [
+        "智华楼 · 建筑体量",
+        "智华楼 · 建筑体量.001",
+        "智华楼 · 建筑体量.002"
+      ],
+      "target_bounds_m": [
+        [
+          432.1992492675781,
+          1511.4840087890625,
+          37.72003173828125
+        ],
+        [
+          529.9378662109375,
+          1612.41357421875,
+          59.62002944946289
+        ]
+      ],
+      "camera_position_m": [
+        717.12744140625,
+        1798.007568359375,
+        314.23626708984375
+      ],
+      "camera_target_m": [
+        481.06854248046875,
+        1561.94873046875,
+        48.67002868652344
+      ],
+      "orthographic_width_m": 151.17823791503906,
+      "image": {
+        "path": "output/campus-model-v2/detail-zhihua.png",
+        "bytes": 623563,
+        "sha256": "e9a5538fc1aa3999967afd60474e6b4a279998e1242261182f7f63bbe17b3f2a"
+      }
+    },
+    {
+      "name": "yidan",
+      "title": "一丹图书馆 · 共用基座",
+      "feature_ids": [
+        "way/710848316"
+      ],
+      "target_objects": [
+        "一丹图书馆 · 建筑体量"
+      ],
+      "target_bounds_m": [
+        [
+          280.7159423828125,
+          1665.5670166015625,
+          39.27779006958008
+        ],
+        [
+          316.54620361328125,
+          1742.73779296875,
+          54.42778778076172
+        ]
+      ],
+      "camera_position_m": [
+        180.8585662841797,
+        1876.2813720703125,
+        200.86300659179688
+      ],
+      "camera_target_m": [
+        298.6310729980469,
+        1704.15234375,
+        46.85279083251953
+      ],
+      "orthographic_width_m": 148.89498901367188,
+      "image": {
+        "path": "output/campus-model-v2/detail-yidan.png",
+        "bytes": 671133,
+        "sha256": "2a6c19af23d9cf6bbf3e9639ea9a3a4195b1c061c5ba7fa404ab7b1f7c871066"
+      }
+    },
+    {
+      "name": "gate1",
+      "title": "一号门",
+      "feature_ids": [
+        "gate1"
+      ],
+      "target_objects": [
+        "一号门 · 弧顶石材标志墙",
+        "一号门 · 黑色水平雨棚",
+        "一号门 · 细柱",
+        "一号门 · 细柱.001",
+        "一号门 · 细柱.002",
+        "一号门 · 细柱.003",
+        "一号门 · 南方科技大学竖排字"
+      ],
+      "target_bounds_m": [
+        [
+          424.3690490722656,
+          1180.16015625,
+          26.16059112548828
+        ],
+        [
+          456.249267578125,
+          1193.13330078125,
+          36.33491134643555
+        ]
+      ],
+      "camera_position_m": [
+        478.9012451171875,
+        1079.7762451171875,
+        69.8398666381836
+      ],
+      "camera_target_m": [
+        440.30914306640625,
+        1186.646728515625,
+        31.247751235961914
+      ],
+      "orthographic_width_m": 49.34114074707031,
+      "image": {
+        "path": "output/campus-model-v2/detail-gate1.png",
+        "bytes": 542463,
+        "sha256": "3ce52e740990c2f0e72aea564ecddcda46a43e1fee1ed7fc435628b0272e6edc"
+      }
+    }
+  ],
+  "contact_sheet": {
+    "path": "output/campus-model-v2/landmark_details.png",
+    "bytes": 2882186,
+    "sha256": "ec7c4cdaf66ecc163ce3ca692ea8f56c294a69ae9b20abf2adb7c6d0bf0c0073"
+  },
+  "images": [
+    {
+      "path": "output/campus-model-v2/detail-science.png",
+      "bytes": 699721,
+      "sha256": "9bda687848d7ad9052e6bd80a958a3fae2041273eaee2afcaea9eae828b02c1b"
+    },
+    {
+      "path": "output/campus-model-v2/detail-engineering.png",
+      "bytes": 663954,
+      "sha256": "803cc6027602494bd2eb3ca52c7b93f2e7763291b8386488e254214adbdc254f"
+    },
+    {
+      "path": "output/campus-model-v2/detail-business.png",
+      "bytes": 659137,
+      "sha256": "9bc6155837c33948057c5e1dd16782ec796704251141cdcd42d305f5e60572c3"
+    },
+    {
+      "path": "output/campus-model-v2/detail-zhihua.png",
+      "bytes": 623563,
+      "sha256": "e9a5538fc1aa3999967afd60474e6b4a279998e1242261182f7f63bbe17b3f2a"
+    },
+    {
+      "path": "output/campus-model-v2/detail-yidan.png",
+      "bytes": 671133,
+      "sha256": "2a6c19af23d9cf6bbf3e9639ea9a3a4195b1c061c5ba7fa404ab7b1f7c871066"
+    },
+    {
+      "path": "output/campus-model-v2/detail-gate1.png",
+      "bytes": 542463,
+      "sha256": "3ce52e740990c2f0e72aea564ecddcda46a43e1fee1ed7fc435628b0272e6edc"
+    }
+  ],
+  "visual_qa": {
+    "status": "passed",
+    "checked_client_date": "2026-10-07",
+    "method": "Actual view_image inspection of six-view model render",
+    "findings": [
+      "Science has large glazed bays and differentiated tower massing.",
+      "Business low bridge, upper setbacks and open ground colonnades are visible.",
+      "Zhihua high block and lower wings differ from the prior uniform extrusion.",
+      "Yidan glazing end, orange vertical ribs and multiple small-window bands are visible.",
+      "Open courtyards remain visible; roads are continuous without render fragment artifacts."
+    ],
+    "limits": "Rendered architectural review; not a live GPU viewport before/after test."
+  },
+  "limitations": "Second version photo-derived architectural refinement; some heights, roof planes and facade details estimated from public photographs."
+}

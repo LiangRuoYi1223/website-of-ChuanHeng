@@ -121,6 +121,20 @@ export function role(value) {
 
 export function permissions(value = [], accountRole) {
   if (!Array.isArray(value) || value.some(permission => !contentPermissions.includes(permission))) fail(400, '接口权限格式不正确。');
-  if (accountRole !== 'admin' && value.length) fail(400, '仅管理员需要分配接口权限。');
-  return contentPermissions.filter(permission => value.includes(permission));
+  if (accountRole !== 'admin' && value.length) fail(400, '仅管理员可以拥有内容管理权限。');
+  return accountRole === 'admin' ? [...contentPermissions] : [];
+}
+
+export function isPresident(value = false, accountRole) {
+  if (typeof value !== 'boolean') fail(400, '社长标记必须为布尔值。');
+  if (value && accountRole !== 'admin') fail(400, '只有管理员可以标记为社长。');
+  return value;
+}
+
+export function siteStatus(value) {
+  const input = object(value);
+  if (typeof input.paused !== 'boolean') fail(400, '网站暂停状态必须为布尔值。');
+  if (!Number.isSafeInteger(input.revision) || input.revision < 1) fail(400, '请提供有效的网站状态版本号。');
+  if (typeof input.password !== 'string' || input.password.length < 1 || input.password.length > 128) fail(400, '请填写有效的确认密码。');
+  return { paused: input.paused, revision: input.revision, password: input.password };
 }

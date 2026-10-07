@@ -1,0 +1,430 @@
+{
+  "schema_version": 1,
+  "generator": "scripts/generate-campus-pbr-v3.py",
+  "resolution_px": [
+    1024,
+    1024
+  ],
+  "license": "Original deterministic procedural material maps generated for this project; no photo pixels used",
+  "normal_convention": "+X right, +Y up tangent-space OpenGL; use Non-Color and Normal Map node",
+  "basecolor_colorspace": "sRGB",
+  "roughness_colorspace": "Non-Color",
+  "material_categories": {
+    "stone": {
+      "rgb": [
+        188,
+        184,
+        172
+      ],
+      "roughness": 0.78,
+      "tile_m": 2.0,
+      "amplitude": 4.0,
+      "height_m": 0.0012,
+      "seed": 14891765898092313450,
+      "maps": {
+        "basecolor": {
+          "path": "output/campus-model-v3/textures/stone_basecolor.png",
+          "bytes": 236911,
+          "sha256": "d5d04e366b389d9f007f8e03ada502b4d198f453496613471a807c9f4f031c5f",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        },
+        "normal": {
+          "path": "output/campus-model-v3/textures/stone_normal.png",
+          "bytes": 1158785,
+          "sha256": "f2e5144c11266e45d71efaf7812058c34dcb2dff8f394b9d7653f391eab9e487",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        },
+        "roughness": {
+          "path": "output/campus-model-v3/textures/stone_roughness.png",
+          "bytes": 230491,
+          "sha256": "83fa402b9ef0e592080b003ac9cf8030706290fc2d4c8c140fc8d3cd76b15640",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        }
+      },
+      "tileable": true,
+      "tile_size_m": [
+        2.0,
+        2.0
+      ],
+      "metallic": 0.0,
+      "basecolor": "output/campus-model-v3/textures/stone_basecolor.png",
+      "normal": "output/campus-model-v3/textures/stone_normal.png",
+      "roughness_map": "output/campus-model-v3/textures/stone_roughness.png",
+      "height_detail_is_estimated": true,
+      "joints_baked_into_maps": false
+    },
+    "cladding": {
+      "rgb": [
+        180,
+        77,
+        43
+      ],
+      "roughness": 0.61,
+      "tile_m": 2.0,
+      "amplitude": 2.7,
+      "height_m": 0.00045,
+      "seed": 2069333210811304409,
+      "maps": {
+        "basecolor": {
+          "path": "output/campus-model-v3/textures/cladding_basecolor.png",
+          "bytes": 232164,
+          "sha256": "a2c50e6b8ee90640f0bc2e1da11eb7bd825d7a5bd7cea29d94bd9d745ea87afa",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        },
+        "normal": {
+          "path": "output/campus-model-v3/textures/cladding_normal.png",
+          "bytes": 813430,
+          "sha256": "f13a8b282b452f01cdbbcde73b56577faab4b0b7da978bb0ecc4dc3ea0fcbe80",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        },
+        "roughness": {
+          "path": "output/campus-model-v3/textures/cladding_roughness.png",
+          "bytes": 243566,
+          "sha256": "b9f14ed934f6db154815c15fa502509dbae9244166b655265c19c5378c66b1bd",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        }
+      },
+      "tileable": true,
+      "tile_size_m": [
+        2.0,
+        2.0
+      ],
+      "metallic": 0.0,
+      "basecolor": "output/campus-model-v3/textures/cladding_basecolor.png",
+      "normal": "output/campus-model-v3/textures/cladding_normal.png",
+      "roughness_map": "output/campus-model-v3/textures/cladding_roughness.png",
+      "height_detail_is_estimated": true,
+      "joints_baked_into_maps": false
+    },
+    "paint": {
+      "rgb": [
+        214,
+        214,
+        205
+      ],
+      "roughness": 0.67,
+      "tile_m": 2.0,
+      "amplitude": 1.8,
+      "height_m": 0.00025,
+      "seed": 4109199714819734697,
+      "maps": {
+        "basecolor": {
+          "path": "output/campus-model-v3/textures/paint_basecolor.png",
+          "bytes": 160458,
+          "sha256": "717afb699584e00f7afbcae005d791e6e0859bd1d0ed52c181066e5609dbd660",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        },
+        "normal": {
+          "path": "output/campus-model-v3/textures/paint_normal.png",
+          "bytes": 613446,
+          "sha256": "68552ce75f921f1276f244e27a2bbe1fb2d4bc798c5f39f3254e25aaebfb7af9",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        },
+        "roughness": {
+          "path": "output/campus-model-v3/textures/paint_roughness.png",
+          "bytes": 243754,
+          "sha256": "644836b0fe08980619e8d6142931ef971bfeed020bd495d7fa588728f123338a",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        }
+      },
+      "tileable": true,
+      "tile_size_m": [
+        2.0,
+        2.0
+      ],
+      "metallic": 0.0,
+      "basecolor": "output/campus-model-v3/textures/paint_basecolor.png",
+      "normal": "output/campus-model-v3/textures/paint_normal.png",
+      "roughness_map": "output/campus-model-v3/textures/paint_roughness.png",
+      "height_detail_is_estimated": true,
+      "joints_baked_into_maps": false
+    },
+    "roof": {
+      "rgb": [
+        70,
+        78,
+        79
+      ],
+      "roughness": 0.72,
+      "tile_m": 3.0,
+      "amplitude": 3.0,
+      "height_m": 0.0006,
+      "seed": 5422510800677653367,
+      "maps": {
+        "basecolor": {
+          "path": "output/campus-model-v3/textures/roof_basecolor.png",
+          "bytes": 250051,
+          "sha256": "d561a149464802399da372c3e856e1525ce2bc0c3b472e0800592d69dd1761d7",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        },
+        "normal": {
+          "path": "output/campus-model-v3/textures/roof_normal.png",
+          "bytes": 770320,
+          "sha256": "50aa085a6edc165c91fe3dc9ee4a0d021e97894a987c0c3b443c6576b0847275",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        },
+        "roughness": {
+          "path": "output/campus-model-v3/textures/roof_roughness.png",
+          "bytes": 243540,
+          "sha256": "dc2b9c8b2e9710a90de029a1c313ad0a5eb17a00aa5ad9d7833f99887f834762",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        }
+      },
+      "tileable": true,
+      "tile_size_m": [
+        3.0,
+        3.0
+      ],
+      "metallic": 0.0,
+      "basecolor": "output/campus-model-v3/textures/roof_basecolor.png",
+      "normal": "output/campus-model-v3/textures/roof_normal.png",
+      "roughness_map": "output/campus-model-v3/textures/roof_roughness.png",
+      "height_detail_is_estimated": true,
+      "joints_baked_into_maps": false
+    },
+    "paving": {
+      "rgb": [
+        163,
+        164,
+        151
+      ],
+      "roughness": 0.86,
+      "tile_m": 2.0,
+      "amplitude": 5.5,
+      "height_m": 0.0015,
+      "seed": 16981482718070834113,
+      "maps": {
+        "basecolor": {
+          "path": "output/campus-model-v3/textures/paving_basecolor.png",
+          "bytes": 360011,
+          "sha256": "51b8e6875b0a1a53417288797337e9a6d59c65261406aaf8cb586eb59703eec6",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        },
+        "normal": {
+          "path": "output/campus-model-v3/textures/paving_normal.png",
+          "bytes": 1440600,
+          "sha256": "f983fd13c94bc34260a0d77923eb41d606b78b687df35ff3683f7e8fbebb06de",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        },
+        "roughness": {
+          "path": "output/campus-model-v3/textures/paving_roughness.png",
+          "bytes": 243201,
+          "sha256": "92d4a1d3933934613a1fa9af457dc022b96d2216e53371d1c71e53945bd981d5",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        }
+      },
+      "tileable": true,
+      "tile_size_m": [
+        2.0,
+        2.0
+      ],
+      "metallic": 0.0,
+      "basecolor": "output/campus-model-v3/textures/paving_basecolor.png",
+      "normal": "output/campus-model-v3/textures/paving_normal.png",
+      "roughness_map": "output/campus-model-v3/textures/paving_roughness.png",
+      "height_detail_is_estimated": true,
+      "joints_baked_into_maps": false
+    },
+    "bark": {
+      "rgb": [
+        93,
+        86,
+        70
+      ],
+      "roughness": 0.91,
+      "tile_m": 1.0,
+      "amplitude": 7.0,
+      "height_m": 0.0028,
+      "seed": 9434633201564280293,
+      "maps": {
+        "basecolor": {
+          "path": "output/campus-model-v3/textures/bark_basecolor.png",
+          "bytes": 78835,
+          "sha256": "a465311d22176487c3581a651ce3522e237a8ab354456f330fe8dd33dfd606eb",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        },
+        "normal": {
+          "path": "output/campus-model-v3/textures/bark_normal.png",
+          "bytes": 1470693,
+          "sha256": "98f866fcf69bc0d901496133fc98b33e3e602c0808b106a702dc1f89bd67414f",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        },
+        "roughness": {
+          "path": "output/campus-model-v3/textures/bark_roughness.png",
+          "bytes": 209916,
+          "sha256": "0bd68ff69206cddd8bc3685e1dd99180e3e34d3519d830705b9d3cc8e1d53974",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        }
+      },
+      "tileable": true,
+      "tile_size_m": [
+        1.0,
+        1.0
+      ],
+      "metallic": 0.0,
+      "basecolor": "output/campus-model-v3/textures/bark_basecolor.png",
+      "normal": "output/campus-model-v3/textures/bark_normal.png",
+      "roughness_map": "output/campus-model-v3/textures/bark_roughness.png",
+      "height_detail_is_estimated": true,
+      "joints_baked_into_maps": false
+    },
+    "foliage": {
+      "rgb": [
+        74,
+        98,
+        58
+      ],
+      "roughness": 0.79,
+      "tile_m": 1.0,
+      "amplitude": 7.5,
+      "height_m": 0.0003,
+      "seed": 7491976801785954049,
+      "maps": {
+        "basecolor": {
+          "path": "output/campus-model-v3/textures/foliage_basecolor.png",
+          "bytes": 209245,
+          "sha256": "825b3820058ed4630820d2a59a47ac483f904257c4b4814f985cc01052461300",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        },
+        "normal": {
+          "path": "output/campus-model-v3/textures/foliage_normal.png",
+          "bytes": 640523,
+          "sha256": "18c42e5768ad2ba728bedc6ed09ac3bc5b3079ac704d0119edc7fa884fc9ef97",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        },
+        "roughness": {
+          "path": "output/campus-model-v3/textures/foliage_roughness.png",
+          "bytes": 206038,
+          "sha256": "84dd005b3a6fadd1f432504cd0b570e44c6ea0cb01dba6b71e53f6264bbd7038",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        }
+      },
+      "tileable": true,
+      "tile_size_m": [
+        1.0,
+        1.0
+      ],
+      "metallic": 0.0,
+      "basecolor": "output/campus-model-v3/textures/foliage_basecolor.png",
+      "normal": "output/campus-model-v3/textures/foliage_normal.png",
+      "roughness_map": "output/campus-model-v3/textures/foliage_roughness.png",
+      "height_detail_is_estimated": true,
+      "joints_baked_into_maps": false
+    },
+    "ground": {
+      "rgb": [
+        101,
+        112,
+        78
+      ],
+      "roughness": 0.94,
+      "tile_m": 6.0,
+      "amplitude": 7.0,
+      "height_m": 0.0018,
+      "seed": 18414309824706279237,
+      "maps": {
+        "basecolor": {
+          "path": "output/campus-model-v3/textures/ground_basecolor.png",
+          "bytes": 406556,
+          "sha256": "97841c3b1a150f862cbe069a527714883e34dbec489788cefaf210a839ecdf54",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        },
+        "normal": {
+          "path": "output/campus-model-v3/textures/ground_normal.png",
+          "bytes": 931584,
+          "sha256": "f4a42f98bbb655dad176e9c06958ab289f29b95e9762d3ab7c45cf18e6b6bd96",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        },
+        "roughness": {
+          "path": "output/campus-model-v3/textures/ground_roughness.png",
+          "bytes": 242912,
+          "sha256": "1c2768eb2f5d8b93fcd31c2b21c1d977d15be09bc1202f0364706cde9c6732ba",
+          "resolution_px": [
+            1024,
+            1024
+          ]
+        }
+      },
+      "tileable": true,
+      "tile_size_m": [
+        6.0,
+        6.0
+      ],
+      "metallic": 0.0,
+      "basecolor": "output/campus-model-v3/textures/ground_basecolor.png",
+      "normal": "output/campus-model-v3/textures/ground_normal.png",
+      "roughness_map": "output/campus-model-v3/textures/ground_roughness.png",
+      "height_detail_is_estimated": true,
+      "joints_baked_into_maps": false
+    }
+  }
+}

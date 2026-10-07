@@ -13,7 +13,7 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 const cookieName = 'chuanheng_session';
 const sessionDuration = 24 * 60 * 60 * 1000;
 const maxImageBytes = 8 * 1024 * 1024;
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.woff': 'font/woff', '.woff2': 'font/woff2' };
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf', '.otf': 'font/otf', '.pdf': 'application/pdf' };
 
 function passwordHash(password) {
   const salt = randomBytes(16).toString('hex');
@@ -27,7 +27,7 @@ function verifyPassword(password, storedHash) {
 }
 const tokenHash = token => createHash('sha256').update(token).digest('hex');
 function userView(user, includeActive = false) {
-  return { id: user.id, username: user.username, displayName: user.display_name, role: user.role, permissions: permissionsFor(user), mustChangePassword: Boolean(user.must_change_password), ...(includeActive ? { active: Boolean(user.active) } : {}) };
+  return { id: user.id, username: user.username, displayName: user.display_name, role: user.role, isPresident: Boolean(user.is_president), permissions: permissionsFor(user), mustChangePassword: Boolean(user.must_change_password), ...(includeActive ? { active: Boolean(user.active) } : {}) };
 }
 
 function json(res, status, data, extraHeaders = {}) {
@@ -60,6 +60,7 @@ export function createApp(options = {}) {
   const dataDir = path.resolve(options.dataDir ?? path.join(projectRoot, 'data'));
   const uploadDir = path.resolve(options.uploadDir ?? path.join(projectRoot, 'uploads'));
   const distDir = path.resolve(options.distDir ?? path.join(projectRoot, 'dist'));
+  const publicDir = path.resolve(options.publicDir ?? path.join(projectRoot, 'public'));
   const production = options.production ?? process.env.NODE_ENV === 'production';
   const secureCookies = options.secureCookies ?? process.env.COOKIE_SECURE === 'true';
   const publicOrigin = options.publicOrigin ?? process.env.SITE_ORIGIN ?? '';
@@ -70,9 +71,11 @@ export function createApp(options = {}) {
     CREATE TABLE IF NOT EXISTS site_settings (id INTEGER PRIMARY KEY CHECK(id = 1), payload TEXT NOT NULL, revision INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS activities (id TEXT PRIMARY KEY, payload TEXT NOT NULL, revision INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, payload TEXT NOT NULL, revision INTEGER NOT NULL);
-    CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, username TEXT NOT NULL UNIQUE, display_name TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('founder','admin','member','viewer')), permissions TEXT NOT NULL DEFAULT '[]', password_hash TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1, must_change_password INTEGER NOT NULL DEFAULT 1);
+    CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, username TEXT NOT NULL UNIQUE, display_name TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','member','viewer')), is_president INTEGER NOT NULL DEFAULT 0 CHECK(is_president IN (0,1) AND (is_president = 0 OR role = 'admin')), permissions TEXT NOT NULL DEFAULT '[]', password_hash TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1, must_change_password INTEGER NOT NULL DEFAULT 1);
     CREATE TABLE IF NOT EXISTS sessions (token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, expires_at INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS registrations (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, activity_id TEXT NOT NULL REFERENCES activities(id) ON DELETE CASCADE, created_at TEXT NOT NULL, UNIQUE(user_id, activity_id));
+    CREATE TABLE IF NOT EXISTS site_status (id INTEGER PRIMARY KEY CHECK(id = 1), paused INTEGER NOT NULL DEFAULT 0 CHECK(paused IN (0,1)), revision INTEGER NOT NULL DEFAULT 1 CHECK(revision >= 1));
+    INSERT OR IGNORE INTO site_status (id, paused, revision) VALUES (1, 0, 1);
   `);
   // Add route/city metadata only to stored rows, so deleted demonstration activities stay deleted.
   // A city's demonstration assignment is safe only while its original seed location is unchanged.
@@ -99,18 +102,23 @@ export function createApp(options = {}) {
     db.close();
     throw error;
   }
-  const legacyUsers = !db.prepare("SELECT sql FROM sqlite_master WHERE name = 'users'").get().sql.includes("'founder'");
-  if (legacyUsers) {
+  const userSchema = db.prepare("SELECT sql FROM sqlite_master WHERE name = 'users'").get().sql;
+  const userColumns = new Set(db.prepare('PRAGMA table_info(users)').all().map(column => column.name));
+  const legacyDesignSeed = userSchema.includes("'editor'") && !userColumns.has('is_president');
+  if (userSchema.includes("'founder'") || userSchema.includes("'editor'") || !userColumns.has('is_president')) {
     try {
-    // Preserve identities and password hashes; previous account administrators become founders.
-    // Previous editors receive no delegated write access until a founder grants it.
+    // Rebuild the role constraint while retaining IDs, password hashes, sessions and registrations.
+    // Existing accounts receive no president marker unless it was already explicitly stored.
     db.exec(`PRAGMA foreign_keys = OFF; BEGIN IMMEDIATE;
-      CREATE TABLE users_v2 (id TEXT PRIMARY KEY, username TEXT NOT NULL UNIQUE, display_name TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('founder','admin','member','viewer')), permissions TEXT NOT NULL DEFAULT '[]', password_hash TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1, must_change_password INTEGER NOT NULL DEFAULT 1);
-      INSERT INTO users_v2 (id, username, display_name, role, password_hash, active, must_change_password)
-        SELECT id, username, display_name, CASE role WHEN 'admin' THEN 'founder' ELSE 'admin' END, password_hash, active, must_change_password FROM users;
+      CREATE TABLE users_v3 (id TEXT PRIMARY KEY, username TEXT NOT NULL UNIQUE, display_name TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','member','viewer')), is_president INTEGER NOT NULL DEFAULT 0 CHECK(is_president IN (0,1) AND (is_president = 0 OR role = 'admin')), permissions TEXT NOT NULL DEFAULT '[]', password_hash TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1, must_change_password INTEGER NOT NULL DEFAULT 1);
+      INSERT INTO users_v3 (id, username, display_name, role, is_president, permissions, password_hash, active, must_change_password)
+        SELECT id, username, CASE display_name WHEN '协会创始者' THEN '协会管理员' ELSE display_name END, CASE role WHEN 'founder' THEN 'admin' WHEN 'editor' THEN 'admin' ELSE role END,
+          ${userColumns.has('is_president') ? "CASE WHEN role IN ('founder','admin','editor') AND is_president = 1 THEN 1 ELSE 0 END" : '0'},
+          ${userColumns.has('permissions') ? 'permissions' : "'[]'"}, password_hash, active, must_change_password FROM users;
       DROP TABLE users;
-      ALTER TABLE users_v2 RENAME TO users;`);
+      ALTER TABLE users_v3 RENAME TO users;`);
     // Upgrade the previous design seed once, retaining edited values and deleted activities.
+    if (legacyDesignSeed) {
     const storedSettings = db.prepare('SELECT payload FROM site_settings WHERE id = 1').get();
     if (storedSettings) {
       const settings = JSON.parse(storedSettings.payload);
@@ -130,6 +138,7 @@ export function createApp(options = {}) {
     }
     const insertProject = db.prepare('INSERT OR IGNORE INTO projects (id, payload, revision) VALUES (?, ?, 1)');
     for (const project of initialProjects) insertProject.run(project.id, JSON.stringify(project));
+    }
     db.exec('COMMIT; PRAGMA foreign_keys = ON;');
     } catch (error) {
       db.exec('ROLLBACK; PRAGMA foreign_keys = ON;');
@@ -147,11 +156,12 @@ export function createApp(options = {}) {
   if (!db.prepare('SELECT id FROM users LIMIT 1').get()) {
     const password = options.initialPassword ?? randomBytes(24).toString('base64url');
     validate.password(password);
-    db.prepare('INSERT INTO users (id, username, display_name, role, password_hash) VALUES (?, ?, ?, ?, ?)').run(randomUUID(), 'admin', '协会创始者', 'founder', passwordHash(password));
-    writeFileSync(path.join(dataDir, 'initial-admin.txt'), `川衡网站初始创始者\n账号：admin\n密码：${password}\n首次登录请修改密码。本文件包含敏感信息，请妥善保管，修改后删除。\n`, { mode: 0o600, flag: 'w' });
+    db.prepare('INSERT INTO users (id, username, display_name, role, is_president, password_hash) VALUES (?, ?, ?, ?, 1, ?)').run(randomUUID(), 'admin', '协会初始管理员', 'admin', passwordHash(password));
+    writeFileSync(path.join(dataDir, 'initial-admin.txt'), `川衡网站初始管理员（社长）\n账号：admin\n密码：${password}\n首次登录请修改密码。本文件包含敏感信息，请妥善保管，修改后删除。\n`, { mode: 0o600, flag: 'w' });
   }
   const dummyPasswordHash = passwordHash(randomBytes(24).toString('hex'));
   const loginAttempts = new Map();
+  const statusPasswordAttempts = new Map();
   const cookie = (token, clear = false) => `${cookieName}=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${clear ? 0 : sessionDuration / 1000}${secureCookies ? '; Secure' : ''}`;
 
   function sameOrigin(req) {
@@ -172,16 +182,27 @@ export function createApp(options = {}) {
     return user;
   }
   function requirePermission(user, permission) {
-    if (!canManage(user, permission)) validate.fail(403, '此接口尚未向你的账号开放，请联系创始者分配权限。');
+    if (!canManage(user, permission)) validate.fail(403, '你的账号没有内容管理权限。');
   }
   function requireChangedPassword(user) {
     if (user.must_change_password) throw new validate.HttpError(403, '首次登录或密码重置后，请先修改密码再继续操作。', 'PASSWORD_CHANGE_REQUIRED');
   }
-  function requireManager(req, founderOnly = false) {
+  function requireManager(req) {
     const actor = requireUser(req);
-    if (!['founder', 'admin'].includes(actor.role)) validate.fail(403, '你的账号没有内容管理权限。');
-    if (founderOnly && actor.role !== 'founder') validate.fail(403, '账号与接口权限仅由创始者管理。');
+    if (actor.role !== 'admin') validate.fail(403, '你的账号没有内容管理权限。');
     if (!['GET', 'HEAD'].includes(req.method)) requireChangedPassword(actor);
+    return actor;
+  }
+  function siteStatus() {
+    const status = db.prepare('SELECT paused, revision FROM site_status WHERE id = 1').get();
+    return { paused: Boolean(status.paused), revision: status.revision };
+  }
+  function requireSiteAccess(req, actor = authenticate(req)) {
+    if (siteStatus().paused && actor?.role !== 'admin') throw new validate.HttpError(503, '网站暂时停止开放，请稍后再访问。', 'SITE_PAUSED');
+  }
+  function requirePresident(req) {
+    const actor = requireManager(req);
+    if (!actor.is_president) validate.fail(403, '只有社长可以关停或恢复网站。');
     return actor;
   }
   function contentItem(row) { return { ...JSON.parse(row.payload), ...(row.id === 1 ? {} : { id: row.id }), revision: row.revision }; }
@@ -193,27 +214,31 @@ export function createApp(options = {}) {
   function checkRevision(inputRevision, currentRevision) {
     if ((inputRevision === undefined && currentRevision !== 1) || (inputRevision !== undefined && inputRevision !== currentRevision)) validate.fail(409, '内容已被其他维护者更新，请重新加载最新内容后再保存。');
   }
-  function protectLastFounder(existing, nextRole, nextActive) {
-    if (existing.role === 'founder' && existing.active && (nextRole !== 'founder' || !nextActive) && db.prepare("SELECT COUNT(*) AS count FROM users WHERE role = 'founder' AND active = 1").get().count <= 1) validate.fail(400, '不能停用或降级最后一位有效创始者。');
+  function protectLastManager(existing, nextRole, nextActive, nextPresident) {
+    if (existing.role === 'admin' && existing.active && (nextRole !== 'admin' || !nextActive)
+      && db.prepare("SELECT COUNT(*) AS count FROM users WHERE role = 'admin' AND active = 1").get().count <= 1) validate.fail(400, '不能停用或降级最后一位有效管理员。');
+    if (siteStatus().paused && existing.role === 'admin' && existing.active && existing.is_president
+      && (nextRole !== 'admin' || !nextActive || !nextPresident)
+      && db.prepare("SELECT COUNT(*) AS count FROM users WHERE role = 'admin' AND active = 1 AND is_president = 1").get().count <= 1) validate.fail(400, '网站暂停时，不能停用、降级或取消最后一位有效社长的标记。');
   }
-  function checkLoginLimit(req, username) {
+  function checkLoginLimit(req, username, attempts = loginAttempts, action = '登录') {
     const now = Date.now(), ip = req.socket.remoteAddress ?? 'unknown';
-    for (const [key, item] of loginAttempts) if (item.until < now) loginAttempts.delete(key);
+    for (const [key, item] of attempts) if (item.until < now) attempts.delete(key);
     const keys = [{ key: `ip:${ip}`, maximum: 30 }, { key: `user:${ip}:${username}`, maximum: 5 }];
     for (const { key, maximum } of keys) {
-      const item = loginAttempts.get(key);
-      if (item && item.count >= maximum) validate.fail(429, '登录尝试过于频繁，请 15 分钟后再试。');
+      const item = attempts.get(key);
+      if (item && item.count >= maximum) validate.fail(429, `${action}尝试过于频繁，请 15 分钟后再试。`);
     }
     return {
-      fail() { for (const { key } of keys) { const item = loginAttempts.get(key) ?? { count: 0, until: now + 15 * 60 * 1000 }; item.count++; loginAttempts.set(key, item); } },
-      success() { loginAttempts.delete(keys[1].key); },
+      fail() { for (const { key } of keys) { const item = attempts.get(key) ?? { count: 0, until: now + 15 * 60 * 1000 }; item.count++; attempts.set(key, item); } },
+      success() { attempts.delete(keys[1].key); },
     };
   }
 
   async function api(req, res, parsedUrl) {
     const route = parsedUrl.pathname, method = req.method;
     if (!['GET', 'HEAD'].includes(method)) sameOrigin(req);
-    if (route === '/api/content' && method === 'GET') return json(res, 200, content());
+    if (route === '/api/site-status' && method === 'GET') return json(res, 200, siteStatus());
     if (route === '/api/auth/me' && method === 'GET') {
       const user = authenticate(req); return json(res, 200, { user: user ? userView(user) : null });
     }
@@ -224,6 +249,7 @@ export function createApp(options = {}) {
       const valid = verifyPassword(body.password, user?.password_hash ?? dummyPasswordHash);
       if (!user || !user.active || !valid) { limit.fail(); validate.fail(401, '账号或密码不正确。'); }
       limit.success();
+      requireSiteAccess(req, user);
       db.prepare('DELETE FROM sessions WHERE expires_at <= ?').run(Date.now());
       const token = randomBytes(32).toString('hex');
       db.prepare('INSERT INTO sessions VALUES (?, ?, ?)').run(tokenHash(token), user.id, Date.now() + sessionDuration);
@@ -233,8 +259,31 @@ export function createApp(options = {}) {
       const user = authenticate(req); if (user) db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(user.token_hash);
       return json(res, 200, { ok: true }, { 'Set-Cookie': cookie('', true) });
     }
+    if (route === '/api/admin/site-status' && method === 'POST') {
+      requirePresident(req);
+      const input = validate.siteStatus(await readBody(req, 4096));
+      let next;
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        // Re-read the live session, marker, password and revision after receiving the entire body.
+        const currentActor = requirePresident(req);
+        const limit = checkLoginLimit(req, currentActor.id, statusPasswordAttempts, '密码确认');
+        if (!verifyPassword(input.password, currentActor.password_hash)) { limit.fail(); validate.fail(400, '密码确认不正确。'); }
+        limit.success();
+        const current = siteStatus();
+        if (input.revision !== current.revision) validate.fail(409, '网站状态已被更新，请重新加载最新状态后再操作。');
+        next = { paused: input.paused, revision: current.revision + 1 };
+        db.prepare('UPDATE site_status SET paused = ?, revision = ? WHERE id = 1').run(Number(next.paused), next.revision);
+        db.exec('COMMIT');
+      } catch (error) { db.exec('ROLLBACK'); throw error; }
+      return json(res, 200, next);
+    }
+    requireSiteAccess(req);
+    if (route === '/api/content' && method === 'GET') return json(res, 200, content());
     if (route === '/api/auth/password' && method === 'POST') {
-      const user = requireUser(req), body = validate.object(await readBody(req, 4096));
+      requireUser(req);
+      const body = validate.object(await readBody(req, 4096)), user = requireUser(req);
+      requireSiteAccess(req, user);
       if (!verifyPassword(body.currentPassword, user.password_hash)) validate.fail(400, '当前密码不正确。');
       const newPassword = validate.password(body.newPassword);
       if (verifyPassword(newPassword, user.password_hash)) validate.fail(400, '新密码需要与当前密码不同。');
@@ -255,6 +304,7 @@ export function createApp(options = {}) {
         requireChangedPassword(actor);
         const body = validate.object(await readBody(req, 4096)), requestedActivity = validate.id(body.activityId);
         const currentActor = requireUser(req);
+        requireSiteAccess(req, currentActor);
         if (!canRegister(currentActor)) validate.fail(403, '浏览者只能浏览活动，社员才可报名参加。');
         requireChangedPassword(currentActor);
         const row = db.prepare('SELECT * FROM activities WHERE id = ?').get(requestedActivity);
@@ -277,7 +327,7 @@ export function createApp(options = {}) {
       validate.fail(404, '接口不存在。');
     }
     if (!route.startsWith('/api/admin/')) validate.fail(404, '接口不存在。');
-    const actor = requireManager(req, route.startsWith('/api/admin/users'));
+    const actor = requireManager(req);
     if (route === '/api/admin/content' && method === 'GET') return json(res, 200, content(actor));
     if (route === '/api/admin/settings' && method === 'PUT') {
       requirePermission(actor, 'settings:write');
@@ -328,37 +378,51 @@ export function createApp(options = {}) {
     if (route === '/api/admin/users' && method === 'GET') return json(res, 200, { users: db.prepare('SELECT * FROM users ORDER BY username').all().map(user => userView(user, true)) });
     if (route === '/api/admin/users' && method === 'POST') {
       const body = validate.object(await readBody(req, 8192));
-      requireManager(req, true);
+      requireManager(req);
       const username = validate.username(body.username), displayName = validate.string(body.displayName, '显示名称', { required: true, max: 100 }), role = validate.role(body.role);
       const permissions = validate.permissions(body.permissions, role);
+      const isPresident = validate.isPresident(body.isPresident, role);
       const hash = passwordHash(validate.password(body.password));
       if (db.prepare('SELECT id FROM users WHERE username = ?').get(username)) validate.fail(409, '此账号已存在。');
       const newId = randomUUID();
-      db.prepare('INSERT INTO users (id, username, display_name, role, permissions, password_hash) VALUES (?, ?, ?, ?, ?, ?)').run(newId, username, displayName, role, JSON.stringify(permissions), hash);
+      db.prepare('INSERT INTO users (id, username, display_name, role, is_president, permissions, password_hash) VALUES (?, ?, ?, ?, ?, ?, ?)').run(newId, username, displayName, role, Number(isPresident), JSON.stringify(permissions), hash);
       return json(res, 201, { user: userView(db.prepare('SELECT * FROM users WHERE id = ?').get(newId), true) });
     }
     const userMatch = route.match(/^\/api\/admin\/users\/([^/]+)$/);
     if (userMatch && ['PUT', 'DELETE'].includes(method)) {
-      const userId = validate.id(userMatch[1]), existing = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+      const userId = validate.id(userMatch[1]);
+      let existing = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
       if (!existing) validate.fail(404, '账号不存在。');
       if (method === 'DELETE') {
-        protectLastFounder(existing, existing.role, false);
-        db.prepare('UPDATE users SET active = 0 WHERE id = ?').run(userId);
-        db.prepare('DELETE FROM sessions WHERE user_id = ?').run(userId);
+        db.exec('BEGIN IMMEDIATE');
+        try {
+          existing = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+          if (!existing) validate.fail(404, '账号不存在。');
+          protectLastManager(existing, existing.role, false, Boolean(existing.is_president));
+          db.prepare('UPDATE users SET active = 0 WHERE id = ?').run(userId);
+          db.prepare('DELETE FROM sessions WHERE user_id = ?').run(userId);
+          db.exec('COMMIT');
+        } catch (error) { db.exec('ROLLBACK'); throw error; }
         return json(res, 200, { ok: true });
       }
       const body = validate.object(await readBody(req, 8192));
-      requireManager(req, true);
+      requireManager(req);
+      existing = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+      if (!existing) validate.fail(404, '账号不存在。');
       const displayName = validate.string(body.displayName ?? existing.display_name, '显示名称', { required: true, max: 100 });
       const role = body.role === undefined ? existing.role : validate.role(body.role);
-      const permissions = validate.permissions(body.permissions ?? (role === 'admin' && existing.role === 'admin' ? permissionsFor(existing) : []), role);
+      const permissions = validate.permissions(body.permissions === undefined ? [] : body.permissions, role);
+      const isPresident = validate.isPresident(body.isPresident === undefined ? (role === 'admin' && Boolean(existing.is_president)) : body.isPresident, role);
       if (body.active !== undefined && typeof body.active !== 'boolean') validate.fail(400, '账号状态格式不正确。');
       const active = body.active === undefined ? existing.active : Number(body.active);
       const hash = body.password ? passwordHash(validate.password(body.password)) : existing.password_hash;
-      protectLastFounder(existing, role, active);
-      db.prepare('UPDATE users SET display_name = ?, role = ?, permissions = ?, active = ?, password_hash = ?, must_change_password = ? WHERE id = ?').run(displayName, role, JSON.stringify(permissions), active, hash, body.password ? 1 : existing.must_change_password, userId);
-      const permissionsChanged = existing.role === 'admin' && role === 'admin' && JSON.stringify(permissionsFor(existing)) !== JSON.stringify(permissions);
-      if (!active || body.password || role !== existing.role || permissionsChanged) db.prepare('DELETE FROM sessions WHERE user_id = ?').run(userId);
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        protectLastManager(existing, role, active, isPresident);
+        db.prepare('UPDATE users SET display_name = ?, role = ?, is_president = ?, permissions = ?, active = ?, password_hash = ?, must_change_password = ? WHERE id = ?').run(displayName, role, Number(isPresident), JSON.stringify(permissions), active, hash, body.password ? 1 : existing.must_change_password, userId);
+        if (!active || body.password || role !== existing.role) db.prepare('DELETE FROM sessions WHERE user_id = ?').run(userId);
+        db.exec('COMMIT');
+      } catch (error) { db.exec('ROLLBACK'); throw error; }
       return json(res, 200, { user: userView(db.prepare('SELECT * FROM users WHERE id = ?').get(userId), true) });
     }
     if (route === '/api/admin/upload' && method === 'POST') {
@@ -387,8 +451,12 @@ export function createApp(options = {}) {
     if (!existsSync(file) || !statSync(file).isFile()) return false;
     const resolved = realpathSync(file), resolvedRoot = realpathSync(root);
     if (!resolved.startsWith(`${resolvedRoot}${path.sep}`)) return false;
-    const type = types[path.extname(file).toLowerCase()] ?? 'application/octet-stream';
-    res.writeHead(200, { 'Content-Type': type, 'Content-Length': statSync(file).size, 'Cache-Control': file.endsWith('index.html') ? 'no-cache' : 'public, max-age=3600' });
+    const extension = path.extname(file).toLowerCase();
+    const shellAsset = ['.html', '.js', '.css', '.woff', '.woff2', '.ttf', '.otf', '.ico'].includes(extension)
+      || /^favicon(?:-[^.]+)?\.(?:svg|png)$/i.test(path.basename(file));
+    if (!shellAsset) requireSiteAccess(req);
+    const type = types[extension] ?? 'application/octet-stream';
+    res.writeHead(200, { 'Content-Type': type, 'Content-Length': statSync(file).size, 'Cache-Control': shellAsset ? (file.endsWith('index.html') ? 'no-cache' : 'public, max-age=3600') : 'no-store' });
     if (req.method === 'HEAD') res.end();
     else createReadStream(file).on('error', () => res.destroy()).pipe(res);
     return true;
@@ -401,11 +469,18 @@ export function createApp(options = {}) {
       const parsedUrl = new URL(req.url, 'http://localhost');
       if (parsedUrl.pathname === '/api' || parsedUrl.pathname.startsWith('/api/')) return await api(req, res, parsedUrl);
       if (!['GET', 'HEAD'].includes(req.method)) validate.fail(405, '此资源仅支持读取。');
-      const pathname = decodeURIComponent(parsedUrl.pathname);
+      const decodedPathname = decodeURIComponent(parsedUrl.pathname);
+      if (decodedPathname.includes('\\') || decodedPathname.includes('\0')) validate.fail(400, '请求路径格式不正确。');
+      const pathname = path.posix.normalize(decodedPathname);
+      if (/^\/(?:uploads|images|docs)(?:\/|$)/i.test(pathname)) requireSiteAccess(req);
       if (pathname.startsWith('/uploads/')) {
         const filename = pathname.slice('/uploads/'.length);
         if (/^[a-f0-9-]{36}\.(png|jpg|webp)$/.test(filename) && sendFile(req, res, path.join(uploadDir, filename), uploadDir)) return;
         validate.fail(404, '图片不存在。');
+      }
+      if (!production && /^\/(?:images|docs)\//i.test(pathname)) {
+        const publicFile = path.resolve(publicDir, `.${pathname}`);
+        if (publicFile.startsWith(`${publicDir}${path.sep}`) && sendFile(req, res, publicFile, publicDir)) return;
       }
       const file = path.resolve(distDir, `.${pathname}`);
       if (file.startsWith(`${distDir}${path.sep}`) && sendFile(req, res, file, distDir)) return;

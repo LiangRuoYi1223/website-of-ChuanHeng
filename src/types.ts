@@ -64,10 +64,11 @@ export interface PublicContent {
   projects: Project[];
   cooperation?: CooperationContent;
 }
-export type UserRole = 'founder' | 'admin' | 'member' | 'viewer';
+export type UserRole = 'admin' | 'member' | 'viewer';
 export type ContentPermission = 'settings:write' | 'activities:write' | 'projects:write' | 'uploads:write';
 export interface User {
-  id: string; username: string; displayName: string; role: UserRole;
+  id: string; username: string; displayName: string; role: UserRole; isPresident: boolean;
   permissions: string[]; mustChangePassword?: boolean; active?: boolean;
 }
 export interface Registration { id: string; activityId: string; createdAt: string; }
+export interface SiteStatus { paused: boolean; revision: number; }

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "status": "failed",
-  "started_at": "2026-10-07T13:03:48+08:00",
+  "status": "passed",
+  "started_at": "2026-10-07T13:08:08+08:00",
   "timezone": "Asia/Shanghai",
   "input": {
     "path": "docs/campus-model-v2/buildings.json",
@@ -11,7 +11,7 @@
   "prepared": {
     "path": "output/campus-model-v2/campus-prepared.json",
     "bytes": 3787359,
-    "sha256": "2485ada29e3c989f93a12de8d749dc32c234138d8858d6504aca2132a8628c43"
+    "sha256": "0e2b815667b5b14353fbf6803b51259c0a029e0713e6dc8eeda210874c638540"
   },
   "terrain_sources": {
     "blend": {
@@ -59,11 +59,92 @@
     "Facade repetition is illustrative; footprints/parts follow supplied geometry.",
     "Original DTM geometry remains intact; foundations/platforms are separate meshes."
   ],
-  "stages": [],
-  "outputs": [],
-  "failure": {
-    "stage": "build-save",
-    "message": "Campus Blender stage failed: build-save; see artifacts/campus-model-v2/logs/build-save.log",
-    "log": "artifacts/campus-model-v2/logs/build-save.log"
-  }
+  "stages": [
+    {
+      "stage": "build-save",
+      "return_code": 0,
+      "fresh_blender_process": true,
+      "elapsed_seconds": 11.595,
+      "report": {
+        "path": "output/campus-model-v2/reports/build-save.json",
+        "bytes": 2321007,
+        "sha256": "ee812206e4cd80af0ff2b8b8c481200451e31ac5c36a7e0da725278d66db16ee"
+      },
+      "log": "artifacts/campus-model-v2/logs/build-save.log"
+    },
+    {
+      "stage": "reopen-export-render",
+      "return_code": 0,
+      "fresh_blender_process": true,
+      "elapsed_seconds": 13.765,
+      "report": {
+        "path": "output/campus-model-v2/reports/reopen-export-render.json",
+        "bytes": 1675100,
+        "sha256": "b10d7affdecba1cf072dbb8ca8716cbe3b8212bc56d90f7b44f607b39f90347e"
+      },
+      "log": "artifacts/campus-model-v2/logs/reopen-export-render.log"
+    },
+    {
+      "stage": "glb-roundtrip",
+      "return_code": 0,
+      "fresh_blender_process": true,
+      "elapsed_seconds": 10.243,
+      "report": {
+        "path": "output/campus-model-v2/reports/glb-roundtrip.json",
+        "bytes": 1673782,
+        "sha256": "5ae82f4f90495b67cb97561afaefaaa412fde29410651e446e040c4a7a827f0a"
+      },
+      "log": "artifacts/campus-model-v2/logs/glb-roundtrip.log"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "output/campus-model-v2/sustech_campus_v2.blend",
+      "bytes": 47710606,
+      "sha256": "21797b160f9f388511095e6d2cbc0f92218ff1f99c311c9bf25828e2e1ebec86"
+    },
+    {
+      "path": "output/campus-model-v2/sustech_campus_v2.glb",
+      "bytes": 65523840,
+      "sha256": "47b81ea7936f3aeea90a21d29aedb7ec3a0f67fa6c240654af9aec2fef7eae5d"
+    },
+    {
+      "path": "output/campus-model-v2/campus-prepared.json",
+      "bytes": 3787359,
+      "sha256": "0e2b815667b5b14353fbf6803b51259c0a029e0713e6dc8eeda210874c638540"
+    },
+    {
+      "path": "output/campus-model-v2/campus_aerial.png",
+      "bytes": 3602659,
+      "sha256": "1907b8453285f07168d8ca897ae14362d0eac8feb9419ac6426a81ab02a70fe6"
+    },
+    {
+      "path": "output/campus-model-v2/gate_inward.png",
+      "bytes": 2166571,
+      "sha256": "a373eb13030766802de6614d0eac4b8c8ff84b91d735f698a8f7ab9fcc009896"
+    },
+    {
+      "path": "output/campus-model-v2/campus_overview_labeled.png",
+      "bytes": 3374661,
+      "sha256": "71cbf8c32f37bb1ccc4133e3cdae68428836fe609d1a03dca8937ea67f9abe14"
+    },
+    {
+      "path": "output/campus-model-v2/reports/build-save.json",
+      "bytes": 2321007,
+      "sha256": "ee812206e4cd80af0ff2b8b8c481200451e31ac5c36a7e0da725278d66db16ee"
+    },
+    {
+      "path": "output/campus-model-v2/reports/reopen-export-render.json",
+      "bytes": 1675100,
+      "sha256": "b10d7affdecba1cf072dbb8ca8716cbe3b8212bc56d90f7b44f607b39f90347e"
+    },
+    {
+      "path": "output/campus-model-v2/reports/glb-roundtrip.json",
+      "bytes": 1673782,
+      "sha256": "5ae82f4f90495b67cb97561afaefaaa412fde29410651e446e040c4a7a827f0a"
+    }
+  ],
+  "blender_version": "5.2.2 LTS",
+  "finished_at": "2026-10-07T13:08:44+08:00",
+  "elapsed_seconds": 36.724
 }

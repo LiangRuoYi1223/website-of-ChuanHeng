@@ -28,17 +28,6 @@
 .auth-page button:disabled, .activity-registration button:disabled { opacity: .65; cursor: not-allowed; }
 .auth-page .button:disabled:hover, .activity-registration .button:disabled:hover { transform: none; background: var(--green); }
 .auth-login-help { margin: 24px 0 20px; color: var(--muted); font-size: var(--text-ui); line-height: 1.8; max-width: 42ch; }
-.role-overview { align-self: start; padding: 8px 0 0; }
-.role-overview h2 { font: 500 1.5rem/1.5 var(--font-body); margin: 0 0 8px; }
-.role-overview > p { color: var(--muted); font-size: var(--text-ui); margin: 0; }
-.role-overview dl { margin: 28px 0 0; }
-.role-overview dl > div { padding: 18px 0; display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 18px; border-top: 1px solid var(--line); }
-.role-overview dl > div:last-child { border-bottom: 1px solid var(--line); }
-.role-overview dt { font-size: 1rem; color: var(--green); font-weight: 600; }
-.role-overview dt > span { display: block; font-size: var(--text-caption); font-weight: 400; margin-top: 6px; }
-.role-overview dd { margin: 0; font-size: var(--text-ui); line-height: 1.8; color: var(--muted); }
-.role-overview dl > div[data-current='true'] { background: var(--soft); padding-inline: 12px; margin-inline: -12px; }
-.role-overview .role-footnote { margin-top: 20px; font-size: var(--text-caption); }
 .auth-loading { padding: 80px 24px; text-align: center; color: var(--muted); }
 .auth-alert, .auth-success { margin: 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-button); font-size: var(--text-ui); line-height: 1.8; background: var(--surface); }
 .auth-alert { color: #803e2c; border-color: #d9b6a8; background: #faf3ef; }
@@ -48,7 +37,7 @@
 .account-heading h1 { font-family: var(--font-body); font-size: 2rem; overflow-wrap: anywhere; }
 .account-heading p { color: var(--muted); display: flex; align-items: center; flex-wrap: wrap; gap: 16px; margin: 0; }
 .account-role { display: inline-flex; gap: 6px; align-items: center; color: var(--green); font-size: var(--text-ui); }
-.account-layout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, .8fr); gap: 80px; }
+.account-layout { display: grid; grid-template-columns: minmax(0, 1fr); max-width: 760px; }
 .account-section { border-top: 1px solid var(--line); padding: 28px 0 32px; }
 .account-section h2 { font: 500 1.5rem/1.5 var(--font-body); margin: 0 0 12px; }
 .account-section > p, .account-empty p { color: var(--muted); font-size: var(--text-ui); margin: 0 0 18px; }
@@ -77,7 +66,6 @@
   .header-inner .main-nav .nav-join { padding-inline: 16px; gap: 10px; }
   .header-user-name { display: none; }
   .header-role { border: 0; padding-left: 0; font-size: var(--text-ui); color: var(--green); }
-  .account-layout { gap: 48px; }
 }
 @media (min-width: 761px) and (max-width: 940px) {
   .header-inner { width: calc(100% - 40px); gap: 12px; }
@@ -102,11 +90,9 @@
   .auth-layout { grid-template-columns: minmax(0, 1fr); gap: 48px; margin-top: 32px; }
   .auth-login-section { max-width: none; }
   .auth-page h1 { font-size: 2.2rem; }
-  .role-overview { padding-top: 0; }
   .account-heading { align-items: flex-start; gap: 16px; margin: 32px 0; }
   .account-heading h1 { font-size: 1.6rem; }
   .account-heading > .button { padding-inline: 12px; min-width: 110px; font-size: var(--text-ui); }
-  .account-layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .account-password-form { max-width: none; }
   .registration-list li { gap: 12px; }
 }

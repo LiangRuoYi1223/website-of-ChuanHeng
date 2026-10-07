@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Navigate, useBlocker } from 'react-router-dom';
-import { ArrowUpRight, Mountain, LogOut, LayoutDashboard, CalendarDays, Users, Settings, KeyRound, Flag, RefreshCw, X } from 'lucide-react';
+import { ArrowUpRight, Mountain, LogOut, LayoutDashboard, CalendarDays, Users, Settings, KeyRound, Flag, RefreshCw, Power, X } from 'lucide-react';
 import { api, ApiError } from '../api';
 import { useAuth } from '../auth/AuthContext';
-import { roleLabels, roleDescriptions, canManageContent, hasPermission } from '../auth/permissions';
+import { userRoleLabel, canManageContent, hasPermission } from '../auth/permissions';
 import type { PublicContent, User } from '../types';
 import { AdminSettings } from './AdminSettings';
 import { AdminUsers } from './AdminUsers';
 import { Records } from './Records';
+import { SiteService } from './SiteService';
 import './admin.css';
 
-type View = 'overview' | 'activities' | 'projects' | 'settings' | 'users' | 'password';
-const roles = ['founder', 'admin', 'member', 'viewer'] as const;
+type View = 'overview' | 'activities' | 'projects' | 'settings' | 'users' | 'password' | 'service';
 const modules = [
   { key: 'activities', permission: 'activities:write', label: '活动管理', action: '维护活动', icon: CalendarDays },
   { key: 'projects', permission: 'projects:write', label: '攀登项目', action: '维护攀登计划', icon: Flag },
@@ -33,7 +33,7 @@ function PasswordForm({ user, onSaved }: { user: User; onSaved: (user: User) => 
   }
   return <section className="admin-panel">
     <h2>{user.mustChangePassword ? '设置你的新密码' : '修改个人密码'}</h2>
-    <p className="admin-help">{user.mustChangePassword ? '当前使用的是临时密码，修改后即可使用已授权的功能。' : '修改后，其他设备上的登录会失效。'}</p>
+    <p className="admin-help">{user.mustChangePassword ? '当前使用的是临时密码，修改后即可使用管理功能。' : '修改后，其他设备上的登录会失效。'}</p>
     <form className="admin-form" onSubmit={submit} data-dirty={!!(currentPassword || newPassword || confirmation)}>
       <label className="admin-field">当前密码<input type="password" autoComplete="current-password" required value={currentPassword} onChange={e => setCurrent(e.target.value)} /></label>
       <label className="admin-field">新密码<input type="password" autoComplete="new-password" required minLength={12} maxLength={128} value={newPassword} onChange={e => setNext(e.target.value)} /><small>12–128 个字符，建议使用长度足够的独立密码。</small></label>
@@ -45,8 +45,8 @@ function PasswordForm({ user, onSaved }: { user: User; onSaved: (user: User) => 
 }
 
 export default function AdminApp() {
-  const { user, checking, setUser, logout: authLogout } = useAuth();
-  const userScope = user ? JSON.stringify([user.id, user.role, user.permissions, Boolean(user.mustChangePassword)]) : 'guest';
+  const { user, checking, setUser, refresh: refreshAuth, logout: authLogout } = useAuth();
+  const userScope = user ? JSON.stringify([user.id, user.role, user.isPresident, Boolean(user.mustChangePassword)]) : 'guest';
   const [loadedContent, setLoadedContent] = useState<{ scope: string; data: PublicContent } | null>(null);
   const content = loadedContent?.scope === userScope ? loadedContent.data : null;
   function setContent(next: PublicContent | null) { setLoadedContent(next ? { scope: userScope, data: next } : null); }
@@ -54,8 +54,8 @@ export default function AdminApp() {
   const latestUserScope = useRef(userScope), contentRequest = useRef(0);
   latestUserScope.current = userScope;
   const blocker = useBlocker(({ currentLocation, nextLocation }) => currentLocation.pathname !== nextLocation.pathname && hasUnsaved());
-  const grantedModules = modules.filter(module => hasPermission(user, module.permission));
-  const permittedViews: View[] = ['overview', 'password', ...grantedModules.map(module => module.key), ...(user?.role === 'founder' ? ['users' as const] : [])];
+  const grantedModules = modules;
+  const permittedViews: View[] = ['overview', 'password', ...grantedModules.map(module => module.key), ...(user?.role === 'admin' ? ['users' as const] : []), ...(user?.role === 'admin' && user.isPresident ? ['service' as const] : [])];
   const effectiveView = user?.mustChangePassword ? 'password' : permittedViews.includes(view) ? view : 'overview';
 
   useEffect(() => {
@@ -108,36 +108,37 @@ export default function AdminApp() {
   const nav = [
     { key: 'overview' as const, label: '概览', icon: LayoutDashboard },
     ...grantedModules,
-    ...(user.role === 'founder' ? [{ key: 'users' as const, label: '账号与权限', icon: Users }] : []),
+    { key: 'users' as const, label: '账号与权限', icon: Users },
+    ...(user.isPresident ? [{ key: 'service' as const, label: '网站服务', icon: Power }] : []),
     { key: 'password' as const, label: '个人密码', icon: KeyRound },
   ];
   return <div className="admin-app"><div className="admin-shell">
     <aside className="admin-sidebar">
       <div className="admin-brand"><Mountain size={30} /><div><strong>川衡登山协会</strong><small>内容管理</small></div></div>
       <nav aria-label="后台导航">{nav.map(item => <button className="admin-nav-item" data-active={effectiveView === item.key} aria-current={effectiveView === item.key ? 'page' : undefined} key={item.key} disabled={user.mustChangePassword && item.key !== 'password'} onClick={() => changeView(item.key)}><item.icon size={19} />{item.label}</button>)}</nav>
-      <div className="admin-user"><strong>{user.displayName}</strong><small>{roleLabels[user.role]}</small><button className="admin-button admin-secondary" onClick={() => void logout()}><LogOut size={16} />退出登录</button></div>
+      <div className="admin-user"><strong>{user.displayName}</strong><small>{userRoleLabel(user)}</small><button className="admin-button admin-secondary" onClick={() => void logout()}><LogOut size={16} />退出登录</button></div>
     </aside>
     <div className="admin-main">
-      <header className="admin-topbar"><div><h1>{nav.find(n => n.key === effectiveView)?.label}</h1><p>{roleLabels[user.role]} · {user.role === 'founder' ? '可修改全站内容' : '仅开放已授权的管理接口'}</p></div><a className="admin-button admin-secondary" href="/" onClick={e => { if (hasUnsaved() && !confirm('有未保存的修改，是否返回网站？')) e.preventDefault(); }}>查看网站 <ArrowUpRight size={16} /></a></header>
+      <header className="admin-topbar"><div><h1>{nav.find(n => n.key === effectiveView)?.label}</h1><p>{userRoleLabel(user)} · 可修改全站内容</p></div><a className="admin-button admin-secondary" href="/" onClick={e => { if (hasUnsaved() && !confirm('有未保存的修改，是否返回网站？')) e.preventDefault(); }}>查看网站 <ArrowUpRight size={16} /></a></header>
       <div className="admin-content">
         {error && <div className="admin-alert" role="alert">{error}<button className="admin-icon-button" aria-label="关闭错误提示" onClick={() => setError('')}><X size={18} /></button></div>}
         {notice && <div className="admin-alert admin-success" role="status">{notice}</div>}
         {user.mustChangePassword && <div className="admin-password-banner">首次登录或密码重置后，需要先修改临时密码。</div>}
         {effectiveView === 'password' && <PasswordForm user={user} onSaved={next => { setUser(next); setNotice('密码已更新。'); if (user.mustChangePassword) setView('overview'); }} />}
         {effectiveView === 'overview' && <>
-          <section className="admin-panel"><h2>{user.role === 'founder' ? '管理全站内容与权限' : '你的已授权接口'}</h2><p className="admin-help">{user.role === 'founder' ? '创始者可以修改网站全部部分，并为管理员开放具体内容接口。新增管理员默认没有内容修改权限。' : grantedModules.length ? '以下入口由创始者授权。你可以在授权范围内编辑、保存和发布内容。' : '当前尚未开放内容编辑接口。创始者授权后，对应管理入口会显示在侧栏。'}</p>
-            {(grantedModules.length > 0 || user.role === 'founder') && <div className="admin-actions">{grantedModules.map(module => <button key={module.key} className="admin-button admin-secondary" onClick={() => changeView(module.key)}><module.icon size={17} />{module.action}</button>)}{user.role === 'founder' && <button className="admin-button admin-primary" onClick={() => changeView('users')}><Users size={17} />管理账号与授权</button>}</div>}
-            <p className="admin-permission-note admin-help">图片上传：{canUpload ? '已开放，可在获授权的内容接口中使用。' : '尚未授权，可填写已有图片地址。'}</p>
+          <section className="admin-panel"><h2>管理全站内容与账号</h2><p className="admin-help">管理员可以修改全部网站内容、上传素材，并管理管理员、社员和浏览者账号。</p>
+            <div className="admin-actions">{grantedModules.map(module => <button key={module.key} className="admin-button admin-secondary" onClick={() => changeView(module.key)}><module.icon size={17} />{module.action}</button>)}<button className="admin-button admin-primary" onClick={() => changeView('users')}><Users size={17} />管理账号与身份</button></div>
           </section>
           {content && grantedModules.length > 0 && <div className="admin-stat-grid">{[
             ...(hasPermission(user, 'activities:write') ? [{ title: '公开活动', value: content.activities.filter(activity => activity.status === 'published').length }] : []),
             { title: '可编辑草稿', value: [...(hasPermission(user, 'activities:write') ? content.activities : []), ...(hasPermission(user, 'projects:write') ? content.projects : [])].filter(record => record.status === 'draft').length },
             ...(hasPermission(user, 'projects:write') ? [{ title: '攀登项目', value: content.projects.length }] : []),
           ].map(stat => <div className="admin-stat" key={stat.title}><span>{stat.title}</span><strong>{stat.value}</strong></div>)}</div>}
-          <section className="admin-panel"><h2>四级权限</h2><div className="admin-table-wrap"><table className="admin-table admin-role-table"><thead><tr><th scope="col">身份</th><th scope="col">开放功能</th></tr></thead><tbody>{roles.map(role => <tr key={role} data-current={user.role === role}><th scope="row">{roleLabels[role]}{user.role === role && <span className="admin-status">当前身份</span>}</th><td>{roleDescriptions[role]}</td></tr>)}</tbody></table></div></section>
+          <SiteService user={user} />
           {content && hasPermission(user, 'settings:write') && <section className="admin-panel"><h2>准备正式发布</h2><p className="admin-help">请补齐公众号入口与合作联系方式，并核对活动日期和参与要求。</p><ul className="admin-checklist"><li>公众号入口：{content.settings.officialSignupUrl || content.settings.officialQrImage ? '已配置' : '待补充'}</li><li>合作联系方式：{content.settings.contactEmail || content.settings.contactWechat ? '已配置' : '待补充'}</li><li>影像示意标注：{content.settings.demoMode === false ? '已关闭' : '已开启'}</li></ul></section>}
         </>}
-        {effectiveView === 'users' && user.role === 'founder' && <AdminUsers currentUser={user} onError={setError} onUserSaved={next => { if (next.id === user.id) setUser(next); }} />}
+        {effectiveView === 'users' && user.role === 'admin' && <AdminUsers currentUser={user} onError={setError} onUserSaved={next => { if (next.id === user.id) { setUser(next); void refreshAuth(); } }} />}
+        {effectiveView === 'service' && user.isPresident && <SiteService user={user} />}
         {(effectiveView === 'activities' || effectiveView === 'projects' || effectiveView === 'settings') && (!content ? <section className="admin-panel"><p role="status">{error ? '暂时无法加载内容，请重新加载。' : '正在加载内容…'}</p><button className="admin-button admin-secondary" onClick={() => void load()}><RefreshCw size={16} />重新加载</button></section> : <>
           {(effectiveView === 'activities' || effectiveView === 'projects') && <Records key={effectiveView} kind={effectiveView} content={content} canUpload={canUpload} onSaved={saved} onError={setError} onReload={load} />}
           {effectiveView === 'settings' && <AdminSettings settings={content.settings} canUpload={canUpload} onSaved={settings => saved({ ...content, settings })} onError={setError} />}

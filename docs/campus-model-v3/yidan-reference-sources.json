@@ -1,0 +1,291 @@
+{
+  "review_date_local": "2026-10-07",
+  "timezone": "Asia/Shanghai",
+  "status": "complete",
+  "records": [
+    {
+      "path": "artifacts/campus-model-v3/references/designer-entry-2021.jpg",
+      "url": "https://architecturestudio.fr/wp-content/uploads/2021/08/FJZ7642-1.jpg",
+      "status": 200,
+      "bytes": 935081,
+      "sha256": "be4cd6a654c1e52fc37df1bc2a4b1bcb027b80d4c9b30bcf6890c1abe238f5f6",
+      "retrieved_utc": "2026-10-07T13:00:24.916229+00:00",
+      "last_modified": "Wed, 15 Dec 2021 11:22:07 GMT",
+      "copyright_use": "Reference inspection only. No permission inferred for distribution or photo textures.",
+      "verified_actual_bytes_sha256": true,
+      "visual_review": "Actual downloaded image inspected with view_image; duplicated gallery-00 is identical to reviewed original yidan-exterior.jpg.",
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model-v3/references/designer-aerial-a-2021.jpg",
+      "url": "https://architecturestudio.fr/wp-content/uploads/2021/08/architecturestudio_DJI-1.jpg",
+      "status": 200,
+      "bytes": 439694,
+      "sha256": "77bed7dd4a8ef41e270cac35355de5cea9fde33ca83763ca92f8d67ad3b255a8",
+      "retrieved_utc": "2026-10-07T13:00:32.977350+00:00",
+      "last_modified": "Wed, 15 Dec 2021 11:22:08 GMT",
+      "copyright_use": "Reference inspection only. No permission inferred for distribution or photo textures.",
+      "verified_actual_bytes_sha256": true,
+      "visual_review": "Actual downloaded image inspected with view_image; duplicated gallery-00 is identical to reviewed original yidan-exterior.jpg.",
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model-v3/references/designer-aerial-b-2021.jpg",
+      "url": "https://architecturestudio.fr/wp-content/uploads/2021/08/architecturestudio_DJI-.jpg",
+      "status": 200,
+      "bytes": 1355836,
+      "sha256": "70b1043254d5d2f3fc16c481b764297f5e44d8c43d7ef31f5650cd7abe0dd963",
+      "retrieved_utc": "2026-10-07T13:00:40.306235+00:00",
+      "last_modified": "Wed, 15 Dec 2021 11:20:44 GMT",
+      "copyright_use": "Reference inspection only. No permission inferred for distribution or photo textures.",
+      "verified_actual_bytes_sha256": true,
+      "visual_review": "Actual downloaded image inspected with view_image; duplicated gallery-00 is identical to reviewed original yidan-exterior.jpg.",
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model-v3/references/designer-aerial-c-2021.jpg",
+      "url": "https://architecturestudio.fr/wp-content/uploads/2021/08/architecturestudio_DJI-2.jpg",
+      "status": 200,
+      "bytes": 1248735,
+      "sha256": "94dbf8e85391e1e6a2bbb19270b6e02356aed6b60b1d0d66b7f0f03a46f5c6c2",
+      "retrieved_utc": "2026-10-07T13:00:47.453911+00:00",
+      "last_modified": "Wed, 15 Dec 2021 11:22:16 GMT",
+      "copyright_use": "Reference inspection only. No permission inferred for distribution or photo textures.",
+      "verified_actual_bytes_sha256": true,
+      "visual_review": "Actual downloaded image inspected with view_image; duplicated gallery-00 is identical to reviewed original yidan-exterior.jpg.",
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model-v3/references/yidan-space-layout.html",
+      "url": "https://lib.sustech.edu.cn/kjbj/list.htm",
+      "status": 200,
+      "bytes": 153465,
+      "sha256": "bd57c71d294a63ae9688248731a2c88e76d105fa2240a6abd74e8f7a3e4b7060",
+      "retrieved_utc": "2026-10-07T13:00:47.580462+00:00",
+      "last_modified": null,
+      "copyright_use": "Reference inspection only. No permission inferred for distribution or photo textures.",
+      "verified_actual_bytes_sha256": true,
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model-v3/references/yidan-floor1.jpg",
+      "url": "https://lib.sustech.edu.cn/_upload/article/images/23/ff/0880726649de80f087f29d096eeb/2e316aed-fe8c-44f0-879b-dabe38c6781b.jpg",
+      "bytes": 281312,
+      "sha256": "e68b15c8c75ec0ee5032421e6d6d64b2a4c65168c51ce03ce76ab913fe42fff5",
+      "retrieved_utc": "2026-10-07T13:03:09.263263+00:00",
+      "last_modified": "Mon, 05 Jul 2021 00:38:18 GMT",
+      "copyright_use": "Reference inspection only; no distribution permission inferred.",
+      "verified_actual_bytes_sha256": true,
+      "visual_review": "Actual downloaded image inspected with view_image; duplicated gallery-00 is identical to reviewed original yidan-exterior.jpg.",
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model-v3/references/yidan-floor2.jpg",
+      "url": "https://lib.sustech.edu.cn/_upload/article/images/23/ff/0880726649de80f087f29d096eeb/f63b8dc3-34f1-4ff4-87e0-db33632b22b8.jpg",
+      "bytes": 271839,
+      "sha256": "09b05bd2b79ef94b03281efddeffc7d0846c5f1c0e0aad61bed5aecf198c3086",
+      "retrieved_utc": "2026-10-07T13:03:09.256440+00:00",
+      "last_modified": "Mon, 05 Jul 2021 00:38:18 GMT",
+      "copyright_use": "Reference inspection only; no distribution permission inferred.",
+      "verified_actual_bytes_sha256": true,
+      "visual_review": "Actual downloaded image inspected with view_image; duplicated gallery-00 is identical to reviewed original yidan-exterior.jpg.",
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model-v3/references/yidan-floor3.jpg",
+      "url": "https://lib.sustech.edu.cn/_upload/article/images/23/ff/0880726649de80f087f29d096eeb/f9390974-4ab4-48c0-8bea-e1681bc0df6f.jpg",
+      "bytes": 299034,
+      "sha256": "418c08cfc8a7dca81b6b2288309cf05a5c3276d24d3556a1bc831d657d7c2343",
+      "retrieved_utc": "2026-10-07T13:03:09.282916+00:00",
+      "last_modified": "Mon, 05 Jul 2021 00:38:18 GMT",
+      "copyright_use": "Reference inspection only; no distribution permission inferred.",
+      "verified_actual_bytes_sha256": true,
+      "visual_review": "Actual downloaded image inspected with view_image; duplicated gallery-00 is identical to reviewed original yidan-exterior.jpg.",
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model-v3/references/yidan-floor4.jpg",
+      "url": "https://lib.sustech.edu.cn/_upload/article/images/23/ff/0880726649de80f087f29d096eeb/44fbb92f-8324-42bd-af47-8356e363d4f0.jpg",
+      "bytes": 281588,
+      "sha256": "cd504a7d298ad9edc566d80081443ea26023983acdf9ad25ebcc6b1e1dd91a04",
+      "retrieved_utc": "2026-10-07T13:03:09.267283+00:00",
+      "last_modified": "Mon, 05 Jul 2021 00:38:18 GMT",
+      "copyright_use": "Reference inspection only; no distribution permission inferred.",
+      "verified_actual_bytes_sha256": true,
+      "visual_review": "Actual downloaded image inspected with view_image; duplicated gallery-00 is identical to reviewed original yidan-exterior.jpg.",
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model-v3/references/yidan-gallery-00.jpg",
+      "url": "https://lib.sustech.edu.cn/_upload/article/images/3e/0d/1534b7cd4039845d78a806df128b/85fa410d-0cbc-440f-bf08-2df4d7d22d86.jpg",
+      "bytes": 6132630,
+      "sha256": "fb2ffd344537c19ecd07c9e14b340fe23cad2333a78a2ee8df3adf496de2b018",
+      "retrieved_utc": "2026-10-07T13:03:11.231865+00:00",
+      "last_modified": "Thu, 04 Feb 2021 05:35:12 GMT",
+      "copyright_use": "Reference inspection only; no distribution permission inferred.",
+      "verified_actual_bytes_sha256": true,
+      "visual_review": "Actual downloaded image inspected with view_image; duplicated gallery-00 is identical to reviewed original yidan-exterior.jpg.",
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model-v3/references/yidan-gallery-01.jpg",
+      "url": "https://lib.sustech.edu.cn/_upload/article/images/3e/0d/1534b7cd4039845d78a806df128b/5f1d536d-cf1c-400c-8b1a-3266ebf6aaab.jpg",
+      "bytes": 653358,
+      "sha256": "1fe2e48526b60c758f7cd365c354d7e2c913472c2883eace38ddc25539872034",
+      "retrieved_utc": "2026-10-07T13:03:09.637904+00:00",
+      "last_modified": "Mon, 12 May 2025 02:49:17 GMT",
+      "copyright_use": "Reference inspection only; no distribution permission inferred.",
+      "verified_actual_bytes_sha256": true,
+      "visual_review": "Actual downloaded image inspected with view_image; duplicated gallery-00 is identical to reviewed original yidan-exterior.jpg.",
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model-v3/references/yidan-gallery-03.jpg",
+      "url": "https://lib.sustech.edu.cn/_upload/article/images/3e/0d/1534b7cd4039845d78a806df128b/b08a1163-447e-40ff-b23c-f159f2f37fdf.jpg",
+      "bytes": 290518,
+      "sha256": "76d099c4894f68a3a640c5b86ac2423dbcc3fbd359f04728b20d246a482ea71f",
+      "retrieved_utc": "2026-10-07T13:03:09.544656+00:00",
+      "last_modified": "Tue, 13 Jul 2021 02:24:59 GMT",
+      "copyright_use": "Reference inspection only; no distribution permission inferred.",
+      "verified_actual_bytes_sha256": true,
+      "visual_review": "Actual downloaded image inspected with view_image; duplicated gallery-00 is identical to reviewed original yidan-exterior.jpg.",
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model-v3/references/yidan-gallery-05.jpg",
+      "url": "https://lib.sustech.edu.cn/_upload/article/images/3e/0d/1534b7cd4039845d78a806df128b/6758cfcd-86ff-48f2-a62c-77a51d82fc3f.jpg",
+      "bytes": 4174011,
+      "sha256": "a7ce9a33f322b0d17612e0130fb0253b9c77586dc2a058beb3b365e480c5fae6",
+      "retrieved_utc": "2026-10-07T13:03:11.326232+00:00",
+      "last_modified": "Thu, 04 Feb 2021 05:35:12 GMT",
+      "copyright_use": "Reference inspection only; no distribution permission inferred.",
+      "verified_actual_bytes_sha256": true,
+      "visual_review": "Actual downloaded image inspected with view_image; duplicated gallery-00 is identical to reviewed original yidan-exterior.jpg.",
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model-v3/references/yidan-gallery-06.jpg",
+      "url": "https://lib.sustech.edu.cn/_upload/article/images/3e/0d/1534b7cd4039845d78a806df128b/3d637133-7e6e-45aa-84ff-97742af8d58f.jpg",
+      "bytes": 3937504,
+      "sha256": "7840fd355f19f7ea31e04b2ac841c4977e1b92e0e1ffa8b6118338febc702592",
+      "retrieved_utc": "2026-10-07T13:03:11.207254+00:00",
+      "last_modified": "Thu, 04 Feb 2021 05:35:12 GMT",
+      "copyright_use": "Reference inspection only; no distribution permission inferred.",
+      "verified_actual_bytes_sha256": true,
+      "visual_review": "Actual downloaded image inspected with view_image; duplicated gallery-00 is identical to reviewed original yidan-exterior.jpg.",
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model-v3/references/yidan-gallery-07.jpg",
+      "url": "https://lib.sustech.edu.cn/_upload/article/images/3e/0d/1534b7cd4039845d78a806df128b/a28b7913-8828-4671-9ca8-52a912255570.jpg",
+      "bytes": 3670172,
+      "sha256": "2ba2f1b1884bd7e3082eb9485c0566634533b20785a2de645363cebeb9e52886",
+      "retrieved_utc": "2026-10-07T13:03:11.217943+00:00",
+      "last_modified": "Thu, 04 Feb 2021 05:35:12 GMT",
+      "copyright_use": "Reference inspection only; no distribution permission inferred.",
+      "verified_actual_bytes_sha256": true,
+      "visual_review": "Actual downloaded image inspected with view_image; duplicated gallery-00 is identical to reviewed original yidan-exterior.jpg.",
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model-v3/references/yidan-gallery-08.jpg",
+      "url": "https://lib.sustech.edu.cn/_upload/article/images/3e/0d/1534b7cd4039845d78a806df128b/a7f05090-281a-4822-9358-830983841792.jpg",
+      "bytes": 3639876,
+      "sha256": "2e08710a6e5dd05846a7219fb105309df5984db2759f470345ee8f27ec14f764",
+      "retrieved_utc": "2026-10-07T13:03:11.866529+00:00",
+      "last_modified": "Thu, 04 Feb 2021 05:35:12 GMT",
+      "copyright_use": "Reference inspection only; no distribution permission inferred.",
+      "verified_actual_bytes_sha256": true,
+      "visual_review": "Actual downloaded image inspected with view_image; duplicated gallery-00 is identical to reviewed original yidan-exterior.jpg.",
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model-v3/references/yidan-gallery-09.jpg",
+      "url": "https://lib.sustech.edu.cn/_upload/article/images/3e/0d/1534b7cd4039845d78a806df128b/db7188b3-4b50-4d3c-b667-6cd2a4f4ebdf.jpg",
+      "bytes": 3325520,
+      "sha256": "0256e6e569cbaff98a453a25d2b33dbbb58acc7aae03cc8990f96c0ff195cb5c",
+      "retrieved_utc": "2026-10-07T13:03:12.190126+00:00",
+      "last_modified": "Thu, 04 Feb 2021 05:35:12 GMT",
+      "copyright_use": "Reference inspection only; no distribution permission inferred.",
+      "verified_actual_bytes_sha256": true,
+      "visual_review": "Actual downloaded image inspected with view_image; duplicated gallery-00 is identical to reviewed original yidan-exterior.jpg.",
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model/references/yidan-exterior.html",
+      "url": "https://lib.sustech.edu.cn/yd/list.htm",
+      "status": 200,
+      "bytes": 60736,
+      "sha256": "aa56e086dd00a72f102a9274c595de0eb03be9cde262abc04e3715e51598f2eb",
+      "retrieved_utc": "2026-10-05T15:22:37.640426+00:00",
+      "http_last_modified": null,
+      "content_type": "text/html",
+      "verified_actual_bytes_sha256": true,
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model/references/center-aerial-2022.jpg",
+      "url": "https://newshub.sustech.edu.cn/uploads/full/2022/11/251669345519296039.jpg",
+      "status": 200,
+      "bytes": 380023,
+      "sha256": "668b41a9e53cc8cb68464b9fd34abad5d4dff6de8145907ea04303862632f25c",
+      "retrieved_utc": "2026-10-05T15:23:41.928746+00:00",
+      "http_last_modified": "Fri, 25 Nov 2022 03:10:24 GMT",
+      "content_type": "image/jpeg",
+      "visual_review": "Actual downloaded image inspected with view_image; duplicated gallery-00 is identical to reviewed original yidan-exterior.jpg.",
+      "verified_actual_bytes_sha256": true,
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model/references/yidan-exterior.jpg",
+      "url": "https://lib.sustech.edu.cn/_upload/article/images/3e/0d/1534b7cd4039845d78a806df128b/85fa410d-0cbc-440f-bf08-2df4d7d22d86.jpg",
+      "status": 200,
+      "bytes": 6132630,
+      "sha256": "fb2ffd344537c19ecd07c9e14b340fe23cad2333a78a2ee8df3adf496de2b018",
+      "retrieved_utc": "2026-10-05T15:24:31.481000+00:00",
+      "http_last_modified": "Thu, 04 Feb 2021 05:35:12 GMT",
+      "content_type": "image/jpeg",
+      "visual_review": "Actual downloaded image inspected with view_image; duplicated gallery-00 is identical to reviewed original yidan-exterior.jpg.",
+      "verified_actual_bytes_sha256": true,
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    },
+    {
+      "path": "artifacts/campus-model/references/center-designer.html",
+      "url": "https://architecturestudio.fr/projets/shz7/",
+      "bytes": 89933,
+      "sha256": "c09c7555b1737d585ea9d1a3ef5859dd363e551b3d95d96db4a996eb3f59a021",
+      "retrieved_utc": "2026-10-05T15:35:04.210181+00:00",
+      "http_last_modified": null,
+      "verified_actual_bytes_sha256": true,
+      "use_restriction": "Internal visual geometry/material reference only; do not distribute as photo texture or imply open license."
+    }
+  ],
+  "directly_confirmed": {
+    "floor_count": 4,
+    "south_glazing": "Official library space text explicitly identifies large glass windows on south side of floors 3 and 4",
+    "third_floor_terrace": true,
+    "main_entrance_floor": 2
+  },
+  "orientation_inferences": {
+    "source_osm_id": "way/710848316",
+    "south_glazed_end_edges": [
+      5,
+      6
+    ],
+    "east_long_glazed_deepframe_edge": 7,
+    "west_orange_edges": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "roof_high_direction_utm": [
+      0,
+      -1
+    ],
+    "confidence": "medium; source photographs and official south-window statement, no measured north-arrow exterior drawing"
+  },
+  "model_dimensions_status": "Photo estimates, not as-built or surveyed LOD3 dimensions",
+  "report": "docs/campus-model-v3/yidan-reference-report.md"
+}

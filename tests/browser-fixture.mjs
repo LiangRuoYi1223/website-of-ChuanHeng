@@ -13,6 +13,8 @@ const origin = 'http://127.0.0.1:3002';
 await new Promise(resolve => app.server.listen(3002, '127.0.0.1', resolve));
 const login = await fetch(`${origin}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: origin }, body: JSON.stringify({ username: 'admin', password: 'fixture-initial-password-only' }) });
 if (!login.ok) throw new Error('Test fixture authentication failed');
+const initialUser = (await login.json()).user;
+if (initialUser.role !== 'admin' || initialUser.isPresident !== true) throw new Error('Fixture initial admin must be the synthetic president');
 const cookie = login.headers.get('set-cookie').split(';')[0];
 const changed = await fetch(`${origin}/api/auth/password`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: origin, Cookie: cookie }, body: JSON.stringify({ currentPassword: 'fixture-initial-password-only', newPassword: 'fixture-browser-password-only' }) });
 if (!changed.ok) throw new Error('Test fixture preparation failed');
@@ -22,13 +24,13 @@ async function request(path, body, session = cookie) {
   if (!response.ok) throw new Error(`Fixture setup failed: ${path} (${response.status})`);
   return response;
 }
-for (const [role, displayName, permissions] of [
-  ['admin', '测试管理员', ['activities:write']],
-  ['member', '测试社员', []],
-  ['viewer', '测试浏览者', []],
+for (const [role, displayName] of [
+  ['admin', '测试管理员'],
+  ['member', '测试社员'],
+  ['viewer', '测试浏览者'],
 ]) {
   const username = `fixture_${role}`;
-  await request('/admin/users', { username, displayName, role, permissions, password: 'fixture-initial-password-only' });
+  await request('/admin/users', { username, displayName, role, isPresident: false, password: 'fixture-initial-password-only' });
   const response = await request('/auth/login', { username, password: 'fixture-initial-password-only' });
   const session = response.headers.get('set-cookie').split(';')[0];
   await request('/auth/password', { currentPassword: 'fixture-initial-password-only', newPassword: 'fixture-browser-password-only' }, session);
@@ -41,4 +43,5 @@ await request('/admin/activities', {
 });
 console.log(`Isolated browser-check site ready: ${origin}`);
 console.log('This fixture contains synthetic content and has no access to the real site database.');
+console.log('Synthetic accounts include one president admin, one ordinary admin, one member and one viewer.');
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => void app.close().then(() => process.exit(0)));

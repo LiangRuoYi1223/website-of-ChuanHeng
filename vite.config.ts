@@ -6,11 +6,15 @@ export default defineConfig({
     proxy: {
       '/api': 'http://127.0.0.1:3001',
       '/uploads': 'http://127.0.0.1:3001',
+      '/images': 'http://127.0.0.1:3001',
+      '/docs': 'http://127.0.0.1:3001',
     },
     fs: { deny: ['.env', '.env.*', '*.{crt,pem}', '**/.git/**', '**/data/**', '**/artifacts/**'] } },
   preview: { proxy: {
     '/api': 'http://127.0.0.1:3001',
     '/uploads': 'http://127.0.0.1:3001',
+    '/images': 'http://127.0.0.1:3001',
+    '/docs': 'http://127.0.0.1:3001',
   } },
   build: { target: 'es2022' }
 });

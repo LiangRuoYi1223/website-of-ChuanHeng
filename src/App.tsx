@@ -11,6 +11,9 @@ import { TeamPage, ProjectDetail } from './pages/Team';
 import { api } from './api';
 import LoginPage from './auth/LoginPage';
 import AccountPage from './auth/AccountPage';
+import { useAuth } from './auth/AuthContext';
+import { useSiteStatus } from './auth/SiteStatusContext';
+import MaintenancePage from './auth/MaintenancePage';
 import './auth/auth.css';
 
 const AdminApp = lazy(() => import('./admin/AdminApp'));
@@ -26,14 +29,24 @@ function PublicApp() {
 
 export default function App() {
   const [content, setContent] = useState<PublicContent>(demoContent);
+  const { user, checking: authChecking } = useAuth();
+  const { status, checking: statusChecking, error: statusError } = useSiteStatus();
   const { pathname } = useLocation();
   useEffect(() => {
     let current = true;
+    if (!status || (status.paused && user?.role !== 'admin')) return;
     api<PublicContent>('/content').then(result => {
       if (current) setContent({ ...result, cooperation: result.cooperation ?? demoContent.cooperation });
-    }).catch(() => { /* Static previews remain readable when the API is unavailable. */ });
+    }).catch(() => { /* Service status gates public content separately. */ });
     return () => { current = false; };
-  }, [pathname]);
+  }, [pathname, status?.paused, status?.revision, user?.id, user?.role]);
+  const manager = user?.role === 'admin';
+  const managementRoute = pathname === '/admin' || pathname.startsWith('/admin/');
+  const gated = !manager && !managementRoute && (status?.paused || !status || !!statusError);
+  if (gated) {
+    if ((authChecking || statusChecking) && pathname !== '/login') return <div className="auth-loading" role="status">正在连接网站…</div>;
+    return <MaintenancePage login={pathname === '/login'}/>;
+  }
   return <ContentContext.Provider value={content}><Routes>
     <Route path="/admin/*" element={<Suspense fallback={<div className="auth-loading" role="status">正在打开内容管理…</div>}><AdminApp/></Suspense>}/>
     <Route path="*" element={<PublicApp/>}/>

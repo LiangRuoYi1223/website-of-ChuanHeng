@@ -560,8 +560,21 @@ class Builder:
                       (face.verts[1].co - face.verts[0].co).cross(face.verts[2].co - face.verts[0].co).length <= 1e-7]
         if degenerate:
             bmesh.ops.delete(bm, geom=degenerate, context="FACES")
+        bm.verts.index_update()
+        seen, duplicate_faces = set(), []
+        for face in bm.faces:
+            key = tuple(sorted(v.index for v in face.verts))
+            if key in seen:
+                duplicate_faces.append(face)
+            seen.add(key)
+        if duplicate_faces:
+            bmesh.ops.delete(bm, geom=duplicate_faces, context="FACES_ONLY")
+        loose_vertices = [vertex for vertex in bm.verts if not vertex.link_faces]
+        if loose_vertices:
+            bmesh.ops.delete(bm, geom=loose_vertices, context="VERTS")
         bm.to_mesh(data)
         bm.free()
+        data.validate(clean_customdata=False)
         data.update()
         obj["asset_id"] = asset_id
         obj["export_asset"] = True
@@ -642,6 +655,9 @@ class Builder:
         frame_style = self.custom_style(prefix + ":frame-style", detail["frame_color"], .65, .05) if detail.get("frame_color") else wall_style
         base_style = self.custom_style(prefix + ":base-wall-style", detail["base_wall_color"]) if detail.get("base_wall_color") else wall_style
         styles = [wall_style, "glass", frame_style, base_style]
+        if detail.get("glazed_end_side"):
+            silver = self.custom_style(prefix + ":glazed-end-frame", detail.get("glazed_end_frame_color", [.62, .66, .65]), .42, .30)
+            styles.append(silver)
         vertices, faces, indices = [], [], []
         components = {"wall_boxes": 0, "glass_panels": 0, "frame_boxes": 0}
         edge_origin = edge_tangent = edge_outward = None
@@ -709,10 +725,10 @@ class Builder:
                     if glazed_end:
                         # Library's short end is continuous glass behind silver ribs.
                         box(s0 + .065, s1 - .065, -recess - .045, -recess, base + .18, roof, 1)
-                        box(s0, s0 + .13, -depth, frame_depth, base, roof, 2)
+                        box(s0, s0 + .13, -depth, frame_depth, base, roof, 4)
                         for row in range(part["levels"] + 1):
                             z = base + row * height / part["levels"]
-                            box(s0, s1, -depth, .12, z, z + .17, 2)
+                            box(s0, s1, -depth, .12, z, z + .17, 4)
                         continue
                     if pilotis > .1:
                         pillar_width = min(.65, bay * .20)
@@ -722,6 +738,7 @@ class Builder:
                         floor0 = max(floor0, base + pilotis)
                         if floor1 <= floor0 + .06:
                             continue
+                        wall_material = 3 if detail.get("base_wall_color") and floor1 <= base + float(detail.get("base_light_height_m", 5)) + .05 else 0
                         effective_mode = "curtain" if glazed_end else mode
                         if effective_mode == "curtain":
                             side = min(.22, bay * .10)
@@ -745,6 +762,8 @@ class Builder:
                             wh = min(window_height, available - .45)
                             opening_z0 = floor0 + max(.22, (available - wh) * .48)
                             opening_z1 = min(opening_z0 + wh, edge_top - .25)
+                            if row == levels - 1 and detail.get("clerestory_height_m"):
+                                opening_z0 = max(opening_z0, opening_z1 - float(detail["clerestory_height_m"]))
                         if opening_z1 - opening_z0 <= .20 or opening1 - opening0 <= .20:
                             box(s0, s1, -depth, 0, floor0, floor1, wall_material)
                             continue
