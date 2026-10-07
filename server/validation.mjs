@@ -1,4 +1,5 @@
 import { roles, contentPermissions } from './permissions.mjs';
+import { findCity } from '../src/features/map-data/cities.ts';
 
 export class HttpError extends Error {
   constructor(status, message, code) { super(message); this.status = status; this.code = code; }
@@ -64,7 +65,13 @@ export function activity(value) {
   const parsedDate = new Date(`${date}T00:00:00Z`);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(+parsedDate) || parsedDate.toISOString().slice(0, 10) !== date) fail(400, '活动日期必须是有效的 YYYY-MM-DD 日期。');
   result.date = date;
-  for (const field of ['category', 'location', 'difficulty']) result[field] = string(input[field], field, { max: 200 });
+  for (const field of ['category', 'difficulty']) result[field] = string(input[field], field, { max: 200 });
+  // Keep location for old clients, while the route text and mapped city stay independent.
+  const routeName = input.routeName === undefined ? (input.location === undefined ? '' : input.location) : input.routeName;
+  result.routeName = string(routeName, '路线名称', { max: 200 });
+  result.location = result.routeName;
+  result.cityCode = string(input.cityCode === undefined ? '' : input.cityCode, '活动城市', { max: 20 });
+  if (result.cityCode && !findCity(result.cityCode)) fail(400, '请选择城市坐标表中有效的活动城市。');
   result.signupUrl = url(input.signupUrl, '报名链接'); result.qrImage = url(input.qrImage, '报名二维码');
   if (input.registrationOpen !== undefined && typeof input.registrationOpen !== 'boolean') fail(400, '报名开放状态格式不正确。');
   result.registrationOpen = input.registrationOpen ?? false;

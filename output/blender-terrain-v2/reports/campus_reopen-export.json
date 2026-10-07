@@ -1,0 +1,107 @@
+{
+  "region": "campus",
+  "stage": "reopen-export",
+  "started_at": "2026-10-05T15:24:59+08:00",
+  "blender_version": "5.2.2 LTS",
+  "python_version": "3.13.13 (main, May  8 2026, 12:37:03) [MSC v.1944 64 bit (AMD64)]",
+  "background": true,
+  "source": {
+    "path": "output/terrain-v2/campus/campus_blockout.obj",
+    "bytes": 5805950,
+    "sha256": "ba55b8db9218d00421c32b11d91b6e3930f0be67adb84766e8793bb020c1e9f9"
+  },
+  "source_metadata": {
+    "path": "output/terrain-v2/campus/campus_metadata.json",
+    "bytes": 13147,
+    "sha256": "16e5d3b447a8376705bb8b16c7ae64afc3ee032e5d586c210b7954964e267b40"
+  },
+  "provenance": {
+    "product": "GEDTM30 v1.2",
+    "product_text": "GEDTM30 v1.2",
+    "attribution": "Ho, Yufeng & Hengl, Tom (2026). Global Ensemble Digital Terrain Model 30m (GEDTM30), v1.2.0, OpenGeoHub, https://doi.org/10.5281/zenodo.18887460; licensed CC BY 4.0. Regional crops and subsequent meshes are modified derivatives.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "license_text": "https://creativecommons.org/licenses/by/4.0/",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "expected_extras": {
+    "region_id": "campus",
+    "attribution": "Ho, Yufeng & Hengl, Tom (2026). Global Ensemble Digital Terrain Model 30m (GEDTM30), v1.2.0, OpenGeoHub, https://doi.org/10.5281/zenodo.18887460; licensed CC BY 4.0. Regional crops and subsequent meshes are modified derivatives.",
+    "source_product": "GEDTM30 v1.2",
+    "terrain_license": "https://creativecommons.org/licenses/by/4.0/",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "source_obj": "output/terrain-v2/campus/campus_blockout.obj",
+    "source_obj_sha256": "ba55b8db9218d00421c32b11d91b6e3930f0be67adb84766e8793bb020c1e9f9",
+    "metadata_source": "output/terrain-v2/campus/campus_metadata.json",
+    "units": "metres",
+    "horizontal_crs": "EPSG:32649",
+    "vertical_datum": "EGM2008 (EPSG:3855), metres",
+    "projected_xy_origin_m": [
+      807450.0,
+      2500665.0
+    ],
+    "vertical_origin_m": 0.0,
+    "surface_model": "predicted_bare_earth",
+    "scope": "four separate v2 terrain assets; not assembled narrative scene"
+  },
+  "mesh_check": {
+    "vertices": 46604,
+    "unique_source_vertices": 46604,
+    "triangles": 92340,
+    "uv_layers": 1,
+    "bounds_min_m": [
+      -2145.0,
+      -600.0,
+      10.539999961853027
+    ],
+    "bounds_max_m": [
+      5145.0,
+      5100.0,
+      350.9989929199219
+    ],
+    "max_coordinate_error_against_obj_m": 1.5136718729991117e-05,
+    "coordinate_tolerance_m": 0.002,
+    "max_uv_error_against_obj": 2.9713134730435797e-08,
+    "uv_tolerance": 2e-06,
+    "all_vertices_and_uv_loops_checked": true,
+    "all_face_normals_positive_z": true,
+    "geometry_sha256": "4040a8069d39f688f6cfbdd5c4f78820f82468b1f1e08474e6786208deec9200",
+    "uv_sha256": "199b3ea262386ef6101c8faa03f5a1984081641fc3ab341b4aaa1b215208bfb9"
+  },
+  "saved_geometry_and_uv_exactly_preserved": true,
+  "glb_check": {
+    "glb_version": 2,
+    "declared_bytes": 2048136,
+    "primitives": 1,
+    "triangles": 92340,
+    "uv_present": true,
+    "self_contained": true,
+    "copyright_present": true,
+    "product_license_and_origin_extras_verified": true,
+    "coordinate_convention": "glTF Y up; Blender Z up on reimport"
+  },
+  "glb": {
+    "path": "output/blender-terrain-v2/campus_validation.glb",
+    "bytes": 2048136,
+    "sha256": "0488685064692989c2f3c14b25dccb3ff6e5d1fe86a0457d3a2aaa0c7dec5dae"
+  },
+  "render": {
+    "engine": "BLENDER_EEVEE",
+    "size_px": [
+      1024,
+      640
+    ],
+    "seconds": 8.677,
+    "foreground_pixel_fraction": 0.3683685302734375,
+    "foreground_rgb_std": 0.03054284118115902,
+    "foreground_rgb_std_minimum": 0.005,
+    "disk_png_reloaded_and_checked": true,
+    "preview": {
+      "path": "output/blender-terrain-v2/campus_preview.png",
+      "bytes": 395585,
+      "sha256": "7c4fcccacff30497f66b89f5a5dba4fe18450c790b9bcadcc438b3aded1ab5b3"
+    }
+  },
+  "elapsed_seconds": 9.261,
+  "finished_at": "2026-10-05T15:25:09+08:00",
+  "status": "passed"
+}

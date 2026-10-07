@@ -1,0 +1,3 @@
+# Python 3.12, project-local dependency target; Blender uses its own Python.
+-r terrain-requirements.txt
+shapely==2.1.2

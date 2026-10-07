@@ -1,0 +1,430 @@
+{
+  "schema_version": 2,
+  "region": {
+    "id": "muztagh_ata",
+    "name": "慕士塔格峰 · 冰川表面高程",
+    "bounds_wgs84": [
+      74.95,
+      38.1,
+      75.35,
+      38.5
+    ],
+    "projected_crs": "EPSG:32643",
+    "source_ids": [
+      "copernicus_muztagh_N38E074",
+      "copernicus_muztagh_N38E075"
+    ],
+    "product": "Copernicus GLO-30",
+    "surface_model": "ice_surface_DSM",
+    "is_dtm": false,
+    "mesh_sampling_m": 60,
+    "reference_points": [
+      {
+        "name": "主峰区域（论文概位）",
+        "lon": 75.116667,
+        "lat": 38.283333,
+        "source": "https://tc.copernicus.org/articles/17/5435/2023/tc-17-5435-2023.html",
+        "coordinate_status": "rounded minute precision; regional reference only, not exact summit"
+      },
+      {
+        "name": "峰顶（GPX参考）",
+        "lon": 75.116124,
+        "lat": 38.275734,
+        "source": "https://www.geiselstein.com/uploads/8/4/4/0/84402202/etappe5-_camp3-gipfel.gpx",
+        "coordinate_status": "2018 traveller Garmin endpoint; approximate, not surveyed",
+        "peak_window_radius_m": 2000
+      },
+      {
+        "name": "西侧大本营（GPX参考）",
+        "lon": 75.023666,
+        "lat": 38.289002,
+        "source": "https://www.geiselstein.com/uploads/8/4/4/0/84402202/etappe1_-_subashi-basecamp.gpx",
+        "coordinate_status": "2018 traveller Garmin endpoint; coverage check only"
+      }
+    ],
+    "limits": [
+      "DSM retains the acquired ice/snow surface; it is not subglacial bedrock.",
+      "Glacier and snow surfaces are time-dependent; this is not a current glacier survey.",
+      "No additional glacier thickness or independent snow-depth geometry is inferred."
+    ]
+  },
+  "product": "Copernicus GLO-30",
+  "surface_model": "ice_surface_DSM",
+  "source_ids": [
+    "copernicus_muztagh_N38E074",
+    "copernicus_muztagh_N38E075"
+  ],
+  "source_tiles": [
+    "copernicus_muztagh_N38E074",
+    "copernicus_muztagh_N38E075"
+  ],
+  "source_rasters": [
+    {
+      "id": "copernicus_muztagh_N38E074",
+      "product": "Copernicus GLO-30 AWS public 2021 release DSM",
+      "local_path": "artifacts/mountain-prep/terrain-v2/raw/Copernicus_DSM_COG_10_N38_00_E074_00_DEM.tif",
+      "sha256": "e1732e45ed5f2b8777a73cd06fe31ae8ae969ff628cb97c1056d9c588f258bae",
+      "crs": "EPSG:4326",
+      "vertical_datum": "EGM2008 (EPSG:3855), metres",
+      "scale": 1.0,
+      "offset": 0.0,
+      "effective_scale": null,
+      "effective_offset": null,
+      "scale_interpretation": null,
+      "attribution": "produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "license_url": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM"
+    },
+    {
+      "id": "copernicus_muztagh_N38E075",
+      "product": "Copernicus GLO-30 AWS public 2021 release DSM",
+      "local_path": "artifacts/mountain-prep/terrain-v2/raw/Copernicus_DSM_COG_10_N38_00_E075_00_DEM.tif",
+      "sha256": "ca81e041c68120947c8f3ec54af4a696457859e6aa0828a39d06f68501a5ce18",
+      "crs": "EPSG:4326",
+      "vertical_datum": "EGM2008 (EPSG:3855), metres",
+      "scale": 1.0,
+      "offset": 0.0,
+      "effective_scale": null,
+      "effective_offset": null,
+      "scale_interpretation": null,
+      "attribution": "produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "license_url": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM"
+    }
+  ],
+  "source_crs": "EPSG:4326",
+  "vertical_datum": "EGM2008 (EPSG:3855), metres",
+  "vertical_units": "metres",
+  "vertical_correction_m": 0,
+  "vertical_origin_m": 0,
+  "vertical_exaggeration": 1,
+  "is_dtm": false,
+  "dtm_status": "not DTM; retained ice/snow surface",
+  "buildings_and_vegetation_removed": false,
+  "object_removal_status": "not removed; original acquired surface retained",
+  "is_subglacial_bedrock": false,
+  "processing": [
+    "source SHA256 and full local block decoding",
+    "masked native scale/offset decoding",
+    "native pixel-grid-aligned mosaic",
+    "native AOI crop",
+    "one bilinear reprojection to master 30m grid",
+    "integer-pixel master-grid region crop",
+    "16-bit heightmap",
+    "local XY / absolute EGM2008 Z OBJ"
+  ],
+  "projected_crs": "EPSG:32643",
+  "projected_bounds_m": [
+    495600,
+    4216890,
+    530700,
+    4261380
+  ],
+  "projected_transform": [
+    30.0,
+    0.0,
+    495600.0,
+    0.0,
+    -30.0,
+    4261380.0,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "resolution_m": 30,
+  "geographic_crop_actual_bounds_wgs84": [
+    74.94986111111112,
+    38.09986111111111,
+    75.35013888888889,
+    38.50013888888889
+  ],
+  "geographic_crop_statistics": {
+    "shape_rows_columns": [
+      1441,
+      1441
+    ],
+    "valid_samples": 2076481,
+    "invalid_samples": 0,
+    "min_m": 3487.26708984375,
+    "max_m": 7484.4580078125,
+    "mean_m": 4601.91845703125,
+    "percentiles_m": {
+      "1": 3638.857666015625,
+      "5": 3685.076171875,
+      "50": 4554.86474609375,
+      "95": 5779.37890625,
+      "99": 6665.96142578125
+    }
+  },
+  "projected_statistics": {
+    "shape_rows_columns": [
+      1483,
+      1170
+    ],
+    "valid_samples": 1735110,
+    "invalid_samples": 0,
+    "min_m": 3489.324462890625,
+    "max_m": 7483.99609375,
+    "mean_m": 4602.048828125,
+    "percentiles_m": {
+      "1": 3638.695556640625,
+      "5": 3685.3798828125,
+      "50": 4555.72265625,
+      "95": 5777.232421875,
+      "99": 6664.25390625
+    }
+  },
+  "projected_extent_km": [
+    35.1,
+    44.49
+  ],
+  "grid": {
+    "rows": 1483,
+    "columns": 1170,
+    "resolution_m": 30,
+    "master_id": "muztagh_ata",
+    "window_in_master_row_col_height_width": [
+      0,
+      0,
+      1483,
+      1170
+    ],
+    "master_projected_bounds_m": [
+      495600,
+      4216890,
+      530700,
+      4261380
+    ],
+    "master_projected_xy_origin_m": [
+      513150.0,
+      4239135.0
+    ],
+    "coordinate_units": "metres"
+  },
+  "grid_join_checks": [
+    {
+      "orientation": "east-west",
+      "join_longitude": 74.99986111111112,
+      "grid_gap_degrees": 0.0,
+      "valid_neighbor_pairs": 1441,
+      "median_neighbor_height_difference_m": 3.0908203125,
+      "p95_neighbor_height_difference_m": 12.78466796875
+    }
+  ],
+  "native_grid_alignment_check": {
+    "source_cells_checked": 225,
+    "all_equal_to_scaled_original_source_cells": true,
+    "all_equal_to_original_source_cells": true,
+    "comparison_units": "scaled metres"
+  },
+  "reference_checks": [
+    {
+      "name": "主峰区域（论文概位）",
+      "lon": 75.116667,
+      "lat": 38.283333,
+      "source": "https://tc.copernicus.org/articles/17/5435/2023/tc-17-5435-2023.html",
+      "coordinate_status": "rounded minute precision; regional reference only, not exact summit",
+      "projected_x_m": 510203.51759832836,
+      "projected_y_m": 4237258.601062882,
+      "within_crop": true,
+      "nearest_raster_elevation_m": 6898.900390625,
+      "local_mesh_xyz_m": [
+        -2946.4824016716448,
+        -1876.3989371182397,
+        6898.900390625
+      ]
+    },
+    {
+      "name": "峰顶（GPX参考）",
+      "lon": 75.116124,
+      "lat": 38.275734,
+      "source": "https://www.geiselstein.com/uploads/8/4/4/0/84402202/etappe5-_camp3-gipfel.gpx",
+      "coordinate_status": "2018 traveller Garmin endpoint; approximate, not surveyed",
+      "peak_window_radius_m": 2000,
+      "projected_x_m": 510157.08628432197,
+      "projected_y_m": 4236415.375813467,
+      "within_crop": true,
+      "nearest_raster_elevation_m": 7391.28076171875,
+      "local_mesh_xyz_m": [
+        -2992.9137156780344,
+        -2719.624186532572,
+        7391.28076171875
+      ],
+      "nearby_peak_max_m": 7483.99609375,
+      "nearby_peak_search_shape": "projected circle, raster pixel centres"
+    },
+    {
+      "name": "西侧大本营（GPX参考）",
+      "lon": 75.023666,
+      "lat": 38.289002,
+      "source": "https://www.geiselstein.com/uploads/8/4/4/0/84402202/etappe1_-_subashi-basecamp.gpx",
+      "coordinate_status": "2018 traveller Garmin endpoint; coverage check only",
+      "projected_x_m": 502069.6309063821,
+      "projected_y_m": 4237881.4478705805,
+      "within_crop": true,
+      "nearest_raster_elevation_m": 4419.2001953125,
+      "local_mesh_xyz_m": [
+        -11080.36909361789,
+        -1253.5521294195205,
+        4419.2001953125
+      ]
+    }
+  ],
+  "maximum_sample_location": {
+    "lon": 75.11381555518687,
+    "lat": 38.276994620819835,
+    "height_m": 7483.99609375,
+    "meaning": "highest sample in crop, not a surveyed summit"
+  },
+  "heightmap": {
+    "path": "output/terrain-v2/muztagh_ata/muztagh_ata_height16.png",
+    "zero_m": 3489.324462890625,
+    "one_m": 7483.99609375,
+    "decode": "elevation_m = pixel/65535 * (one_m-zero_m) + zero_m",
+    "row_zero": "north",
+    "colour_space": "Non-Color / linear data",
+    "mesh_pixel_center_extent_m": [
+      35070,
+      44460
+    ],
+    "max_roundtrip_error_m": 0.03070567090253462,
+    "quantization_limit_m": 0.0324773909426976
+  },
+  "mesh": {
+    "path": "output/terrain-v2/muztagh_ata/muztagh_ata_blockout.obj",
+    "vertices": 434812,
+    "triangles": 866970,
+    "uv_coordinates": 434812,
+    "uv_mapping": "original raster pixel centres",
+    "uv_heightmap_alignment_verified": true,
+    "sampling_m": 60,
+    "open_surface": true,
+    "axis_convention": {
+      "X": "east",
+      "Y": "north",
+      "Z": "up"
+    },
+    "projected_xy_origin_m": [
+      513150.0,
+      4239135.0
+    ],
+    "vertical_origin_m": 0,
+    "units": "metres",
+    "grid_rows_columns": [
+      742,
+      586
+    ],
+    "sampled_elevation_min_m": 3489.324462890625,
+    "sampled_elevation_max_m": 7482.24072265625,
+    "max_serialization_height_error_m": 0.0005000000001018634,
+    "max_serialization_xy_error_m": 0.0,
+    "max_uv_error": 4.957264959637442e-09,
+    "topology_verified": true,
+    "all_triangle_normals_positive_z": true
+  },
+  "attribution": "produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+  "license_url": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM",
+  "license_urls": [
+    "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM"
+  ],
+  "limits": [
+    "DSM retains the acquired ice/snow surface; it is not subglacial bedrock.",
+    "Glacier and snow surfaces are time-dependent; this is not a current glacier survey.",
+    "No additional glacier thickness or independent snow-depth geometry is inferred.",
+    "30m reprojection does not add terrain detail.",
+    "Reference positions are approximate coverage checks, not survey controls.",
+    "No buildings, glacier thickness, near-field rock details or narrative layout are constructed here."
+  ],
+  "outputs": [
+    {
+      "path": "output/terrain-v2/muztagh_ata/muztagh_ata_dsm_native_wgs84.tif",
+      "bytes": 4600294,
+      "sha256": "a488ffffab90f259e6e6954f76bf3893b6c3ad4d0e8d3cb940d45fd7fc910937"
+    },
+    {
+      "path": "output/terrain-v2/muztagh_ata/muztagh_ata_dsm_utm30m.tif",
+      "bytes": 3885514,
+      "sha256": "4f1bc3d18f706e7b925e45179682c49a9878d509637271ff0ed9ad57e6ddc129"
+    },
+    {
+      "path": "output/terrain-v2/muztagh_ata/muztagh_ata_elevation_float32.npy",
+      "bytes": 6940568,
+      "sha256": "3bdb819936e169bf34ad13d4d75d4dc52051af765ec368a2e0a20ba1a8247ead"
+    },
+    {
+      "path": "output/terrain-v2/muztagh_ata/muztagh_ata_height16.png",
+      "bytes": 2335678,
+      "sha256": "de9f20e699942a4b14390e9f77a7629817770a4d50546962ae4dfb56e95bfe8d"
+    },
+    {
+      "path": "output/terrain-v2/muztagh_ata/muztagh_ata_blockout.obj",
+      "bytes": 61119774,
+      "sha256": "1e3e9f793dc79ca3bf034400107e34320f7578e16fb236772af30e7665ea7f88"
+    },
+    {
+      "path": "output/terrain-v2/muztagh_ata/muztagh_ata_map.png",
+      "bytes": 1788297,
+      "sha256": "598c166fffcd010a413517909472b99fa48812122de39848dcda58b5647b9b05"
+    },
+    {
+      "path": "output/terrain-v2/muztagh_ata/muztagh_ata_surface.png",
+      "bytes": 678745,
+      "sha256": "038c8fadf5d8fbb70d580601a5bf24cb6d81e516aac4d6da71e86c063d2018b5"
+    },
+    {
+      "path": "output/terrain-v2/muztagh_ata/muztagh_ata_old_dsm_minus_new_terrain.tif",
+      "bytes": 10090,
+      "sha256": "bd1eaeebe395ff8b96bcf6eb0cb0adf569cf0c010605ceaf8af227a55b984edd"
+    },
+    {
+      "path": "output/terrain-v2/muztagh_ata/muztagh_ata_old_dsm_minus_new_terrain.png",
+      "bytes": 50732,
+      "sha256": "38c9cc17df562238e6308365524e0c4bf382d817df8c30d573774c950021af13"
+    }
+  ],
+  "old_dsm_comparison": {
+    "meaning": "old DSM minus new terrain; diagnostic only, not measured canopy/building height",
+    "status": "reported",
+    "outputs": [
+      {
+        "path": "output/terrain-v2/muztagh_ata/muztagh_ata_old_dsm_minus_new_terrain.tif",
+        "bytes": 10090,
+        "sha256": "bd1eaeebe395ff8b96bcf6eb0cb0adf569cf0c010605ceaf8af227a55b984edd"
+      },
+      {
+        "path": "output/terrain-v2/muztagh_ata/muztagh_ata_old_dsm_minus_new_terrain.png",
+        "bytes": 50732,
+        "sha256": "38c9cc17df562238e6308365524e0c4bf382d817df8c30d573774c950021af13"
+      }
+    ],
+    "differences_do_not_gate_processing": true,
+    "old_source": {
+      "path": "output/terrain/muztagh_ata/muztagh_ata_dsm_utm30m.tif",
+      "bytes": 3885446,
+      "sha256": "e37805a5fcd697788d0f5ebfac945f937e55a08435e67b073cb7f01e64748076"
+    },
+    "old_vertical_datum_tag": "EGM2008",
+    "comparison_valid_pixels": 1735110,
+    "comparison_invalid_pixels": 0,
+    "statistics": {
+      "shape_rows_columns": [
+        1483,
+        1170
+      ],
+      "valid_samples": 1735110,
+      "invalid_samples": 0,
+      "min_m": 0.0,
+      "max_m": 0.0,
+      "mean_m": 0.0,
+      "percentiles_m": {
+        "1": 0.0,
+        "5": 0.0,
+        "50": 0.0,
+        "95": 0.0,
+        "99": 0.0
+      }
+    },
+    "positive_fraction": 0.0,
+    "negative_fraction": 0.0,
+    "absolute_difference_p95_m": 0.0,
+    "warning": "Source prediction, dates, masks and interpolation can differ; do not interpret as exact removed object heights."
+  }
+}

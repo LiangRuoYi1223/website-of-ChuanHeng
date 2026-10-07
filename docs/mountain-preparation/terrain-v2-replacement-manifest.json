@@ -1,0 +1,425 @@
+{
+  "schema_version": 2,
+  "status": "complete",
+  "user_request": "Re-download the four recommended terrain types and delete previous models/data.",
+  "old_assets": [
+    {
+      "path": "output/terrain/ATTRIBUTION.txt",
+      "bytes": 472,
+      "sha256": "b34c7ee8c56663d6dbec6c5df0362d1536d01f84c409e3448acf335c38071256"
+    },
+    {
+      "path": "output/terrain/README.md",
+      "bytes": 5107,
+      "sha256": "606dd8ed9cf1c370c9cb156b20bb2a469797c41bd4fc48a8eb3b7c67a56b6172"
+    },
+    {
+      "path": "output/terrain/terrain-overview.png",
+      "bytes": 3274829,
+      "sha256": "a91f28aab8dfab43603417babec983d733de068bc8eddd03321b03493565402b"
+    },
+    {
+      "path": "output/terrain/campus_tanglang/campus_tanglang_blockout.obj",
+      "bytes": 3719414,
+      "sha256": "8014a4f849f680fe8841d36b0b56ba7047c7ba92ea595a03aae007b3a675cdc2"
+    },
+    {
+      "path": "output/terrain/campus_tanglang/campus_tanglang_dsm_utm30m.tif",
+      "bytes": 359706,
+      "sha256": "74b92ecf132285ea126dbad2a493882632723f7c710d0b990234e69562570873"
+    },
+    {
+      "path": "output/terrain/campus_tanglang/campus_tanglang_dsm_wgs84.tif",
+      "bytes": 350934,
+      "sha256": "11bc24dbbb0721b97b81d9b056530409b0a59dc901f0b665e6d92fd770040ac6"
+    },
+    {
+      "path": "output/terrain/campus_tanglang/campus_tanglang_elevation_float32.npy",
+      "bytes": 477528,
+      "sha256": "b02abe53628f606d6fd37825215b043a466312b5734c70e3bac3dea25604ba82"
+    },
+    {
+      "path": "output/terrain/campus_tanglang/campus_tanglang_height16.png",
+      "bytes": 188622,
+      "sha256": "0df718661575823e83a361eb8daf36be527faf609665d6643cabf275bd0cdf52"
+    },
+    {
+      "path": "output/terrain/campus_tanglang/campus_tanglang_map.png",
+      "bytes": 630272,
+      "sha256": "c7340d0dbaafb23a80f630b0604b57c279aeae1123c2ca6cc17762028d35ec7e"
+    },
+    {
+      "path": "output/terrain/campus_tanglang/campus_tanglang_metadata.json",
+      "bytes": 7647,
+      "sha256": "8fda09c38c654588f36567efc4b1d51e3247ecab8cd96b3395ea93f82e130a4e"
+    },
+    {
+      "path": "output/terrain/campus_tanglang/campus_tanglang_surface.png",
+      "bytes": 700534,
+      "sha256": "691b3be7aa989bbc59e16ad735c0ce17f2bcd132e543948de345149997f71f06"
+    },
+    {
+      "path": "output/terrain/muztagh_ata/muztagh_ata_blockout.obj",
+      "bytes": 14353936,
+      "sha256": "bf18a6d70ca9f5d37397623e90f4a054e9624925014189d607992c17e6d757dc"
+    },
+    {
+      "path": "output/terrain/muztagh_ata/muztagh_ata_dsm_utm30m.tif",
+      "bytes": 3885446,
+      "sha256": "e37805a5fcd697788d0f5ebfac945f937e55a08435e67b073cb7f01e64748076"
+    },
+    {
+      "path": "output/terrain/muztagh_ata/muztagh_ata_dsm_wgs84.tif",
+      "bytes": 4593814,
+      "sha256": "22476345e4b7f960fcca20b117c4e803db6a63aafb2cfa02b5966e63173a446e"
+    },
+    {
+      "path": "output/terrain/muztagh_ata/muztagh_ata_elevation_float32.npy",
+      "bytes": 6940568,
+      "sha256": "3bdb819936e169bf34ad13d4d75d4dc52051af765ec368a2e0a20ba1a8247ead"
+    },
+    {
+      "path": "output/terrain/muztagh_ata/muztagh_ata_height16.png",
+      "bytes": 2335678,
+      "sha256": "de9f20e699942a4b14390e9f77a7629817770a4d50546962ae4dfb56e95bfe8d"
+    },
+    {
+      "path": "output/terrain/muztagh_ata/muztagh_ata_map.png",
+      "bytes": 1601888,
+      "sha256": "2fe1447627d82d4bcfe4b2e2d3dede0217c8015225fd436456e443cb68b18b4c"
+    },
+    {
+      "path": "output/terrain/muztagh_ata/muztagh_ata_metadata.json",
+      "bytes": 8772,
+      "sha256": "7f027a7e3f0754a318764f6e32594c9729c44c6864ab085c4fc41f0b960d856c"
+    },
+    {
+      "path": "output/terrain/muztagh_ata/muztagh_ata_surface.png",
+      "bytes": 664949,
+      "sha256": "53b33ce8ab429815d16330a2ace1e741a1b1135c638e0950e1b57830d113b75c"
+    },
+    {
+      "path": "output/terrain/wutai/wutai_blockout.obj",
+      "bytes": 7703109,
+      "sha256": "db9e74bac46f95c71aab2c477c10d3472539591a1bdd1c3c5506b809c9b45320"
+    },
+    {
+      "path": "output/terrain/wutai/wutai_dsm_utm30m.tif",
+      "bytes": 2347094,
+      "sha256": "c462e8a630cde59920acfac8c9dbeeae937dec9906a0eb57ac0ebb4d75b548a0"
+    },
+    {
+      "path": "output/terrain/wutai/wutai_dsm_wgs84.tif",
+      "bytes": 2652824,
+      "sha256": "7f2c6911e55cd8bd8a4d856f199b2536122ed7c9244d0a893bbd3812fdc6eff1"
+    },
+    {
+      "path": "output/terrain/wutai/wutai_elevation_float32.npy",
+      "bytes": 3802752,
+      "sha256": "77776093d5160ac48e220be5808ed33e88ca2b322b0df6accf196736131d68bf"
+    },
+    {
+      "path": "output/terrain/wutai/wutai_height16.png",
+      "bytes": 1415423,
+      "sha256": "cbdaf03d7261f6f3f0f2d6fabcdf8d4de9bce71cbefce36374d63117651b0fa0"
+    },
+    {
+      "path": "output/terrain/wutai/wutai_map.png",
+      "bytes": 1854517,
+      "sha256": "980f3bc13c981eda5d69becec99dc013a099d65c4e434ffe345e5f2bd1af1998"
+    },
+    {
+      "path": "output/terrain/wutai/wutai_metadata.json",
+      "bytes": 9907,
+      "sha256": "6fbd2ff2cde4f839559c933531687db6e6d8b3d35451384b0faf8780056acbfe"
+    },
+    {
+      "path": "output/terrain/wutai/wutai_surface.png",
+      "bytes": 670799,
+      "sha256": "4c7708e72d01ffb15daf113bb22c29956c5b6539a2703827b3514df09d2524ab"
+    },
+    {
+      "path": "output/blender-validation/campus_tanglang_preview.png",
+      "bytes": 374956,
+      "sha256": "85c63de33000e1f5becbaf0c03632584614ffcf43267fd3ac674e5fc90129f92"
+    },
+    {
+      "path": "output/blender-validation/campus_tanglang_validation.blend",
+      "bytes": 1404038,
+      "sha256": "711532de653d4d75edb88da4a16b6dc8a43cd1d6ee25cba5552cbeef36bfa9b5"
+    },
+    {
+      "path": "output/blender-validation/campus_tanglang_validation.glb",
+      "bytes": 1323168,
+      "sha256": "dd729cacec14b7a8aeeedb1d2e742f5cabe2ac9662067e995c5b06bdada6e7f7"
+    },
+    {
+      "path": "output/blender-validation/muztagh_ata_preview.png",
+      "bytes": 442171,
+      "sha256": "0724979c54cc1bffbc31f733cdb5450c5a1c28719c3cb26991f2a71b0319cdd4"
+    },
+    {
+      "path": "output/blender-validation/muztagh_ata_validation.blend",
+      "bytes": 5373298,
+      "sha256": "dcc666906aa98cfaeaac656ad8cbcdbfe3f6e095af998b73543bfa7cb521c743"
+    },
+    {
+      "path": "output/blender-validation/muztagh_ata_validation.glb",
+      "bytes": 6111732,
+      "sha256": "5f9d4a444a87757136cb61e609e09eb74ab40a19d12fac0c48ee6adce335cbde"
+    },
+    {
+      "path": "output/blender-validation/README.md",
+      "bytes": 3171,
+      "sha256": "073b62fc26214ec9cc55e728cc341ea1304fccc305b89879ef09058921b78485"
+    },
+    {
+      "path": "output/blender-validation/wutai_preview.png",
+      "bytes": 474090,
+      "sha256": "924bfef5a6138968de6f59dc55eaad8931cbbd70fa62d4dbe94cc8a6fc6592c6"
+    },
+    {
+      "path": "output/blender-validation/wutai_validation.blend",
+      "bytes": 2711075,
+      "sha256": "ac9cee4a9385785828912b4c49604273152c91503313c3d30ea0c32c6ff88467"
+    },
+    {
+      "path": "output/blender-validation/wutai_validation.glb",
+      "bytes": 2630572,
+      "sha256": "34f2fbd2c7dbeea52fcd4dcc9d2cc62f26c5069b0a1e9951b88f4308e6e01fde"
+    },
+    {
+      "path": "output/blender-validation/reports/campus_tanglang_glb-roundtrip.json",
+      "bytes": 2079,
+      "sha256": "0057e3f5cc8ae9f50bb6f77a62d5c93318fd7665b965fc7135d9dfe108e238a5"
+    },
+    {
+      "path": "output/blender-validation/reports/campus_tanglang_import-save.json",
+      "bytes": 1524,
+      "sha256": "58d07d67575e1382114ac01ddfbf53f816a73925b442e89a402ba973626aa3fa"
+    },
+    {
+      "path": "output/blender-validation/reports/campus_tanglang_reopen-export.json",
+      "bytes": 2334,
+      "sha256": "10bb9a15746a539050b75c323f2ec0a0384be3d82a766167873ce7907cdd308f"
+    },
+    {
+      "path": "output/blender-validation/reports/muztagh_ata_glb-roundtrip.json",
+      "bytes": 2070,
+      "sha256": "786b99b778b56623e4f34e38ee70357ab4c69eee4ee7b83ff0db9762c653f2b8"
+    },
+    {
+      "path": "output/blender-validation/reports/muztagh_ata_import-save.json",
+      "bytes": 1513,
+      "sha256": "6b9652c9bfc88821f21183008ffbaf3ae5a0eb498e2028e6e7d8f31ddb17057a"
+    },
+    {
+      "path": "output/blender-validation/reports/muztagh_ata_reopen-export.json",
+      "bytes": 2319,
+      "sha256": "686940085c665fdc759ad334667499d73ff722a806f0ab5478090c5017f59448"
+    },
+    {
+      "path": "output/blender-validation/reports/wutai_glb-roundtrip.json",
+      "bytes": 2045,
+      "sha256": "40cde196d94005571df724ce46c720e1b2359820e5bc28a975dc814e857f36ce"
+    },
+    {
+      "path": "output/blender-validation/reports/wutai_import-save.json",
+      "bytes": 1489,
+      "sha256": "988cf93a5740807a2454dac62ab62cd806645512920c3241af27b444f57aebf0"
+    },
+    {
+      "path": "output/blender-validation/reports/wutai_reopen-export.json",
+      "bytes": 2290,
+      "sha256": "a43e182aba9e3df559316f527b92e09850c1a3954e7615325132b18278d55a98"
+    },
+    {
+      "path": "artifacts/mountain-prep/terrain/raw/Copernicus_DSM_COG_10_N22_00_E113_00_DEM.tif",
+      "bytes": 36641041,
+      "sha256": "074e13244e6da6745bcf76150fdc6e06f774140a7aac796785922fce962eacbb"
+    },
+    {
+      "path": "artifacts/mountain-prep/terrain/raw/Copernicus_DSM_COG_10_N22_00_E114_00_DEM.tif",
+      "bytes": 25030462,
+      "sha256": "b950ab75642d6684fe08c82b6aa3bb087c1d35acd229ef0e6e6586e1b0868fa3"
+    },
+    {
+      "path": "artifacts/mountain-prep/terrain/raw/Copernicus_DSM_COG_10_N38_00_E074_00_DEM.tif",
+      "bytes": 38023450,
+      "sha256": "e1732e45ed5f2b8777a73cd06fe31ae8ae969ff628cb97c1056d9c588f258bae"
+    },
+    {
+      "path": "artifacts/mountain-prep/terrain/raw/Copernicus_DSM_COG_10_N38_00_E075_00_DEM.tif",
+      "bytes": 40363569,
+      "sha256": "ca81e041c68120947c8f3ec54af4a696457859e6aa0828a39d06f68501a5ce18"
+    },
+    {
+      "path": "artifacts/mountain-prep/terrain/raw/Copernicus_DSM_COG_10_N38_00_E113_00_DEM.tif",
+      "bytes": 44132239,
+      "sha256": "58e7a3a74c84c7955d1d04c02e40905d1e61ce0bc2d5c1ecc53ecd373ccb44c1"
+    },
+    {
+      "path": "artifacts/mountain-prep/terrain/raw/Copernicus_DSM_COG_10_N39_00_E113_00_DEM.tif",
+      "bytes": 40603040,
+      "sha256": "099cd595cd1b6270ca84a956727040eea877b743331f1f829ce4f70f8e64007a"
+    },
+    {
+      "path": "artifacts/mountain-prep/blender-validation/campus_tanglang_glb-roundtrip.log",
+      "bytes": 627,
+      "sha256": "664a8e7e04bbb270088b32487af4a4c60f1c41156462526834adf3103467190a"
+    },
+    {
+      "path": "artifacts/mountain-prep/blender-validation/campus_tanglang_import-save.log",
+      "bytes": 1013,
+      "sha256": "d51e9073a59ad01da6c8db9a6b6579506ac071b31cb454eb2f489633311956e7"
+    },
+    {
+      "path": "artifacts/mountain-prep/blender-validation/campus_tanglang_reopen-export.log",
+      "bytes": 944,
+      "sha256": "1d68632a29a2e37ef453226971084fd624e43321a3ff670cefe378e83f6d7a8b"
+    },
+    {
+      "path": "artifacts/mountain-prep/blender-validation/muztagh_ata_glb-roundtrip.log",
+      "bytes": 619,
+      "sha256": "b99d71cd33e058d193d96cd28239fb79ab52274de2a7da8de45a2d00053bdd3d"
+    },
+    {
+      "path": "artifacts/mountain-prep/blender-validation/muztagh_ata_import-save.log",
+      "bytes": 1001,
+      "sha256": "6ef38965cce8ec53daef76e0a201d2c113d182ea281d7aac412151ed9be10772"
+    },
+    {
+      "path": "artifacts/mountain-prep/blender-validation/muztagh_ata_reopen-export.log",
+      "bytes": 927,
+      "sha256": "ee88540181163f0e0fe4921a274fcef21251f27c8f2c6d592d295d66017b56e7"
+    },
+    {
+      "path": "artifacts/mountain-prep/blender-validation/wutai_glb-roundtrip.log",
+      "bytes": 607,
+      "sha256": "1fd2c30f4997bd536c7339161d49af567ca3f49cd701d2b96df4d1b4694578ab"
+    },
+    {
+      "path": "artifacts/mountain-prep/blender-validation/wutai_import-save.log",
+      "bytes": 983,
+      "sha256": "2023ec7d260b4a0889f995aca28d61a117d296216f9b6671e20540e4f50a02a2"
+    },
+    {
+      "path": "artifacts/mountain-prep/blender-validation/wutai_reopen-export.log",
+      "bytes": 904,
+      "sha256": "793f3b42b3955d30030cfb2e92db06c20338b700bb87e0a1d6bfa34cf082c42c"
+    },
+    {
+      "path": "artifacts/mountain-prep/blender-runtime-probe.py",
+      "bytes": 894,
+      "sha256": "d22c3642aa42f5e744f7269d2365830b2bdbc5ff93ab2150b30a9dcd06d82d3a"
+    },
+    {
+      "path": "artifacts/mountain-prep/probe-gedtm.py",
+      "bytes": 1855,
+      "sha256": "a72f8bc577ae47e1534305a8bbdafdc7b8ac9c799ce2c661917492afdbd2b2d5"
+    },
+    {
+      "path": "docs/mountain-preparation/terrain-download-manifest.json",
+      "bytes": 10463,
+      "sha256": "46303c334a72abfa7aff5995c49197681fae424aa92f863df48e77a29eaac53a"
+    },
+    {
+      "path": "docs/mountain-preparation/terrain-processing-manifest.json",
+      "bytes": 39462,
+      "sha256": "07223cbecf1d87ed02e80b9971c71b9aa883215d624204dce52a41d84f4a3345"
+    },
+    {
+      "path": "docs/mountain-preparation/terrain-regions.json",
+      "bytes": 3393,
+      "sha256": "5f8722d7eb32159c8957ec4bd5f63c37d0f62cd5321b4e44ea7254ab7a435157"
+    },
+    {
+      "path": "docs/mountain-preparation/blender-runtime-validation.json",
+      "bytes": 7493,
+      "sha256": "af1e713f0e27be3d9b1da9790dec8f930f5517a708374b2fd98b7aaeab88ce50"
+    },
+    {
+      "path": "scripts/download-terrain.py",
+      "bytes": 8774,
+      "sha256": "f11a448db09c90e0ff6da7d3af7d135508287ff1edbbab29a78da2c6f9139dd1"
+    },
+    {
+      "path": "scripts/prepare-terrain.py",
+      "bytes": 26935,
+      "sha256": "be41391c7c3fea113d8f8828689a05dc66d54c9649809d7cbc12430eb7e743cf"
+    },
+    {
+      "path": "scripts/verify-blender.py",
+      "bytes": 22425,
+      "sha256": "1910166be1d7d6b094fa725bc520791c9ee4fc29711479773786292f20c79b57"
+    }
+  ],
+  "old_file_count": 70,
+  "old_bytes": 310345595,
+  "prior_tanglang_approximate_high_point_wgs84": [
+    113.980943,
+    22.576248
+  ],
+  "replacement_reports": [
+    "terrain-v2-download-manifest.json",
+    "terrain-v2-processing-manifest.json",
+    "terrain-v2-blender-validation.json"
+  ],
+  "historical_record_retained": "terrain-access-check.json: initial HEAD access metadata only, no height payload",
+  "targets": [
+    {
+      "relative": "output\\terrain",
+      "absolute": "C:\\Users\\ander\\Documents\\ChatGPT\\川衡网页设计\\output\\terrain"
+    },
+    {
+      "relative": "output\\blender-validation",
+      "absolute": "C:\\Users\\ander\\Documents\\ChatGPT\\川衡网页设计\\output\\blender-validation"
+    },
+    {
+      "relative": "artifacts\\mountain-prep\\terrain",
+      "absolute": "C:\\Users\\ander\\Documents\\ChatGPT\\川衡网页设计\\artifacts\\mountain-prep\\terrain"
+    },
+    {
+      "relative": "artifacts\\mountain-prep\\blender-validation",
+      "absolute": "C:\\Users\\ander\\Documents\\ChatGPT\\川衡网页设计\\artifacts\\mountain-prep\\blender-validation"
+    },
+    {
+      "relative": "artifacts\\mountain-prep\\blender-runtime-probe.py",
+      "absolute": "C:\\Users\\ander\\Documents\\ChatGPT\\川衡网页设计\\artifacts\\mountain-prep\\blender-runtime-probe.py"
+    },
+    {
+      "relative": "artifacts\\mountain-prep\\probe-gedtm.py",
+      "absolute": "C:\\Users\\ander\\Documents\\ChatGPT\\川衡网页设计\\artifacts\\mountain-prep\\probe-gedtm.py"
+    },
+    {
+      "relative": "docs\\mountain-preparation\\terrain-download-manifest.json",
+      "absolute": "C:\\Users\\ander\\Documents\\ChatGPT\\川衡网页设计\\docs\\mountain-preparation\\terrain-download-manifest.json"
+    },
+    {
+      "relative": "docs\\mountain-preparation\\terrain-processing-manifest.json",
+      "absolute": "C:\\Users\\ander\\Documents\\ChatGPT\\川衡网页设计\\docs\\mountain-preparation\\terrain-processing-manifest.json"
+    },
+    {
+      "relative": "docs\\mountain-preparation\\terrain-regions.json",
+      "absolute": "C:\\Users\\ander\\Documents\\ChatGPT\\川衡网页设计\\docs\\mountain-preparation\\terrain-regions.json"
+    },
+    {
+      "relative": "docs\\mountain-preparation\\blender-runtime-validation.json",
+      "absolute": "C:\\Users\\ander\\Documents\\ChatGPT\\川衡网页设计\\docs\\mountain-preparation\\blender-runtime-validation.json"
+    },
+    {
+      "relative": "scripts\\download-terrain.py",
+      "absolute": "C:\\Users\\ander\\Documents\\ChatGPT\\川衡网页设计\\scripts\\download-terrain.py"
+    },
+    {
+      "relative": "scripts\\prepare-terrain.py",
+      "absolute": "C:\\Users\\ander\\Documents\\ChatGPT\\川衡网页设计\\scripts\\prepare-terrain.py"
+    },
+    {
+      "relative": "scripts\\verify-blender.py",
+      "absolute": "C:\\Users\\ander\\Documents\\ChatGPT\\川衡网页设计\\scripts\\verify-blender.py"
+    }
+  ],
+  "updated_utc": "2026-10-05T07:33:59.3478704Z",
+  "all_old_targets_absent": true
+}

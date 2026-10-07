@@ -1,0 +1,167 @@
+{
+  "retrievedDate": "2026-10-05",
+  "url": "https://maps.nlsc.gov.tw/download/縣市界線(TWD97經緯度).zip",
+  "sha256": "0c6fca34a92b92ef3e9a41957e403cb89e814bb64942ca7c7e51c746f913d49d",
+  "bytes": 3708666,
+  "provider": "內政部國土測繪中心 (NLSC)",
+  "license": "政府資料開放授權條款－第1版",
+  "coordinateSystem": "TWD97 geographic longitude/latitude (EPSG:3824)",
+  "sourceFile": "COUNTY_MOI_1090820.shp",
+  "projection": "GEOGCS[\"GCS_TWD_1997\",DATUM[\"D_TWD_1997\",SPHEROID[\"GRS_1980\",6378137.0,298.257222101]],PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]]",
+  "features": [
+    {
+      "countyCode": "09007",
+      "countyName": "連江縣",
+      "longitude": 119.934398,
+      "latitude": 26.155447,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "09020",
+      "countyName": "金門縣",
+      "longitude": 118.380155,
+      "latitude": 24.457742,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "10002",
+      "countyName": "宜蘭縣",
+      "longitude": 121.64046,
+      "latitude": 24.57023,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "10004",
+      "countyName": "新竹縣",
+      "longitude": 121.163535,
+      "latitude": 24.681087,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "10005",
+      "countyName": "苗栗縣",
+      "longitude": 120.922006,
+      "latitude": 24.483912,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "10007",
+      "countyName": "彰化縣",
+      "longitude": 120.468785,
+      "latitude": 23.964589,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "10008",
+      "countyName": "南投縣",
+      "longitude": 120.982077,
+      "latitude": 23.842738,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "10009",
+      "countyName": "雲林縣",
+      "longitude": 120.379239,
+      "latitude": 23.690071,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "10010",
+      "countyName": "嘉義縣",
+      "longitude": 120.517906,
+      "latitude": 23.44969,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "10013",
+      "countyName": "屏東縣",
+      "longitude": 120.677462,
+      "latitude": 22.48306,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "10014",
+      "countyName": "臺東縣",
+      "longitude": 121.033,
+      "latitude": 22.874845,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "10015",
+      "countyName": "花蓮縣",
+      "longitude": 121.378966,
+      "latitude": 23.753364,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "10016",
+      "countyName": "澎湖縣",
+      "longitude": 119.656297,
+      "latitude": 23.585741,
+      "method": "largest-ring-interior-scanline"
+    },
+    {
+      "countyCode": "10017",
+      "countyName": "基隆市",
+      "longitude": 121.718525,
+      "latitude": 25.117136,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "10018",
+      "countyName": "新竹市",
+      "longitude": 120.946307,
+      "latitude": 24.786998,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "10020",
+      "countyName": "嘉義市",
+      "longitude": 120.447932,
+      "latitude": 23.480547,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "63000",
+      "countyName": "臺北市",
+      "longitude": 121.553296,
+      "latitude": 25.082945,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "64000",
+      "countyName": "高雄市",
+      "longitude": 120.61766,
+      "latitude": 22.996104,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "65000",
+      "countyName": "新北市",
+      "longitude": 121.590503,
+      "latitude": 24.998184,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "66000",
+      "countyName": "臺中市",
+      "longitude": 120.892398,
+      "latitude": 24.238211,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "67000",
+      "countyName": "臺南市",
+      "longitude": 120.324758,
+      "latitude": 23.150778,
+      "method": "largest-ring-centroid"
+    },
+    {
+      "countyCode": "68000",
+      "countyName": "桃園市",
+      "longitude": 121.257645,
+      "latitude": 24.903294,
+      "method": "largest-ring-centroid"
+    }
+  ]
+}

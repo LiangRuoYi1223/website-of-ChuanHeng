@@ -1,0 +1,85 @@
+{
+  "schema_version": 2,
+  "projected_raster_resolution_m": 30,
+  "source_padding_degrees": 0.02,
+  "vertical_datum": "EGM2008 (EPSG:3855)",
+  "master_grids": {
+    "campus_tanglang": {
+      "bounds_wgs84": [113.94, 22.54, 114.04, 22.63],
+      "projected_crs": "EPSG:32649",
+      "source_ids": ["gedtm30_campus_tanglang"],
+      "members": ["campus", "tanglang"]
+    }
+  },
+  "regions": [
+    {
+      "id": "campus",
+      "name": "南科大 · 预测裸地基底",
+      "bounds_wgs84": [113.97, 22.58, 114.04, 22.63],
+      "projected_crs": "EPSG:32649",
+      "source_ids": ["gedtm30_campus_tanglang"],
+      "master_grid": "campus_tanglang",
+      "product": "GEDTM30 v1.2",
+      "surface_model": "predicted_bare_earth",
+      "is_dtm": true,
+      "mesh_sampling_m": 30,
+      "reference_points": [
+        {"name": "校园概位", "lon": 113.99986, "lat": 22.598965, "source": "https://www.sustech.edu.cn/zh/contact_us.html", "coordinate_status": "published campus map datum unspecified; approximate coverage check, not surveyed building footprint"}
+      ],
+      "limits": ["GEDTM30 is a globally predicted bare-earth DTM, not a locally surveyed campus DTM.", "Residual tree/building bias and older terrain conditions are possible.", "This AOI is a modelling crop, not the official campus boundary; individual building footprints are not verified here."]
+    },
+    {
+      "id": "tanglang",
+      "name": "塘朗山 · 预测裸地基底",
+      "bounds_wgs84": [113.94, 22.54, 114.04, 22.585],
+      "projected_crs": "EPSG:32649",
+      "source_ids": ["gedtm30_campus_tanglang"],
+      "master_grid": "campus_tanglang",
+      "product": "GEDTM30 v1.2",
+      "surface_model": "predicted_bare_earth",
+      "is_dtm": true,
+      "mesh_sampling_m": 30,
+      "reference_points": [
+        {"name": "塘朗主峰附近（旧 DSM 粗略高点）", "lon": 113.980943, "lat": 22.576248, "source": "historical Copernicus v1 crop max recorded in replacement manifest", "coordinate_status": "old Copernicus crop maximum, approximate location only; not a surveyed summit", "peak_window_radius_m": 1200},
+        {"name": "极目阁（国内地图概位）", "lon": 113.986115, "lat": 22.573356, "source": "https://www.amap.com/place/B0FFKJYD0W", "coordinate_status": "GCJ-02 POI without transformation; coverage reference only, not a WGS84 summit control"}
+      ],
+      "limits": ["GEDTM30 is a globally predicted bare-earth DTM; canopy removal is estimated and may leave residuals.", "This AOI is a modelling crop, not the official park boundary."]
+    },
+    {
+      "id": "wutai",
+      "name": "五台山顺朝区域 · 预测裸地基底",
+      "bounds_wgs84": [113.42, 38.86, 113.72, 39.14],
+      "projected_crs": "EPSG:32649",
+      "source_ids": ["gedtm30_wutai"],
+      "product": "GEDTM30 v1.2",
+      "surface_model": "predicted_bare_earth",
+      "is_dtm": true,
+      "mesh_sampling_m": 60,
+      "reference_points": [
+        {"name": "东台（路线参考）", "lon": 113.660367, "lat": 39.043333, "source": "https://www.foooooot.com/trip/23426/", "coordinate_status": "original track CRS unspecified; approximate coverage check only"},
+        {"name": "南台（路线参考）", "lon": 113.5337, "lat": 38.923083, "source": "https://www.foooooot.com/trip/23426/", "coordinate_status": "original track CRS unspecified; approximate coverage check only"},
+        {"name": "西台（路线参考）", "lon": 113.490693, "lat": 39.037244, "source": "https://www.foooooot.com/footprint/1620475/", "coordinate_status": "original track CRS unspecified; approximate coverage check only"},
+        {"name": "中台（路线参考）", "lon": 113.531483, "lat": 39.046167, "source": "https://www.foooooot.com/trip/23426/", "coordinate_status": "original track CRS unspecified; approximate coverage check only"},
+        {"name": "北台（GPS参考）", "lon": 113.56764, "lat": 39.08029, "source": "https://www.prominent-mountains.no/mountains/3000mtn/wutai.html", "coordinate_status": "traveller GPS; approximate location, not a survey control", "peak_window_radius_m": 1200}
+      ],
+      "limits": ["GEDTM30 is a globally predicted bare-earth DTM, not high-resolution surveying of the five terraces.", "Tree/building corrections and terrain residuals may remain; snow is not independently separated."]
+    },
+    {
+      "id": "muztagh_ata",
+      "name": "慕士塔格峰 · 冰川表面高程",
+      "bounds_wgs84": [74.95, 38.10, 75.35, 38.50],
+      "projected_crs": "EPSG:32643",
+      "source_ids": ["copernicus_muztagh_N38E074", "copernicus_muztagh_N38E075"],
+      "product": "Copernicus GLO-30",
+      "surface_model": "ice_surface_DSM",
+      "is_dtm": false,
+      "mesh_sampling_m": 60,
+      "reference_points": [
+        {"name": "主峰区域（论文概位）", "lon": 75.116667, "lat": 38.283333, "source": "https://tc.copernicus.org/articles/17/5435/2023/tc-17-5435-2023.html", "coordinate_status": "rounded minute precision; regional reference only, not exact summit"},
+        {"name": "峰顶（GPX参考）", "lon": 75.116124, "lat": 38.275734, "source": "https://www.geiselstein.com/uploads/8/4/4/0/84402202/etappe5-_camp3-gipfel.gpx", "coordinate_status": "2018 traveller Garmin endpoint; approximate, not surveyed", "peak_window_radius_m": 2000},
+        {"name": "西侧大本营（GPX参考）", "lon": 75.023666, "lat": 38.289002, "source": "https://www.geiselstein.com/uploads/8/4/4/0/84402202/etappe1_-_subashi-basecamp.gpx", "coordinate_status": "2018 traveller Garmin endpoint; coverage check only"}
+      ],
+      "limits": ["DSM retains the acquired ice/snow surface; it is not subglacial bedrock.", "Glacier and snow surfaces are time-dependent; this is not a current glacier survey.", "No additional glacier thickness or independent snow-depth geometry is inferred."]
+    }
+  ]
+}

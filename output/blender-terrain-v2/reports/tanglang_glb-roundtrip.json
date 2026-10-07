@@ -1,0 +1,101 @@
+{
+  "region": "tanglang",
+  "stage": "glb-roundtrip",
+  "started_at": "2026-10-05T15:25:17+08:00",
+  "blender_version": "5.2.2 LTS",
+  "python_version": "3.13.13 (main, May  8 2026, 12:37:03) [MSC v.1944 64 bit (AMD64)]",
+  "background": true,
+  "source": {
+    "path": "output/terrain-v2/tanglang/tanglang_blockout.obj",
+    "bytes": 7631448,
+    "sha256": "398aaff2660db4b07ac3f0b0bb3cbbfa60aff26c977c7f3c56e0f6cec732138b"
+  },
+  "source_metadata": {
+    "path": "output/terrain-v2/tanglang/tanglang_metadata.json",
+    "bytes": 14073,
+    "sha256": "1f1fa7e6eb6aa4986e68c0a60dc50ee7ff4fff14f0d6f7c9bb4f06b8c1b473e5"
+  },
+  "provenance": {
+    "product": "GEDTM30 v1.2",
+    "product_text": "GEDTM30 v1.2",
+    "attribution": "Ho, Yufeng & Hengl, Tom (2026). Global Ensemble Digital Terrain Model 30m (GEDTM30), v1.2.0, OpenGeoHub, https://doi.org/10.5281/zenodo.18887460; licensed CC BY 4.0. Regional crops and subsequent meshes are modified derivatives.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "license_text": "https://creativecommons.org/licenses/by/4.0/",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "expected_extras": {
+    "region_id": "tanglang",
+    "attribution": "Ho, Yufeng & Hengl, Tom (2026). Global Ensemble Digital Terrain Model 30m (GEDTM30), v1.2.0, OpenGeoHub, https://doi.org/10.5281/zenodo.18887460; licensed CC BY 4.0. Regional crops and subsequent meshes are modified derivatives.",
+    "source_product": "GEDTM30 v1.2",
+    "terrain_license": "https://creativecommons.org/licenses/by/4.0/",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "source_obj": "output/terrain-v2/tanglang/tanglang_blockout.obj",
+    "source_obj_sha256": "398aaff2660db4b07ac3f0b0bb3cbbfa60aff26c977c7f3c56e0f6cec732138b",
+    "metadata_source": "output/terrain-v2/tanglang/tanglang_metadata.json",
+    "units": "metres",
+    "horizontal_crs": "EPSG:32649",
+    "vertical_datum": "EGM2008 (EPSG:3855), metres",
+    "projected_xy_origin_m": [
+      807450.0,
+      2500665.0
+    ],
+    "vertical_origin_m": 0.0,
+    "surface_model": "predicted_bare_earth",
+    "scope": "four separate v2 terrain assets; not assembled narrative scene"
+  },
+  "mesh_check": {
+    "vertices": 60378,
+    "unique_source_vertices": 60378,
+    "triangles": 119716,
+    "uv_layers": 1,
+    "bounds_min_m": [
+      -5145.0,
+      -5100.0,
+      -1.3930000066757202
+    ],
+    "bounds_max_m": [
+      5235.0,
+      90.0,
+      418.82598876953125
+    ],
+    "max_coordinate_error_against_obj_m": 1.5136718729991117e-05,
+    "coordinate_tolerance_m": 0.002,
+    "max_uv_error_against_obj": 4.306976320034295e-08,
+    "uv_tolerance": 2e-06,
+    "all_vertices_and_uv_loops_checked": true,
+    "all_face_normals_positive_z": true,
+    "geometry_sha256": "185005aec0abe70fcf52cf3858dc4498eb710ec6048c1871375339845bdd9627",
+    "uv_sha256": "a61d9cba64f57740de34a2658d70e6c9f60f253b82f85c3a8f17999bb7e1c9b7"
+  },
+  "material_check": {
+    "base_colour_rgba": [
+      0.3799999952316284,
+      0.4300000071525574,
+      0.4699999988079071,
+      1.0
+    ],
+    "roughness": 0.8600000143051147,
+    "metallic": 0.0,
+    "values_match_export_source": true
+  },
+  "glb_check": {
+    "glb_version": 2,
+    "declared_bytes": 2653176,
+    "primitives": 1,
+    "triangles": 119716,
+    "uv_present": true,
+    "self_contained": true,
+    "copyright_present": true,
+    "product_license_and_origin_extras_verified": true,
+    "coordinate_convention": "glTF Y up; Blender Z up on reimport"
+  },
+  "material_and_metadata_preserved": true,
+  "glb": {
+    "path": "output/blender-terrain-v2/tanglang_validation.glb",
+    "bytes": 2653176,
+    "sha256": "842ddc8014d9222c01b348f8f38b19ae4d76bc19beec13395f09e207c6a76315"
+  },
+  "elapsed_seconds": 0.725,
+  "finished_at": "2026-10-05T15:25:18+08:00",
+  "status": "passed"
+}

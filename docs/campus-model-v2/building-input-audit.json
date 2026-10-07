@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "source_building_features": 113,
+  "all_top_level_source_footprints_unchanged": true,
+  "business_ground_plan_partition_coverage": "exact; source wings/bridge preserved; upper two storeys inset1.1m",
+  "zhihua_partition_coverage": "exact; photographed high-end geographic position remains estimated",
+  "terrain_modified": false,
+  "previous_model_outputs_modified": false,
+  "landmark_physical_detail": "recessed glazing, volumetric columns and frames, parapets, terrace railings, business low bridge and setbacks, Yidan multirow windows and full-height glass end"
+}

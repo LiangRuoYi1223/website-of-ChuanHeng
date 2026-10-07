@@ -1,3 +1,4 @@
+import { activityCity, activityRoute } from '../features/activity-location';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { ArrowUpRight, ChevronLeft, LogOut, ShieldCheck } from 'lucide-react';
@@ -81,7 +82,7 @@ export default function AccountPage() {
       {error && <p className="auth-alert" role="alert">{error}{eligible && <button className="text-link" onClick={load}>重新加载</button>}</p>}
       {eligible && <section className="account-section"><h2>我的活动报名</h2>{loading ? <p role="status">正在加载报名记录…</p> : registrations.length ? <ul className="registration-list">{registrations.map(item => {
         const activity = activities.find(value => value.id === item.activityId);
-        return <li key={item.id}><div>{activity ? <Link to={`/activities/${activity.id}`}>{activity.title}<ArrowUpRight size={15}/></Link> : <strong>活动暂未公开</strong>}<small>{activity ? `${activity.date} · ${activity.location}` : '原活动已下架，报名记录仍保留。'}</small></div><button className="text-link" disabled={!!busy} onClick={() => cancel(item.activityId)}>{busy === item.activityId ? '正在取消…' : '取消报名'}</button></li>;
+        return <li key={item.id}><div>{activity ? <Link to={`/activities/${activity.id}`}>{activity.title}<ArrowUpRight size={15}/></Link> : <strong>活动暂未公开</strong>}<small>{activity ? `${activity.date} · ${[activityCity(activity),activityRoute(activity)].filter(Boolean).join(' · ')}` : '原活动已下架，报名记录仍保留。'}</small></div><button className="text-link" disabled={!!busy} onClick={() => cancel(item.activityId)}>{busy === item.activityId ? '正在取消…' : '取消报名'}</button></li>;
       })}</ul> : <div className="account-empty"><p>还没有报名记录，选一次喜欢的出发吧。</p><Link className="text-link" to="/#calendar">浏览活动预告 <ArrowUpRight size={16}/></Link></div>}</section>}
       <PersonalPassword key={user.id} user={user} onSaved={next => { if (latestScope.current === scope) setUser(next); }}/>
     </div><RoleOverview currentRole={user.role}/></div>

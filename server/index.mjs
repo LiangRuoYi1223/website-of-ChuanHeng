@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { initialSettings, initialActivities, initialProjects, initialCooperation, legacyActivityIds, legacyAboutDescription } from './seed.mjs';
 import * as validate from './validation.mjs';
 import { permissionsFor, canManage, canRegister } from './permissions.mjs';
+import { findCity } from '../src/features/map-data/cities.ts';
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const cookieName = 'chuanheng_session';
@@ -73,6 +74,31 @@ export function createApp(options = {}) {
     CREATE TABLE IF NOT EXISTS sessions (token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, expires_at INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS registrations (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, activity_id TEXT NOT NULL REFERENCES activities(id) ON DELETE CASCADE, created_at TEXT NOT NULL, UNIQUE(user_id, activity_id));
   `);
+  // Add route/city metadata only to stored rows, so deleted demonstration activities stay deleted.
+  // A city's demonstration assignment is safe only while its original seed location is unchanged.
+  try {
+    db.exec('BEGIN IMMEDIATE');
+    const seeds = new Map(initialActivities.map(activity => [activity.id, activity]));
+    const update = db.prepare('UPDATE activities SET payload = ?, revision = revision + 1 WHERE id = ?');
+    for (const row of db.prepare('SELECT id, payload FROM activities').all()) {
+      const existing = JSON.parse(row.payload), next = { ...existing }, seed = seeds.get(row.id);
+      if (existing.routeName === undefined) {
+        next.routeName = typeof existing.location === 'string' ? existing.location : '';
+        next.location = next.routeName;
+      }
+      if (existing.cityCode === undefined) {
+        const uneditedSeedLocation = existing.isDemo === true && seed && existing.location === seed.location
+          && (existing.routeName === undefined || existing.routeName === seed.routeName);
+        next.cityCode = uneditedSeedLocation && findCity(seed.cityCode) ? seed.cityCode : '';
+      }
+      if (existing.routeName === undefined || existing.cityCode === undefined) update.run(JSON.stringify(next), row.id);
+    }
+    db.exec('COMMIT');
+  } catch (error) {
+    db.exec('ROLLBACK');
+    db.close();
+    throw error;
+  }
   const legacyUsers = !db.prepare("SELECT sql FROM sqlite_master WHERE name = 'users'").get().sql.includes("'founder'");
   if (legacyUsers) {
     try {

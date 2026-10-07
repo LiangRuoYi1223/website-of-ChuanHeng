@@ -1,0 +1,12 @@
+{
+  "building_features": 113,
+  "source_geometry_equal_for_all_features": true,
+  "source_footprints_sha256": "aee587e9b93f5f7925d84b2e6e5b8fea58e808c427824c79e0acd1d559f3a313",
+  "road_or_path_features": 287,
+  "water_line_features": 8,
+  "coordinate_crs": "EPSG:4326 to EPSG:32649; no GCJ shift",
+  "science_part_coverage_equal_to_original": true,
+  "shared_base_child_features": 4,
+  "official_yidan_total_storeys": 4,
+  "website_changed": false
+}

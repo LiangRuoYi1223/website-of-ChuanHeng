@@ -1,0 +1,357 @@
+{
+  "status": "passed",
+  "started_at": "2026-10-07T12:46:09+08:00",
+  "finished_at": "2026-10-07T12:46:32+08:00",
+  "blender_version": "5.2.2 LTS",
+  "source_scene_opened_read_only": true,
+  "save_or_export_performed": false,
+  "protected_files_unchanged": true,
+  "protected_before": [
+    {
+      "path": "output/campus-model/sustech_campus.blend",
+      "bytes": 31724933,
+      "sha256": "fc0a448b9566704feb97cd408652d3c896a39b460c1a66c3c77e944a4783992f"
+    },
+    {
+      "path": "output/campus-model/sustech_campus.glb",
+      "bytes": 21021768,
+      "sha256": "8a62f6e3570267bd106b64c6000e425f53ee07201c58e95da4d2457c9e53a06e"
+    },
+    {
+      "path": "output/campus-model/campus_aerial.png",
+      "bytes": 2581667,
+      "sha256": "d946cd0ee9f95a06026514300a8df633fc754202fdc4a5947a9229994d421a8c"
+    },
+    {
+      "path": "output/campus-model/gate_inward.png",
+      "bytes": 1514395,
+      "sha256": "43e04c611c2744f459e4fd6f38a1b2b7575ab8461fde19d63e15ed85a7c3e04a"
+    },
+    {
+      "path": "output/campus-model/campus_overview_labeled.png",
+      "bytes": 2396416,
+      "sha256": "a37dfa829361893b32a241a7d2d6e1ad119d19ef1960a1b6173684292db376d2"
+    }
+  ],
+  "protected_after": [
+    {
+      "path": "output/campus-model/sustech_campus.blend",
+      "bytes": 31724933,
+      "sha256": "fc0a448b9566704feb97cd408652d3c896a39b460c1a66c3c77e944a4783992f"
+    },
+    {
+      "path": "output/campus-model/sustech_campus.glb",
+      "bytes": 21021768,
+      "sha256": "8a62f6e3570267bd106b64c6000e425f53ee07201c58e95da4d2457c9e53a06e"
+    },
+    {
+      "path": "output/campus-model/campus_aerial.png",
+      "bytes": 2581667,
+      "sha256": "d946cd0ee9f95a06026514300a8df633fc754202fdc4a5947a9229994d421a8c"
+    },
+    {
+      "path": "output/campus-model/gate_inward.png",
+      "bytes": 1514395,
+      "sha256": "43e04c611c2744f459e4fd6f38a1b2b7575ab8461fde19d63e15ed85a7c3e04a"
+    },
+    {
+      "path": "output/campus-model/campus_overview_labeled.png",
+      "bytes": 2396416,
+      "sha256": "a37dfa829361893b32a241a7d2d6e1ad119d19ef1960a1b6173684292db376d2"
+    }
+  ],
+  "views": [
+    {
+      "name": "science",
+      "title": "理学院",
+      "feature_ids": [
+        "relation/18716462"
+      ],
+      "target_objects": [
+        "理学院 · 建筑体量",
+        "理学院 · 建筑体量.001",
+        "理学院 · 建筑体量.002"
+      ],
+      "target_bounds_m": [
+        [
+          299.196533203125,
+          1237.1285400390625,
+          30.65282440185547
+        ],
+        [
+          509.8592834472656,
+          1442.485107421875,
+          73.15282440185547
+        ]
+      ],
+      "camera_position_m": [
+        692.6390380859375,
+        918.7213134765625,
+        783.2620239257812
+      ],
+      "camera_target_m": [
+        404.52789306640625,
+        1339.806884765625,
+        51.90282440185547
+      ],
+      "orthographic_width_m": 409.6012878417969,
+      "image": {
+        "path": "output/campus-model/detail-science.png",
+        "bytes": 684264,
+        "sha256": "ee55b05729392abbd580b0d83652520ef185506f049935a25517d689ada01be5"
+      }
+    },
+    {
+      "name": "engineering",
+      "title": "工学院 · 南北楼",
+      "feature_ids": [
+        "way/695571961",
+        "way/695571962"
+      ],
+      "target_objects": [
+        "工学院南楼 · 建筑体量",
+        "工学院北楼 · 建筑体量"
+      ],
+      "target_bounds_m": [
+        [
+          -22.404617309570312,
+          1869.689453125,
+          48.86792755126953
+        ],
+        [
+          180.12559509277344,
+          2178.7373046875,
+          95.66793060302734
+        ]
+      ],
+      "camera_position_m": [
+        447.3350830078125,
+        1485.673583984375,
+        979.2823486328125
+      ],
+      "camera_target_m": [
+        78.86048889160156,
+        2024.21337890625,
+        72.26792907714844
+      ],
+      "orthographic_width_m": 566.522705078125,
+      "image": {
+        "path": "output/campus-model/detail-engineering.png",
+        "bytes": 629983,
+        "sha256": "9a1653eacdc00b2706549057978c3b1ed94c15b012946f26b1c0827875d06ad4"
+      }
+    },
+    {
+      "name": "business",
+      "title": "商学院",
+      "feature_ids": [
+        "way/703098307"
+      ],
+      "target_objects": [
+        "商学院 · 建筑体量"
+      ],
+      "target_bounds_m": [
+        [
+          496.52294921875,
+          1447.97314453125,
+          35.847618103027344
+        ],
+        [
+          611.8707275390625,
+          1566.07568359375,
+          58.847618103027344
+        ]
+      ],
+      "camera_position_m": [
+        726.0988159179688,
+        1255.7830810546875,
+        444.0445251464844
+      ],
+      "camera_target_m": [
+        554.1968383789062,
+        1507.0244140625,
+        47.347618103027344
+      ],
+      "orthographic_width_m": 261.6940612792969,
+      "image": {
+        "path": "output/campus-model/detail-business.png",
+        "bytes": 635937,
+        "sha256": "984ae6c172d87f1be4094fc84549aaffbcbf22eb28d95e1ff6b0c9540896d223"
+      }
+    },
+    {
+      "name": "zhihua",
+      "title": "智华楼",
+      "feature_ids": [
+        "way/703098306"
+      ],
+      "target_objects": [
+        "智华楼 · 建筑体量"
+      ],
+      "target_bounds_m": [
+        [
+          432.1992492675781,
+          1511.4840087890625,
+          37.72003173828125
+        ],
+        [
+          529.9378662109375,
+          1612.41357421875,
+          60.22003173828125
+        ]
+      ],
+      "camera_position_m": [
+        627.8140258789062,
+        1347.474609375,
+        387.61346435546875
+      ],
+      "camera_target_m": [
+        481.06854248046875,
+        1561.94873046875,
+        48.97003173828125
+      ],
+      "orthographic_width_m": 222.4177703857422,
+      "image": {
+        "path": "output/campus-model/detail-zhihua.png",
+        "bytes": 608541,
+        "sha256": "88989384bcb248be9712350a1f35f204fa15bbeb9ab7adbd68750d7295c3cdd5"
+      }
+    },
+    {
+      "name": "yidan",
+      "title": "一丹图书馆 · 共用基座",
+      "feature_ids": [
+        "way/710848316"
+      ],
+      "target_objects": [
+        "一丹图书馆 · 建筑体量"
+      ],
+      "target_bounds_m": [
+        [
+          280.7159423828125,
+          1665.5670166015625,
+          39.27779006958008
+        ],
+        [
+          316.54620361328125,
+          1742.73779296875,
+          54.77779006958008
+        ]
+      ],
+      "camera_position_m": [
+        207.53936767578125,
+        1571.018310546875,
+        250.2323760986328
+      ],
+      "camera_target_m": [
+        298.6310729980469,
+        1704.15234375,
+        47.02779006958008
+      ],
+      "orthographic_width_m": 180.87887573242188,
+      "image": {
+        "path": "output/campus-model/detail-yidan.png",
+        "bytes": 616338,
+        "sha256": "c5be02d81e7629c5a24562be318517d2cb9dfcb98fe349b66026f09e9dd81a0b"
+      }
+    },
+    {
+      "name": "gate1",
+      "title": "一号门",
+      "feature_ids": [
+        "gate1"
+      ],
+      "target_objects": [
+        "一号门 · 弧顶石材标志墙",
+        "一号门 · 黑色水平雨棚",
+        "一号门 · 细柱",
+        "一号门 · 细柱.001",
+        "一号门 · 细柱.002",
+        "一号门 · 细柱.003",
+        "一号门 · 南方科技大学竖排字"
+      ],
+      "target_bounds_m": [
+        [
+          424.3690490722656,
+          1180.16015625,
+          26.16058921813965
+        ],
+        [
+          456.249267578125,
+          1193.13330078125,
+          36.33491134643555
+        ]
+      ],
+      "camera_position_m": [
+        478.9012451171875,
+        1079.7762451171875,
+        69.8398666381836
+      ],
+      "camera_target_m": [
+        440.30914306640625,
+        1186.646728515625,
+        31.24774932861328
+      ],
+      "orthographic_width_m": 49.34114074707031,
+      "image": {
+        "path": "output/campus-model/detail-gate1.png",
+        "bytes": 534472,
+        "sha256": "82f0efdb932887331e06dd9c5e1d7ec36f902e82b1edabe2fe84e76078157214"
+      }
+    }
+  ],
+  "contact_sheet": {
+    "path": "output/campus-model/landmark_details.png",
+    "bytes": 2756034,
+    "sha256": "f30a41bda8686c2660acb3e1ff3bee3629bc1e3dbd70bd3f50c835d3164d091a"
+  },
+  "images": [
+    {
+      "path": "output/campus-model/detail-science.png",
+      "bytes": 684264,
+      "sha256": "ee55b05729392abbd580b0d83652520ef185506f049935a25517d689ada01be5"
+    },
+    {
+      "path": "output/campus-model/detail-engineering.png",
+      "bytes": 629983,
+      "sha256": "9a1653eacdc00b2706549057978c3b1ed94c15b012946f26b1c0827875d06ad4"
+    },
+    {
+      "path": "output/campus-model/detail-business.png",
+      "bytes": 635937,
+      "sha256": "984ae6c172d87f1be4094fc84549aaffbcbf22eb28d95e1ff6b0c9540896d223"
+    },
+    {
+      "path": "output/campus-model/detail-zhihua.png",
+      "bytes": 608541,
+      "sha256": "88989384bcb248be9712350a1f35f204fa15bbeb9ab7adbd68750d7295c3cdd5"
+    },
+    {
+      "path": "output/campus-model/detail-yidan.png",
+      "bytes": 616338,
+      "sha256": "c5be02d81e7629c5a24562be318517d2cb9dfcb98fe349b66026f09e9dd81a0b"
+    },
+    {
+      "path": "output/campus-model/detail-gate1.png",
+      "bytes": 534472,
+      "sha256": "82f0efdb932887331e06dd9c5e1d7ec36f902e82b1edabe2fe84e76078157214"
+    }
+  ],
+  "visual_qa": {
+    "status": "passed",
+    "method": "Actual view_image inspection of rendered 2808x1504 contact sheet",
+    "target_views": 6,
+    "findings": [
+      "All five requested landmarks and the existing gate are visible at useful close-up scale.",
+      "Engineering south/north courtyards remain open.",
+      "Science, Business and Zhihua preserve their footprint indentations and courtyards.",
+      "Yidan is distinguished by its orange-red shell and shared low platform context.",
+      "Chinese titles and first-version/estimated-detail note are legible."
+    ],
+    "limitations": [
+      "Regularized windows and estimated roofs are clearly first-version massing rather than detailed architectural reconstruction.",
+      "Nearby geometry is intentionally retained; surrounding buildings may be cropped at image edges."
+    ]
+  },
+  "limitations": "Existing first version massing; some heights, roof planes and facade details estimated from public photographs."
+}

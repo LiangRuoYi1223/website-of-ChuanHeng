@@ -1,0 +1,8 @@
+produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved
+
+Ho, Yufeng & Hengl, Tom (2026). Global Ensemble Digital Terrain Model 30m (GEDTM30), v1.2.0, OpenGeoHub, https://doi.org/10.5281/zenodo.18887460; licensed CC BY 4.0. Regional crops and subsequent meshes are modified derivatives.
+
+https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM
+https://creativecommons.org/licenses/by/4.0/
+
+Derived products: scaled native crops, horizontal reprojections, heightmaps and terrain meshes.

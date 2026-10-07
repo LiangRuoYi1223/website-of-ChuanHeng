@@ -1,0 +1,6 @@
+# Tested with Python 3.12.14, Windows amd64. Install into a project-local target.
+numpy==2.5.3
+rasterio==1.4.4
+pyproj==3.8.0
+matplotlib==3.11.2
+Pillow==12.3.0

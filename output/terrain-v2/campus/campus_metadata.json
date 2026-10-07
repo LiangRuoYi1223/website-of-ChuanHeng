@@ -1,0 +1,399 @@
+{
+  "schema_version": 2,
+  "region": {
+    "id": "campus",
+    "name": "南科大 · 预测裸地基底",
+    "bounds_wgs84": [
+      113.97,
+      22.58,
+      114.04,
+      22.63
+    ],
+    "projected_crs": "EPSG:32649",
+    "source_ids": [
+      "gedtm30_campus_tanglang"
+    ],
+    "master_grid": "campus_tanglang",
+    "product": "GEDTM30 v1.2",
+    "surface_model": "predicted_bare_earth",
+    "is_dtm": true,
+    "mesh_sampling_m": 30,
+    "reference_points": [
+      {
+        "name": "校园概位",
+        "lon": 113.99986,
+        "lat": 22.598965,
+        "source": "https://www.sustech.edu.cn/zh/contact_us.html",
+        "coordinate_status": "published campus map datum unspecified; approximate coverage check, not surveyed building footprint"
+      }
+    ],
+    "limits": [
+      "GEDTM30 is a globally predicted bare-earth DTM, not a locally surveyed campus DTM.",
+      "Residual tree/building bias and older terrain conditions are possible.",
+      "This AOI is a modelling crop, not the official campus boundary; individual building footprints are not verified here."
+    ]
+  },
+  "product": "GEDTM30 v1.2",
+  "surface_model": "predicted_bare_earth",
+  "source_ids": [
+    "gedtm30_campus_tanglang"
+  ],
+  "source_tiles": [
+    "gedtm30_campus_tanglang"
+  ],
+  "source_rasters": [
+    {
+      "id": "gedtm30_campus_tanglang",
+      "product": "GEDTM30 v1.2.0 predicted bare-earth DTM",
+      "local_path": "artifacts/mountain-prep/terrain-v2/raw/gedtm30_campus_tanglang_native.tif",
+      "sha256": "fa9956b60f9a82e83153eb849f4bbd88aaf27370c1cf35415a553d80f1a0a10a",
+      "crs": "EPSG:4326",
+      "vertical_datum": "EGM2008 (EPSG:3855), metres",
+      "scale": 0.1,
+      "offset": 0.0,
+      "effective_scale": 1.0,
+      "effective_offset": 0.0,
+      "scale_interpretation": {
+        "source_band_scale_metadata": 0.1,
+        "effective_scale_to_metres": 1.0,
+        "original_native_values_and_scale_tag_retained": true,
+        "decision": "Float32 values are already metres; ignore the inconsistent 0.1 band scale in this 30m COG for derived products.",
+        "official_metadata": "https://zenodo.org/records/18887460 (v1.2 Float32 terrain layer, scale 1)",
+        "exact_30m_url_metadata": "https://codeberg.org/openlandmap/GEDTM30/raw/branch/main/metadata/cog_list.csv (same URL: scale=1, Float32, unit=meter)",
+        "cross_check": [
+          {
+            "lon": 113.980943,
+            "lat": 22.576248,
+            "gedtm_raw_m": 421.6,
+            "copernicus_m": 428.0511
+          },
+          {
+            "lon": 113.56764,
+            "lat": 39.08029,
+            "gedtm_raw_m": 3058.8999,
+            "copernicus_m": 3059.8291
+          }
+        ],
+        "publisher_confirmation_obtained": false
+      },
+      "attribution": "Ho, Yufeng & Hengl, Tom (2026). Global Ensemble Digital Terrain Model 30m (GEDTM30), v1.2.0, OpenGeoHub, https://doi.org/10.5281/zenodo.18887460; licensed CC BY 4.0. Regional crops and subsequent meshes are modified derivatives.",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/"
+    }
+  ],
+  "source_crs": "EPSG:4326",
+  "vertical_datum": "EGM2008 (EPSG:3855), metres",
+  "vertical_units": "metres",
+  "vertical_correction_m": 0,
+  "vertical_origin_m": 0,
+  "vertical_exaggeration": 1,
+  "is_dtm": true,
+  "dtm_status": "machine-learning predicted, not a locally surveyed DTM",
+  "buildings_and_vegetation_removed": null,
+  "object_removal_status": "predicted bare-earth reduction; residuals possible",
+  "is_subglacial_bedrock": false,
+  "processing": [
+    "source SHA256 and full local block decoding",
+    "masked native scale/offset decoding",
+    "native pixel-grid-aligned mosaic",
+    "native AOI crop",
+    "one bilinear reprojection to master 30m grid",
+    "integer-pixel master-grid region crop",
+    "16-bit heightmap",
+    "local XY / absolute EGM2008 Z OBJ"
+  ],
+  "projected_crs": "EPSG:32649",
+  "projected_bounds_m": [
+    805290,
+    2500050,
+    812610,
+    2505780
+  ],
+  "projected_transform": [
+    30.0,
+    0.0,
+    805290.0,
+    0.0,
+    -30.0,
+    2505780.0,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "resolution_m": 30,
+  "geographic_crop_actual_bounds_wgs84": [
+    113.96986111133896,
+    22.579861111062733,
+    114.04013888911679,
+    22.630138888840552
+  ],
+  "geographic_crop_statistics": {
+    "shape_rows_columns": [
+      181,
+      253
+    ],
+    "valid_samples": 45793,
+    "invalid_samples": 0,
+    "min_m": 11.800000190734863,
+    "max_m": 354.20001220703125,
+    "mean_m": 90.79771423339844,
+    "percentiles_m": {
+      "1": 21.700000762939453,
+      "5": 29.600000381469727,
+      "50": 77.9000015258789,
+      "95": 230.39999389648438,
+      "99": 298.1000061035156
+    }
+  },
+  "projected_statistics": {
+    "shape_rows_columns": [
+      191,
+      244
+    ],
+    "valid_samples": 46604,
+    "invalid_samples": 0,
+    "min_m": 10.539894104003906,
+    "max_m": 350.99945068359375,
+    "mean_m": 91.63736724853516,
+    "percentiles_m": {
+      "1": 21.861406326293945,
+      "5": 29.706762313842773,
+      "50": 78.40632629394531,
+      "95": 230.41116333007812,
+      "99": 297.4346008300781
+    }
+  },
+  "projected_extent_km": [
+    7.32,
+    5.73
+  ],
+  "grid": {
+    "rows": 191,
+    "columns": 244,
+    "resolution_m": 30,
+    "master_id": "campus_tanglang",
+    "window_in_master_row_col_height_width": [
+      0,
+      103,
+      191,
+      244
+    ],
+    "master_projected_bounds_m": [
+      802200,
+      2495550,
+      812700,
+      2505780
+    ],
+    "master_projected_xy_origin_m": [
+      807450.0,
+      2500665.0
+    ],
+    "coordinate_units": "metres"
+  },
+  "grid_join_checks": [],
+  "native_grid_alignment_check": {
+    "source_cells_checked": 225,
+    "all_equal_to_scaled_original_source_cells": true,
+    "all_equal_to_original_source_cells": true,
+    "comparison_units": "scaled metres"
+  },
+  "reference_checks": [
+    {
+      "name": "校园概位",
+      "lon": 113.99986,
+      "lat": 22.598965,
+      "source": "https://www.sustech.edu.cn/zh/contact_us.html",
+      "coordinate_status": "published campus map datum unspecified; approximate coverage check, not surveyed building footprint",
+      "projected_x_m": 808430.9058718255,
+      "projected_y_m": 2502231.15695758,
+      "within_crop": true,
+      "nearest_raster_elevation_m": 28.718183517456055,
+      "local_mesh_xyz_m": [
+        980.9058718255255,
+        1566.1569575797766,
+        28.718183517456055
+      ]
+    }
+  ],
+  "maximum_sample_location": {
+    "lon": 114.02749867253358,
+    "lat": 22.585394289874976,
+    "height_m": 350.99945068359375,
+    "meaning": "highest sample in crop, not a surveyed summit"
+  },
+  "heightmap": {
+    "path": "output/terrain-v2/campus/campus_height16.png",
+    "zero_m": 10.539894104003906,
+    "one_m": 350.99945068359375,
+    "decode": "elevation_m = pixel/65535 * (one_m-zero_m) + zero_m",
+    "row_zero": "north",
+    "colour_space": "Non-Color / linear data",
+    "mesh_pixel_center_extent_m": [
+      7290,
+      5700
+    ],
+    "max_roundtrip_error_m": 0.0026245972853189414,
+    "quantization_limit_m": 0.004597539914393758
+  },
+  "mesh": {
+    "path": "output/terrain-v2/campus/campus_blockout.obj",
+    "vertices": 46604,
+    "triangles": 92340,
+    "uv_coordinates": 46604,
+    "uv_mapping": "original raster pixel centres",
+    "uv_heightmap_alignment_verified": true,
+    "sampling_m": 30,
+    "open_surface": true,
+    "axis_convention": {
+      "X": "east",
+      "Y": "north",
+      "Z": "up"
+    },
+    "projected_xy_origin_m": [
+      807450.0,
+      2500665.0
+    ],
+    "vertical_origin_m": 0,
+    "units": "metres",
+    "grid_rows_columns": [
+      191,
+      244
+    ],
+    "sampled_elevation_min_m": 10.539894104003906,
+    "sampled_elevation_max_m": 350.99945068359375,
+    "max_serialization_height_error_m": 0.0005000000000023874,
+    "max_serialization_xy_error_m": 0.0,
+    "max_uv_error": 4.9738219515260695e-09,
+    "topology_verified": true,
+    "all_triangle_normals_positive_z": true
+  },
+  "attribution": "Ho, Yufeng & Hengl, Tom (2026). Global Ensemble Digital Terrain Model 30m (GEDTM30), v1.2.0, OpenGeoHub, https://doi.org/10.5281/zenodo.18887460; licensed CC BY 4.0. Regional crops and subsequent meshes are modified derivatives.",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "license_urls": [
+    "https://creativecommons.org/licenses/by/4.0/"
+  ],
+  "limits": [
+    "GEDTM30 is a globally predicted bare-earth DTM, not a locally surveyed campus DTM.",
+    "Residual tree/building bias and older terrain conditions are possible.",
+    "This AOI is a modelling crop, not the official campus boundary; individual building footprints are not verified here.",
+    "30m reprojection does not add terrain detail.",
+    "Reference positions are approximate coverage checks, not survey controls.",
+    "No buildings, glacier thickness, near-field rock details or narrative layout are constructed here."
+  ],
+  "outputs": [
+    {
+      "path": "output/terrain-v2/campus/campus_dtm_native_wgs84.tif",
+      "bytes": 85960,
+      "sha256": "af82d168f7c387dde4a4cf731b22b18eae1fc3f58f3364a0ec0fd9a620b53cb4"
+    },
+    {
+      "path": "output/terrain-v2/campus/campus_dtm_utm30m.tif",
+      "bytes": 140898,
+      "sha256": "6ca272a879faa1611b27f93d4333e471edd9598829d29a2694fee8403f498220"
+    },
+    {
+      "path": "output/terrain-v2/campus/campus_elevation_float32.npy",
+      "bytes": 186544,
+      "sha256": "5a268aaad2d5649a59f36260b7321ff07b76d747859c0cc06ad6ab5e0582cf4b"
+    },
+    {
+      "path": "output/terrain-v2/campus/campus_height16.png",
+      "bytes": 77230,
+      "sha256": "e24c4c50211817683655186a2ba9951e288a3e27ae2284e71d38b2bd0c8a3e5d"
+    },
+    {
+      "path": "output/terrain-v2/campus/campus_blockout.obj",
+      "bytes": 5805950,
+      "sha256": "ba55b8db9218d00421c32b11d91b6e3930f0be67adb84766e8793bb020c1e9f9"
+    },
+    {
+      "path": "output/terrain-v2/campus/campus_map.png",
+      "bytes": 419613,
+      "sha256": "65fd0e801296e785cf569c1ba607184f7c9677a65884ae6a47b5d1efabebbe58"
+    },
+    {
+      "path": "output/terrain-v2/campus/campus_surface.png",
+      "bytes": 577694,
+      "sha256": "0fea7ce68d78c3c97de55e416e402becf81d167acbb155918abbe2fadda75a16"
+    },
+    {
+      "path": "output/terrain-v2/campus/campus_old_dsm_minus_new_terrain.tif",
+      "bytes": 151962,
+      "sha256": "b6448be3104f9ca3387be12eb07b1be893bfaf53d7763a42cf9b4e60e6cc51dd"
+    },
+    {
+      "path": "output/terrain-v2/campus/campus_old_dsm_minus_new_terrain.png",
+      "bytes": 212782,
+      "sha256": "f4b0197accec38c48b5c7632735544424d3b95e6544f77013afb01447c9c2c28"
+    }
+  ],
+  "old_dsm_comparison": {
+    "meaning": "old DSM minus new terrain; diagnostic only, not measured canopy/building height",
+    "status": "reported",
+    "outputs": [
+      {
+        "path": "output/terrain-v2/campus/campus_old_dsm_minus_new_terrain.tif",
+        "bytes": 151962,
+        "sha256": "b6448be3104f9ca3387be12eb07b1be893bfaf53d7763a42cf9b4e60e6cc51dd"
+      },
+      {
+        "path": "output/terrain-v2/campus/campus_old_dsm_minus_new_terrain.png",
+        "bytes": 212782,
+        "sha256": "f4b0197accec38c48b5c7632735544424d3b95e6544f77013afb01447c9c2c28"
+      }
+    ],
+    "differences_do_not_gate_processing": true,
+    "old_source": {
+      "path": "output/terrain/campus_tanglang/campus_tanglang_dsm_utm30m.tif",
+      "bytes": 359706,
+      "sha256": "74b92ecf132285ea126dbad2a493882632723f7c710d0b990234e69562570873"
+    },
+    "old_vertical_datum_tag": "EGM2008",
+    "comparison_valid_pixels": 46604,
+    "comparison_invalid_pixels": 0,
+    "statistics": {
+      "shape_rows_columns": [
+        191,
+        244
+      ],
+      "valid_samples": 46604,
+      "invalid_samples": 0,
+      "min_m": -6.966419219970703,
+      "max_m": 23.150588989257812,
+      "mean_m": 4.701498508453369,
+      "percentiles_m": {
+        "1": -2.0757925510406494,
+        "5": -0.3230690062046051,
+        "50": 4.152042388916016,
+        "95": 11.140040397644043,
+        "99": 13.55786418914795
+      }
+    },
+    "positive_fraction": 0.9364432237576173,
+    "negative_fraction": 0.06355677624238262,
+    "absolute_difference_p95_m": 11.140040397644043,
+    "warning": "Source prediction, dates, masks and interpolation can differ; do not interpret as exact removed object heights."
+  },
+  "shared_city_grid_check": {
+    "regions": [
+      "campus",
+      "tanglang"
+    ],
+    "projected_overlap_bounds_m": [
+      805290,
+      2500050,
+      812610,
+      2500770
+    ],
+    "shape_rows_columns": [
+      24,
+      244
+    ],
+    "pixels_compared": 5856,
+    "all_overlap_pixels_exactly_equal": true,
+    "maximum_difference_m": 0,
+    "shared_projected_xy_origin_m": [
+      807450.0,
+      2500665.0
+    ]
+  }
+}

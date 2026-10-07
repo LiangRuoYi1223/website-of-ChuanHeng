@@ -37,6 +37,7 @@ const climbingAlbum: Activity['album'] = [
 // Browser-only demonstration content. No database, account, or backend imports.
 const activityDefaults = {
   location: '路线待实际发布',
+  routeName: '路线待实际发布',
   difficulty: '以正式公告为准',
   duration: '预计时长待公布',
   cost: '费用以正式公告为准',
@@ -84,13 +85,13 @@ export const demoContent: PublicContent = {
     ],
   },
   activities: [
-    { ...activityDefaults, id: 'demo-autumn-hike', title: '秋日山野徒步 · 示例', category: '轻松徒步', kind: 'upcoming', date: '2026-10-18', duration: '半日（演示参考）', timeCommitment: 'half-day', experience: 'relaxed', preparation: walkingPreparation, beginnerFriendly: '入门活动版式 · 要求待正式公布', summary: '把周末交给山野，在林间找回轻快的步调。活动安排为演示内容，正式信息待发布。', image: '/images/hiking.webp' },
-    { ...activityDefaults, id: 'demo-rope-training', title: '绳结与基础训练 · 示例', category: '基础训练', kind: 'upcoming', date: '2026-10-25', duration: '约 2 小时（演示参考）', timeCommitment: 'half-day', experience: 'skills', preparation: skillsPreparation, summary: '从一根绳子开始，认识户外技术与伙伴协作。此为训练展示示例。', image: '/images/alpine.webp' },
-    { ...activityDefaults, id: 'demo-november-trail', title: '山脊上的周末 · 示例', category: '轻松徒步', kind: 'upcoming', date: '2026-11-08', duration: '一日（演示参考）', timeCommitment: 'full-day', experience: 'scenic', preparation: walkingPreparation, summary: '把脚步放慢，把视野打开。此为十一月活动日历演示，路线和参与要求待正式发布。', image: '/images/hiking.webp' },
-    { ...activityDefaults, id: 'demo-december-forest', title: '冬日林间慢行 · 示例', category: '森林徒步', kind: 'upcoming', date: '2026-12-06', duration: '半日（演示参考）', timeCommitment: 'half-day', experience: 'relaxed', preparation: walkingPreparation, summary: '留一个周末给林间的光与风。此为十二月活动日历演示，正式安排待发布。', image: '/images/forest.webp' },
-    { ...activityDefaults, id: 'demo-january-training', title: '新年基础训练 · 示例', category: '基础训练', kind: 'upcoming', date: '2027-01-10', duration: '约 2 小时（演示参考）', timeCommitment: 'half-day', experience: 'skills', preparation: skillsPreparation, summary: '在一次练习中，为下一次出发做准备。此为一月训练日历演示，正式安排待发布。', image: '/images/alpine.webp' },
-    { ...activityDefaults, id: 'demo-forest-walk', title: '森林里的慢行时光 · 示例', category: '森林徒步', kind: 'past', date: '2026-09-20', timeCommitment: 'half-day', experience: 'relaxed', preparation: walkingPreparation, album: forestAlbum, registrationStatus: '回顾版式示例', summary: '树影、山风和一起同行的伙伴。此内容为活动回顾版式示例，待替换真实记录。', image: '/images/forest.webp' },
-    { ...activityDefaults, id: 'demo-climbing', title: '第一次攀岩体验 · 示例', category: '攀岩体验', kind: 'past', date: '2026-09-13', timeCommitment: 'half-day', experience: 'skills', preparation: skillsPreparation, album: climbingAlbum, registrationStatus: '回顾版式示例', summary: '在岩壁上找到新的支点，在伙伴间建立信任。此内容为活动回顾示例。', image: '/images/alpine.webp' },
+    { ...activityDefaults, id: 'demo-autumn-hike', cityCode: '440300', title: '秋日山野徒步 · 示例', category: '轻松徒步', kind: 'upcoming', date: '2026-10-18', duration: '半日（演示参考）', timeCommitment: 'half-day', experience: 'relaxed', preparation: walkingPreparation, beginnerFriendly: '入门活动版式 · 要求待正式公布', summary: '把周末交给山野，在林间找回轻快的步调。活动安排为演示内容，正式信息待发布。', image: '/images/hiking.webp' },
+    { ...activityDefaults, id: 'demo-rope-training', cityCode: '510100', title: '绳结与基础训练 · 示例', category: '基础训练', kind: 'upcoming', date: '2026-10-25', duration: '约 2 小时（演示参考）', timeCommitment: 'half-day', experience: 'skills', preparation: skillsPreparation, summary: '从一根绳子开始，认识户外技术与伙伴协作。此为训练展示示例。', image: '/images/alpine.webp' },
+    { ...activityDefaults, id: 'demo-november-trail', cityCode: '450300', title: '山脊上的周末 · 示例', category: '轻松徒步', kind: 'upcoming', date: '2026-11-08', duration: '一日（演示参考）', timeCommitment: 'full-day', experience: 'scenic', preparation: walkingPreparation, summary: '把脚步放慢，把视野打开。此为十一月活动日历演示，路线和参与要求待正式发布。', image: '/images/hiking.webp' },
+    { ...activityDefaults, id: 'demo-december-forest', cityCode: '330100', title: '冬日林间慢行 · 示例', category: '森林徒步', kind: 'upcoming', date: '2026-12-06', duration: '半日（演示参考）', timeCommitment: 'half-day', experience: 'relaxed', preparation: walkingPreparation, summary: '留一个周末给林间的光与风。此为十二月活动日历演示，正式安排待发布。', image: '/images/forest.webp' },
+    { ...activityDefaults, id: 'demo-january-training', cityCode: '510100', title: '新年基础训练 · 示例', category: '基础训练', kind: 'upcoming', date: '2027-01-10', duration: '约 2 小时（演示参考）', timeCommitment: 'half-day', experience: 'skills', preparation: skillsPreparation, summary: '在一次练习中，为下一次出发做准备。此为一月训练日历演示，正式安排待发布。', image: '/images/alpine.webp' },
+    { ...activityDefaults, id: 'demo-forest-walk', cityCode: '440200', title: '森林里的慢行时光 · 示例', category: '森林徒步', kind: 'past', date: '2026-09-20', timeCommitment: 'half-day', experience: 'relaxed', preparation: walkingPreparation, album: forestAlbum, registrationStatus: '回顾版式示例', summary: '树影、山风和一起同行的伙伴。此内容为活动回顾版式示例，待替换真实记录。', image: '/images/forest.webp' },
+    { ...activityDefaults, id: 'demo-climbing', cityCode: '440300', title: '第一次攀岩体验 · 示例', category: '攀岩体验', kind: 'past', date: '2026-09-13', timeCommitment: 'half-day', experience: 'skills', preparation: skillsPreparation, album: climbingAlbum, registrationStatus: '回顾版式示例', summary: '在岩壁上找到新的支点，在伙伴间建立信任。此内容为活动回顾示例。', image: '/images/alpine.webp' },
   ],
   projects: cooperationProjects,
   cooperation: cooperationContent,

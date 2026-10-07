@@ -1,0 +1,1237 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "verified_at": "2026-10-07T12:48:18+08:00",
+  "method": "Independent GLB binary accessor decoding, scene node transforms, roof triangle XY unions, source polygon/holes and actual Z interfaces; no model files modified.",
+  "checked_artifacts": [
+    {
+      "path": "output/campus-model/sustech_campus.blend",
+      "bytes": 31724933,
+      "sha256": "fc0a448b9566704feb97cd408652d3c896a39b460c1a66c3c77e944a4783992f",
+      "matches_build_validation": true
+    },
+    {
+      "path": "output/campus-model/sustech_campus.glb",
+      "bytes": 21021768,
+      "sha256": "8a62f6e3570267bd106b64c6000e425f53ee07201c58e95da4d2457c9e53a06e",
+      "matches_build_validation": true
+    },
+    {
+      "path": "output/campus-model/campus-prepared.json",
+      "bytes": 1423120,
+      "sha256": "34c66b1fc589120d31aa4db86bf46e337ddb75d8568f3e373ea90f41e34ac520",
+      "matches_build_validation": true
+    },
+    {
+      "path": "output/campus-model/campus_aerial.png",
+      "bytes": 2581667,
+      "sha256": "d946cd0ee9f95a06026514300a8df633fc754202fdc4a5947a9229994d421a8c",
+      "matches_build_validation": true
+    },
+    {
+      "path": "output/campus-model/gate_inward.png",
+      "bytes": 1514395,
+      "sha256": "43e04c611c2744f459e4fd6f38a1b2b7575ab8461fde19d63e15ed85a7c3e04a",
+      "matches_build_validation": true
+    },
+    {
+      "path": "output/campus-model/campus_overview_labeled.png",
+      "bytes": 2396416,
+      "sha256": "a37dfa829361893b32a241a7d2d6e1ad119d19ef1960a1b6173684292db376d2",
+      "matches_build_validation": true
+    },
+    {
+      "path": "output/campus-model/reports/build-save.json",
+      "bytes": 1944219,
+      "sha256": "0f47555173d559a64b62bfcf669f15f67f6ccbba3820a5312d065f6d06be5e19",
+      "matches_build_validation": true
+    },
+    {
+      "path": "output/campus-model/reports/reopen-export-render.json",
+      "bytes": 1351598,
+      "sha256": "61f629c4d1f070bb339b9d55a75d99020c91c6d024e34b745e38894b617bb575",
+      "matches_build_validation": true
+    },
+    {
+      "path": "output/campus-model/reports/glb-roundtrip.json",
+      "bytes": 1350112,
+      "sha256": "1f632cc54ad55c3102f4b449a5dfc1634798706acdeaa459b982eeef4a9d2ae8",
+      "matches_build_validation": true
+    },
+    {
+      "path": "docs/campus-model/buildings.json",
+      "bytes": 605284,
+      "sha256": "58619ed4e0c792064347bd0d7de0773fb625e67c45ab952c5ba6381da40ee282",
+      "matches_build_validation": true
+    },
+    {
+      "path": "output/blender-terrain-v2/campus_validation.blend",
+      "bytes": 2294480,
+      "sha256": "a463613596e1a5e4ca03d5dcb0213ca3f3d1dd667cd8cca28e8975f84be0aed7",
+      "matches_build_validation": true
+    },
+    {
+      "path": "output/terrain-v2/campus/campus_metadata.json",
+      "bytes": 13147,
+      "sha256": "16e5d3b447a8376705bb8b16c7ae64afc3ee032e5d586c210b7954964e267b40",
+      "matches_build_validation": true
+    },
+    {
+      "path": "output/terrain-v2/campus/campus_elevation_float32.npy",
+      "bytes": 186544,
+      "sha256": "5a268aaad2d5649a59f36260b7321ff07b76d747859c0cc06ad6ab5e0582cf4b",
+      "matches_build_validation": true
+    }
+  ],
+  "source_feature_count": 113,
+  "source_building_count": 109,
+  "source_building_part_count": 4,
+  "source_ids_config_prepared_and_glb_equal": true,
+  "all_source_footprints_exactly_retained_in_metadata": true,
+  "glb_mesh_nodes": 642,
+  "glb_triangles": 435998,
+  "glb_self_contained_without_image_textures": true,
+  "maximum_roof_projection_difference_area_m2": 0.02224878222726898,
+  "all_actual_roof_projections_match_source_within_float32_tolerance": true,
+  "building_roof_coverage": [
+    {
+      "id": "way/727356943",
+      "source_area_m2": 582.8218418402624,
+      "actual_roof_projection_area_m2": 582.8231290355325,
+      "symmetric_difference_area_m2": 0.0018340841842539412,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/710848316",
+      "source_area_m2": 1975.491504586219,
+      "actual_roof_projection_area_m2": 1975.4922436829656,
+      "symmetric_difference_area_m2": 0.0018928543712073507,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/727355597",
+      "source_area_m2": 644.2445392893283,
+      "actual_roof_projection_area_m2": 644.244741205126,
+      "symmetric_difference_area_m2": 0.001601379902924844,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/727355596",
+      "source_area_m2": 548.1313249755068,
+      "actual_roof_projection_area_m2": 548.130487576127,
+      "symmetric_difference_area_m2": 0.0009905900424728013,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/703098288",
+      "source_area_m2": 5077.724124505965,
+      "actual_roof_projection_area_m2": 5077.724318090826,
+      "symmetric_difference_area_m2": 0.008047979126026459,
+      "tolerance_m2": 0.10155448249011931,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638544892",
+      "source_area_m2": 435.41906873781335,
+      "actual_roof_projection_area_m2": 435.4204901456833,
+      "symmetric_difference_area_m2": 0.002233563753705349,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/755112934",
+      "source_area_m2": 1237.720622415297,
+      "actual_roof_projection_area_m2": 1237.7205728814006,
+      "symmetric_difference_area_m2": 0.00447255619278601,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638544891",
+      "source_area_m2": 1045.2559785420763,
+      "actual_roof_projection_area_m2": 1045.260849699378,
+      "symmetric_difference_area_m2": 0.006389491200399421,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638544890",
+      "source_area_m2": 1138.7373764564124,
+      "actual_roof_projection_area_m2": 1138.7354881614447,
+      "symmetric_difference_area_m2": 0.005091987794462552,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638544889",
+      "source_area_m2": 1189.18747307239,
+      "actual_roof_projection_area_m2": 1189.186998642981,
+      "symmetric_difference_area_m2": 0.005293350241968358,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638544888",
+      "source_area_m2": 984.0628785420491,
+      "actual_roof_projection_area_m2": 984.0664364174008,
+      "symmetric_difference_area_m2": 0.005631406845199856,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638544881",
+      "source_area_m2": 1222.0926254997337,
+      "actual_roof_projection_area_m2": 1222.0913448259234,
+      "symmetric_difference_area_m2": 0.002845974534024392,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638544884",
+      "source_area_m2": 1276.456613706517,
+      "actual_roof_projection_area_m2": 1276.4610993862152,
+      "symmetric_difference_area_m2": 0.007905899690371126,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638544887",
+      "source_area_m2": 1056.095997961066,
+      "actual_roof_projection_area_m2": 1056.0953377485275,
+      "symmetric_difference_area_m2": 0.0012019804259303462,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/1360556608",
+      "source_area_m2": 2367.524512253919,
+      "actual_roof_projection_area_m2": 2367.523599830456,
+      "symmetric_difference_area_m2": 0.00628063901267669,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "relation/12480428",
+      "source_area_m2": 11719.559063956172,
+      "actual_roof_projection_area_m2": 11719.564568541013,
+      "symmetric_difference_area_m2": 0.02224878222726898,
+      "tolerance_m2": 0.23439118127912348,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/736809369",
+      "source_area_m2": 5072.564945999836,
+      "actual_roof_projection_area_m2": 5072.567532842979,
+      "symmetric_difference_area_m2": 0.0053905624817811235,
+      "tolerance_m2": 0.10145129891999673,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533170978",
+      "source_area_m2": 3010.024237755765,
+      "actual_roof_projection_area_m2": 3010.0266544385813,
+      "symmetric_difference_area_m2": 0.0036224526925737106,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/703098307",
+      "source_area_m2": 4258.479267795832,
+      "actual_roof_projection_area_m2": 4258.474873371422,
+      "symmetric_difference_area_m2": 0.007577479087499328,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/703098290",
+      "source_area_m2": 4368.549711269963,
+      "actual_roof_projection_area_m2": 4368.549092940986,
+      "symmetric_difference_area_m2": 0.004284330094529644,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/755562230",
+      "source_area_m2": 622.1137670011619,
+      "actual_roof_projection_area_m2": 622.1142156422138,
+      "symmetric_difference_area_m2": 0.004082925434603158,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/695571958",
+      "source_area_m2": 964.0672085840345,
+      "actual_roof_projection_area_m2": 964.062212659046,
+      "symmetric_difference_area_m2": 0.007501945787281771,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/695571957",
+      "source_area_m2": 787.1914742024142,
+      "actual_roof_projection_area_m2": 787.1876106858253,
+      "symmetric_difference_area_m2": 0.0042606163215341735,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/695571956",
+      "source_area_m2": 712.2038719851444,
+      "actual_roof_projection_area_m2": 712.2020730674267,
+      "symmetric_difference_area_m2": 0.0033581205660952883,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/695571955",
+      "source_area_m2": 915.6801039397064,
+      "actual_roof_projection_area_m2": 915.6759487241507,
+      "symmetric_difference_area_m2": 0.004426109454539946,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/695571954",
+      "source_area_m2": 917.9316294647856,
+      "actual_roof_projection_area_m2": 917.9322371631861,
+      "symmetric_difference_area_m2": 0.003594690347600828,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/695571953",
+      "source_area_m2": 951.0187526196019,
+      "actual_roof_projection_area_m2": 951.0253394283354,
+      "symmetric_difference_area_m2": 0.006868213723118868,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/695571952",
+      "source_area_m2": 752.9598341246725,
+      "actual_roof_projection_area_m2": 752.9606753960252,
+      "symmetric_difference_area_m2": 0.0011170176898460385,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/695571951",
+      "source_area_m2": 748.7713466016043,
+      "actual_roof_projection_area_m2": 748.7680653519928,
+      "symmetric_difference_area_m2": 0.005263042903545077,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/695571950",
+      "source_area_m2": 592.0848487786543,
+      "actual_roof_projection_area_m2": 592.0850147530437,
+      "symmetric_difference_area_m2": 0.003891184343575414,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/695571949",
+      "source_area_m2": 788.8172016906254,
+      "actual_roof_projection_area_m2": 788.8135861232877,
+      "symmetric_difference_area_m2": 0.005586858490360317,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/695571962",
+      "source_area_m2": 6295.375174232439,
+      "actual_roof_projection_area_m2": 6295.384416967718,
+      "symmetric_difference_area_m2": 0.02064944292267598,
+      "tolerance_m2": 0.1259075034846488,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/695571961",
+      "source_area_m2": 7447.905484341285,
+      "actual_roof_projection_area_m2": 7447.912090483402,
+      "symmetric_difference_area_m2": 0.014152546310324244,
+      "tolerance_m2": 0.1489581096868257,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638544900",
+      "source_area_m2": 1385.690891207467,
+      "actual_roof_projection_area_m2": 1385.6902938336134,
+      "symmetric_difference_area_m2": 0.003592676606716882,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638544899",
+      "source_area_m2": 1214.8181453734894,
+      "actual_roof_projection_area_m2": 1214.818952292204,
+      "symmetric_difference_area_m2": 0.003145907466684405,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638544896",
+      "source_area_m2": 1386.2958664670236,
+      "actual_roof_projection_area_m2": 1386.2942256629467,
+      "symmetric_difference_area_m2": 0.0029881049451068527,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638544897",
+      "source_area_m2": 1385.598812849424,
+      "actual_roof_projection_area_m2": 1385.6033066362143,
+      "symmetric_difference_area_m2": 0.0056434622030708485,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638544894",
+      "source_area_m2": 1385.6038238663464,
+      "actual_roof_projection_area_m2": 1385.603603310883,
+      "symmetric_difference_area_m2": 0.005080646889580003,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638544898",
+      "source_area_m2": 1386.288958349917,
+      "actual_roof_projection_area_m2": 1386.2852930352092,
+      "symmetric_difference_area_m2": 0.004321369488755222,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638544893",
+      "source_area_m2": 1246.1236748445365,
+      "actual_roof_projection_area_m2": 1246.1292827799916,
+      "symmetric_difference_area_m2": 0.010204429199102333,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/727355603",
+      "source_area_m2": 681.1907079232469,
+      "actual_roof_projection_area_m2": 681.1911426484585,
+      "symmetric_difference_area_m2": 0.0016035423387043381,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/727355602",
+      "source_area_m2": 650.1944984820753,
+      "actual_roof_projection_area_m2": 650.1943373829126,
+      "symmetric_difference_area_m2": 0.002523530744386596,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/727355601",
+      "source_area_m2": 612.6570102631069,
+      "actual_roof_projection_area_m2": 612.6568034999073,
+      "symmetric_difference_area_m2": 0.0015165080680534142,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/727355600",
+      "source_area_m2": 663.8981753586808,
+      "actual_roof_projection_area_m2": 663.898056127131,
+      "symmetric_difference_area_m2": 0.0019865631757002705,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/727355599",
+      "source_area_m2": 686.1568762281547,
+      "actual_roof_projection_area_m2": 686.1566999703646,
+      "symmetric_difference_area_m2": 0.001391533427707627,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/727355598",
+      "source_area_m2": 650.26959621597,
+      "actual_roof_projection_area_m2": 650.2715580500662,
+      "symmetric_difference_area_m2": 0.0022381210115543083,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/703098306",
+      "source_area_m2": 3342.041550959968,
+      "actual_roof_projection_area_m2": 3342.044253299013,
+      "symmetric_difference_area_m2": 0.008843672501903222,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533171027",
+      "source_area_m2": 405.71351394707546,
+      "actual_roof_projection_area_m2": 405.7136178687215,
+      "symmetric_difference_area_m2": 0.004279564582459901,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "relation/12870273",
+      "source_area_m2": 5772.78730176441,
+      "actual_roof_projection_area_m2": 5772.792171569541,
+      "symmetric_difference_area_m2": 0.016166786809222775,
+      "tolerance_m2": 0.1154557460352882,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533171008",
+      "source_area_m2": 830.1317461407514,
+      "actual_roof_projection_area_m2": 830.1330804750323,
+      "symmetric_difference_area_m2": 0.003996398442885001,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533171031",
+      "source_area_m2": 173.2615987974477,
+      "actual_roof_projection_area_m2": 173.2609316110611,
+      "symmetric_difference_area_m2": 0.0009089811470550233,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533171032",
+      "source_area_m2": 173.12021109564057,
+      "actual_roof_projection_area_m2": 173.12024709768593,
+      "symmetric_difference_area_m2": 0.0011370928423521112,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533171033",
+      "source_area_m2": 131.07646213319472,
+      "actual_roof_projection_area_m2": 131.07629603892565,
+      "symmetric_difference_area_m2": 0.0014525638987608123,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533171034",
+      "source_area_m2": 131.0376596956043,
+      "actual_roof_projection_area_m2": 131.03811615519226,
+      "symmetric_difference_area_m2": 0.0013279318525704193,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533171035",
+      "source_area_m2": 131.10348679251248,
+      "actual_roof_projection_area_m2": 131.10363724641502,
+      "symmetric_difference_area_m2": 0.0009812281811486757,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533171036",
+      "source_area_m2": 150.5173976521,
+      "actual_roof_projection_area_m2": 150.51689135096967,
+      "symmetric_difference_area_m2": 0.0008364319065055622,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533171037",
+      "source_area_m2": 150.7282513454198,
+      "actual_roof_projection_area_m2": 150.7279941868037,
+      "symmetric_difference_area_m2": 0.000773752529232885,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533171038",
+      "source_area_m2": 150.7278772043818,
+      "actual_roof_projection_area_m2": 150.72756030596793,
+      "symmetric_difference_area_m2": 0.0009189743479533359,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/710848314",
+      "source_area_m2": 1104.670057432112,
+      "actual_roof_projection_area_m2": 1104.6688764430583,
+      "symmetric_difference_area_m2": 0.0021872083118783477,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/710848317",
+      "source_area_m2": 1024.2182595905817,
+      "actual_roof_projection_area_m2": 1024.2177063450217,
+      "symmetric_difference_area_m2": 0.0017892171859971839,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/710848322",
+      "source_area_m2": 2029.2664179510807,
+      "actual_roof_projection_area_m2": 2029.2671541618183,
+      "symmetric_difference_area_m2": 0.005399661646293543,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/919044335",
+      "source_area_m2": 1141.5629281635825,
+      "actual_roof_projection_area_m2": 1141.5623452179134,
+      "symmetric_difference_area_m2": 0.006031763913305827,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/919051717",
+      "source_area_m2": 514.073232931875,
+      "actual_roof_projection_area_m2": 514.0735745020211,
+      "symmetric_difference_area_m2": 0.0032489221641140665,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/927400198",
+      "source_area_m2": 161.7649843543634,
+      "actual_roof_projection_area_m2": 161.76465393044055,
+      "symmetric_difference_area_m2": 0.001435108685989302,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/927400201",
+      "source_area_m2": 200.48466639104896,
+      "actual_roof_projection_area_m2": 200.48393849353306,
+      "symmetric_difference_area_m2": 0.001054932655777706,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/927438471",
+      "source_area_m2": 957.5623784132324,
+      "actual_roof_projection_area_m2": 957.5621822141111,
+      "symmetric_difference_area_m2": 0.001713629869333808,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/927438472",
+      "source_area_m2": 650.287861099095,
+      "actual_roof_projection_area_m2": 650.286895301193,
+      "symmetric_difference_area_m2": 0.002464668636383926,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/927438473",
+      "source_area_m2": 898.4853044856916,
+      "actual_roof_projection_area_m2": 898.4839272759855,
+      "symmetric_difference_area_m2": 0.0019830640181621438,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/927438474",
+      "source_area_m2": 651.3821673102757,
+      "actual_roof_projection_area_m2": 651.3821619264781,
+      "symmetric_difference_area_m2": 0.002288876956219179,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/927438475",
+      "source_area_m2": 631.1116334124368,
+      "actual_roof_projection_area_m2": 631.110443726182,
+      "symmetric_difference_area_m2": 0.0016380398084394144,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/927438476",
+      "source_area_m2": 699.0550666213679,
+      "actual_roof_projection_area_m2": 699.0558764711022,
+      "symmetric_difference_area_m2": 0.0022209980254281263,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/949595081",
+      "source_area_m2": 227.84753649873528,
+      "actual_roof_projection_area_m2": 227.84903273917735,
+      "symmetric_difference_area_m2": 0.0018922622278768418,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/1425706234",
+      "source_area_m2": 2870.2131057238585,
+      "actual_roof_projection_area_m2": 2870.210501983762,
+      "symmetric_difference_area_m2": 0.00980917971122229,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/1470235326",
+      "source_area_m2": 1345.4237557040271,
+      "actual_roof_projection_area_m2": 1345.4224931113422,
+      "symmetric_difference_area_m2": 0.003771798856026516,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/1470235327",
+      "source_area_m2": 752.6995132203397,
+      "actual_roof_projection_area_m2": 752.6978847049177,
+      "symmetric_difference_area_m2": 0.002359493301336334,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/1470235328",
+      "source_area_m2": 19850.450564502222,
+      "actual_roof_projection_area_m2": 19850.450973249972,
+      "symmetric_difference_area_m2": 0.014615109542941053,
+      "tolerance_m2": 0.39700901129004446,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/1470235329",
+      "source_area_m2": 22990.45649834923,
+      "actual_roof_projection_area_m2": 22990.45203093812,
+      "symmetric_difference_area_m2": 0.012892863568255716,
+      "tolerance_m2": 0.45980912996698464,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/1470235330",
+      "source_area_m2": 6509.145861400398,
+      "actual_roof_projection_area_m2": 6509.146447733045,
+      "symmetric_difference_area_m2": 0.009963294801653023,
+      "tolerance_m2": 0.13018291722800795,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/1470235331",
+      "source_area_m2": 8413.821690716699,
+      "actual_roof_projection_area_m2": 8413.819856956601,
+      "symmetric_difference_area_m2": 0.009560658457699066,
+      "tolerance_m2": 0.168276433814334,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533170977",
+      "source_area_m2": 2445.5169305979593,
+      "actual_roof_projection_area_m2": 2445.5174458054826,
+      "symmetric_difference_area_m2": 0.004654348121715916,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/663702943",
+      "source_area_m2": 405.0664030505939,
+      "actual_roof_projection_area_m2": 405.0654303357005,
+      "symmetric_difference_area_m2": 0.0027435562415107804,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638398876",
+      "source_area_m2": 1145.185842305579,
+      "actual_roof_projection_area_m2": 1145.1885589659214,
+      "symmetric_difference_area_m2": 0.003746777977201565,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638398877",
+      "source_area_m2": 1067.4429503500232,
+      "actual_roof_projection_area_m2": 1067.4442586153746,
+      "symmetric_difference_area_m2": 0.0052173768225378175,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638398878",
+      "source_area_m2": 1085.2623434309762,
+      "actual_roof_projection_area_m2": 1085.2600588649511,
+      "symmetric_difference_area_m2": 0.003930855686628513,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638398879",
+      "source_area_m2": 982.6423548224607,
+      "actual_roof_projection_area_m2": 982.6448962688446,
+      "symmetric_difference_area_m2": 0.00431979786275112,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/580408293",
+      "source_area_m2": 626.6956273337394,
+      "actual_roof_projection_area_m2": 626.6968570053577,
+      "symmetric_difference_area_m2": 0.004112342364930147,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638398880",
+      "source_area_m2": 4299.025465168106,
+      "actual_roof_projection_area_m2": 4299.0310678854585,
+      "symmetric_difference_area_m2": 0.0065535937876874005,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/876065295",
+      "source_area_m2": 573.407925572285,
+      "actual_roof_projection_area_m2": 573.4067597575486,
+      "symmetric_difference_area_m2": 0.0013492729041712334,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533171023",
+      "source_area_m2": 1281.0743424368763,
+      "actual_roof_projection_area_m2": 1281.076653148979,
+      "symmetric_difference_area_m2": 0.003253919690824383,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533171022",
+      "source_area_m2": 982.3572886798808,
+      "actual_roof_projection_area_m2": 982.3598914779723,
+      "symmetric_difference_area_m2": 0.003102020326440269,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533171021",
+      "source_area_m2": 1753.135812293242,
+      "actual_roof_projection_area_m2": 1753.1345405578613,
+      "symmetric_difference_area_m2": 0.0030528913743398224,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533171024",
+      "source_area_m2": 1065.773341950485,
+      "actual_roof_projection_area_m2": 1065.7726822104305,
+      "symmetric_difference_area_m2": 0.004640327662507881,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533171026",
+      "source_area_m2": 701.7896268677383,
+      "actual_roof_projection_area_m2": 701.7900830432773,
+      "symmetric_difference_area_m2": 0.002592887439160669,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533171025",
+      "source_area_m2": 691.7959702921646,
+      "actual_roof_projection_area_m2": 691.7963074594736,
+      "symmetric_difference_area_m2": 0.0029919323313252603,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "relation/18716462",
+      "source_area_m2": 12492.002254980449,
+      "actual_roof_projection_area_m2": 12491.996250962839,
+      "symmetric_difference_area_m2": 0.01931176307639678,
+      "tolerance_m2": 0.249840045099609,
+      "body_objects": 3,
+      "passed": true
+    },
+    {
+      "id": "way/533170974",
+      "source_area_m2": 3844.5977123944426,
+      "actual_roof_projection_area_m2": 3844.5975766405463,
+      "symmetric_difference_area_m2": 0.004748814646903349,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533170982",
+      "source_area_m2": 3664.353343197547,
+      "actual_roof_projection_area_m2": 3664.354011597112,
+      "symmetric_difference_area_m2": 0.006585487900014751,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533170981",
+      "source_area_m2": 3526.9828534715693,
+      "actual_roof_projection_area_m2": 3526.982852923684,
+      "symmetric_difference_area_m2": 0.0034440327923662677,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533170979",
+      "source_area_m2": 2976.5598566025715,
+      "actual_roof_projection_area_m2": 2976.558788342052,
+      "symmetric_difference_area_m2": 0.004875421825175584,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "relation/18716485",
+      "source_area_m2": 1680.4004991759557,
+      "actual_roof_projection_area_m2": 1680.4003546694294,
+      "symmetric_difference_area_m2": 0.0018644062967427392,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533170980",
+      "source_area_m2": 3102.8181131021347,
+      "actual_roof_projection_area_m2": 3102.8251474511344,
+      "symmetric_difference_area_m2": 0.007566514540559583,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533171030",
+      "source_area_m2": 395.0192729967328,
+      "actual_roof_projection_area_m2": 395.0196222830564,
+      "symmetric_difference_area_m2": 0.0010718807334797013,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533171029",
+      "source_area_m2": 363.77257488951926,
+      "actual_roof_projection_area_m2": 363.7718904055655,
+      "symmetric_difference_area_m2": 0.0011531529265123824,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/533171028",
+      "source_area_m2": 505.3560030370012,
+      "actual_roof_projection_area_m2": 505.35688658617437,
+      "symmetric_difference_area_m2": 0.0011435429128574396,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/628933252",
+      "source_area_m2": 1057.498261888934,
+      "actual_roof_projection_area_m2": 1057.497094720602,
+      "symmetric_difference_area_m2": 0.009860518972320629,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/628933253",
+      "source_area_m2": 1277.3444716225222,
+      "actual_roof_projection_area_m2": 1277.343733727932,
+      "symmetric_difference_area_m2": 0.004517554285828454,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638398293",
+      "source_area_m2": 1222.8775645376782,
+      "actual_roof_projection_area_m2": 1222.879681598395,
+      "symmetric_difference_area_m2": 0.005313981374191043,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638398294",
+      "source_area_m2": 1045.332046262502,
+      "actual_roof_projection_area_m2": 1045.3334215208888,
+      "symmetric_difference_area_m2": 0.004793358517263207,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638398295",
+      "source_area_m2": 1335.4419849830056,
+      "actual_roof_projection_area_m2": 1335.438037198037,
+      "symmetric_difference_area_m2": 0.0062667611439778115,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/927418785",
+      "source_area_m2": 675.1461538376732,
+      "actual_roof_projection_area_m2": 675.1448443420231,
+      "symmetric_difference_area_m2": 0.002723301348953512,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/927418784",
+      "source_area_m2": 602.284199803736,
+      "actual_roof_projection_area_m2": 602.2850262522697,
+      "symmetric_difference_area_m2": 0.00824940777025962,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/638398296",
+      "source_area_m2": 697.7025307531076,
+      "actual_roof_projection_area_m2": 697.7017309740186,
+      "symmetric_difference_area_m2": 0.0016456820169242646,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    },
+    {
+      "id": "way/755562229",
+      "source_area_m2": 16.199645545612796,
+      "actual_roof_projection_area_m2": 16.19963469915092,
+      "symmetric_difference_area_m2": 0.00039542965395122557,
+      "tolerance_m2": 0.1,
+      "body_objects": 1,
+      "passed": true
+    }
+  ],
+  "science": {
+    "feature_id": "relation/18716462",
+    "config_partition_count": 2,
+    "actual_body_count": 3,
+    "source_courtyard_holes": 1,
+    "source_courtyard_area_m2": 4478.329571520585,
+    "partition_overlap_area_m2": 0.0,
+    "partition_coverage_difference_area_m2": 3.7863096718700763e-07,
+    "actual_roof_area_in_source_courtyard_m2": 0.0009497067233894541,
+    "actual_roof_difference_area_m2": 0.01931176307639678,
+    "modeled_heights_m": [
+      23.5,
+      42.5
+    ],
+    "height_partition_estimated": true
+  },
+  "center": {
+    "parent_feature_id": "relation/12480428",
+    "parent_height_m": 4.5,
+    "parent_storeys": 1,
+    "source_courtyard_holes": 7,
+    "actual_roof_area_in_source_courtyards_m2": [
+      0.0007211943784071195,
+      0.0009502492434528033,
+      0.000275308452719811,
+      0.0005262083126678085,
+      0.0010391804504600866,
+      0.003065983546792241,
+      0.00015735891424000458
+    ],
+    "shared_base_child_count": 4,
+    "children": [
+      {
+        "feature_id": "way/710848314",
+        "child_body_bottom_m": 39.27779006958008,
+        "parent_body_top_m": 39.27779006958008,
+        "interface_gap_m": 0.0,
+        "vertical_body_overlap_m": 0,
+        "upper_storeys": 2,
+        "total_storeys_including_common_base": 3,
+        "height_m_above_common_base": 7.8,
+        "total_highest_height_m_from_parent_ground": 12.299999237060547,
+        "source_xy_overhang_area_m2": 0.0,
+        "source_xy_overhang_fraction": 0.0,
+        "actual_float32_xy_overhang_area_m2": 0.0,
+        "duplicate_child_foundation": false
+      },
+      {
+        "feature_id": "way/710848316",
+        "child_body_bottom_m": 39.27779006958008,
+        "parent_body_top_m": 39.27779006958008,
+        "interface_gap_m": 0.0,
+        "vertical_body_overlap_m": 0,
+        "upper_storeys": 3,
+        "total_storeys_including_common_base": 4,
+        "height_m_above_common_base": 15.5,
+        "total_highest_height_m_from_parent_ground": 20.0,
+        "source_xy_overhang_area_m2": 0.0,
+        "source_xy_overhang_fraction": 0.0,
+        "actual_float32_xy_overhang_area_m2": 0.0,
+        "duplicate_child_foundation": false
+      },
+      {
+        "feature_id": "way/710848317",
+        "child_body_bottom_m": 39.27779006958008,
+        "parent_body_top_m": 39.27779006958008,
+        "interface_gap_m": 0.0,
+        "vertical_body_overlap_m": 0,
+        "upper_storeys": 3,
+        "total_storeys_including_common_base": 4,
+        "height_m_above_common_base": 11.9,
+        "total_highest_height_m_from_parent_ground": 16.39999771118164,
+        "source_xy_overhang_area_m2": 0.0,
+        "source_xy_overhang_fraction": 0.0,
+        "actual_float32_xy_overhang_area_m2": 4.352841228794091e-05,
+        "duplicate_child_foundation": false
+      },
+      {
+        "feature_id": "way/710848322",
+        "child_body_bottom_m": 39.27779006958008,
+        "parent_body_top_m": 39.27779006958008,
+        "interface_gap_m": 0.0,
+        "vertical_body_overlap_m": 0,
+        "upper_storeys": 3,
+        "total_storeys_including_common_base": 4,
+        "height_m_above_common_base": 11.9,
+        "total_highest_height_m_from_parent_ground": 16.39999771118164,
+        "source_xy_overhang_area_m2": 0.0,
+        "source_xy_overhang_fraction": 0.0,
+        "actual_float32_xy_overhang_area_m2": 0.0007708524385890345,
+        "duplicate_child_foundation": false
+      }
+    ],
+    "yidan_total_storeys": 4,
+    "yidan_total_highest_height_m_estimate": 20,
+    "xy_alignment_note": "Actual float32 roof boundary differs slightly from double-precision source polygons; original child/parent source overlap and boundary quantization are reported separately."
+  },
+  "original_dtm_unchanged": true,
+  "verified_stage_ground_alignment": {
+    "foundation_objects": 116,
+    "ground_contact_samples": 4997,
+    "maximum_ground_contact_error_m": 2.889191708987937e-05,
+    "ground_embed_m": 0.2,
+    "floors_at_or_above_sampled_dtm": true,
+    "raw_dtm_geometry_preserved": true
+  },
+  "original_terrain_geometry_sha256": "4040a8069d39f688f6cfbdd5c4f78820f82468b1f1e08474e6786208deec9200",
+  "visual_review": {
+    "images_viewed": [
+      "campus_aerial.png",
+      "campus_overview_labeled.png",
+      "gate_inward.png"
+    ],
+    "finding": "All major buildings present and labeled; orange Yidan shell, warm engineering C/U footprints, science court and gate visible. Low-detail facade repetition and simple terrain are appropriate only for first campus massing, not final visual quality."
+  },
+  "limits": [
+    "GEDTM30 is a roughly 30m predicted bare-earth product; no locally surveyed campus DTM.",
+    "Base contact verifies the supplied terrain, not real-world road/step/platform elevations.",
+    "Science height partition and most heights/roof slopes/facades are explicit visual estimates, not measured plans.",
+    "Public map footprints are not survey-certified; source geometry and float32 boundary quantization are recorded separately.",
+    "No interiors, final vegetation/landscaping or web integration in this model."
+  ]
+}

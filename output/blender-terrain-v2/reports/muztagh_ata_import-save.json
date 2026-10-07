@@ -1,0 +1,78 @@
+{
+  "region": "muztagh_ata",
+  "stage": "import-save",
+  "started_at": "2026-10-05T15:25:36+08:00",
+  "blender_version": "5.2.2 LTS",
+  "python_version": "3.13.13 (main, May  8 2026, 12:37:03) [MSC v.1944 64 bit (AMD64)]",
+  "background": true,
+  "source": {
+    "path": "output/terrain-v2/muztagh_ata/muztagh_ata_blockout.obj",
+    "bytes": 61119774,
+    "sha256": "1e3e9f793dc79ca3bf034400107e34320f7578e16fb236772af30e7665ea7f88"
+  },
+  "source_metadata": {
+    "path": "output/terrain-v2/muztagh_ata/muztagh_ata_metadata.json",
+    "bytes": 15005,
+    "sha256": "f5bffdbe5616c5eb3616e23ea17608e391e5bd35aab6c8c7f6ff998ed6a81b83"
+  },
+  "provenance": {
+    "product": "Copernicus GLO-30",
+    "product_text": "Copernicus GLO-30",
+    "attribution": "produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+    "license": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM",
+    "license_text": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM",
+    "license_url": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM"
+  },
+  "expected_extras": {
+    "region_id": "muztagh_ata",
+    "attribution": "produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+    "source_product": "Copernicus GLO-30",
+    "terrain_license": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM",
+    "license_url": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM",
+    "source_obj": "output/terrain-v2/muztagh_ata/muztagh_ata_blockout.obj",
+    "source_obj_sha256": "1e3e9f793dc79ca3bf034400107e34320f7578e16fb236772af30e7665ea7f88",
+    "metadata_source": "output/terrain-v2/muztagh_ata/muztagh_ata_metadata.json",
+    "units": "metres",
+    "horizontal_crs": "EPSG:32643",
+    "vertical_datum": "EGM2008 (EPSG:3855), metres",
+    "projected_xy_origin_m": [
+      513150.0,
+      4239135.0
+    ],
+    "vertical_origin_m": 0.0,
+    "surface_model": "ice_surface_DSM",
+    "scope": "four separate v2 terrain assets; not assembled narrative scene"
+  },
+  "mesh_check": {
+    "vertices": 434812,
+    "unique_source_vertices": 434812,
+    "triangles": 866970,
+    "uv_layers": 1,
+    "bounds_min_m": [
+      -17535.0,
+      -22230.0,
+      3489.323974609375
+    ],
+    "bounds_max_m": [
+      17535.0,
+      22230.0,
+      7482.2412109375
+    ],
+    "max_coordinate_error_against_obj_m": 0.00024218749967985786,
+    "coordinate_tolerance_m": 0.002,
+    "max_uv_error_against_obj": 2.9729156469926465e-08,
+    "uv_tolerance": 2e-06,
+    "all_vertices_and_uv_loops_checked": true,
+    "all_face_normals_positive_z": true,
+    "geometry_sha256": "8152f8cfe373e646d9457846aed8ff8b590d1944f9016231e63779db718e260c",
+    "uv_sha256": "ef79366dc36d18f3aba213631cca69277d98e3420b4b3dc91973d56936d1a64d"
+  },
+  "blend": {
+    "path": "output/blender-terrain-v2/muztagh_ata_validation.blend",
+    "bytes": 20871054,
+    "sha256": "a6b87aed8f9b22d4902cae7a285dcb33c4db7675dd018f06a250430e5fd8748a"
+  },
+  "elapsed_seconds": 5.23,
+  "finished_at": "2026-10-05T15:25:42+08:00",
+  "status": "passed"
+}

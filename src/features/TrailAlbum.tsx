@@ -1,3 +1,4 @@
+import { activityCity, activityRoute } from './activity-location';
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { ArrowLeft, ArrowRight, ArrowUpRight, Images, X } from 'lucide-react';
 import type { Activity } from '../types';
@@ -85,7 +86,7 @@ export default function TrailAlbum({ activities, compact = false }: TrailAlbumPr
         </div>
 
         <div className="trail-album-meta">
-          <div><span className="trail-album-category">{selected.category}</span><time dateTime={selected.date}>{formatDate(selected.date)}</time><span>{selected.location}</span></div>
+          <div><span className="trail-album-category">{selected.category}</span><time dateTime={selected.date}>{formatDate(selected.date)}</time><span>{[activityCity(selected), activityRoute(selected)].filter(Boolean).join(' · ')}</span></div>
           <span className="trail-album-photo-count">{photos.length} 张照片{selected.isDemo ? ' · 回顾示例' : ''}</span>
         </div>
 

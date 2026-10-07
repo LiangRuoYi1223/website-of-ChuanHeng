@@ -1,0 +1,343 @@
+{
+  "started_at": "2026-10-05T15:24:57+08:00",
+  "timezone": "Asia/Shanghai",
+  "blender_executable": "D:\\blender\\blender.exe",
+  "scope": "OBJ import, BLEND save/reopen, GLB export/reimport, EEVEE still render",
+  "terrain_version": 2,
+  "regions": [
+    "campus",
+    "tanglang",
+    "wutai",
+    "muztagh_ata"
+  ],
+  "sources": [
+    {
+      "region": "campus",
+      "metadata": {
+        "path": "output/terrain-v2/campus/campus_metadata.json",
+        "bytes": 13147,
+        "sha256": "16e5d3b447a8376705bb8b16c7ae64afc3ee032e5d586c210b7954964e267b40"
+      },
+      "mesh": {
+        "path": "output/terrain-v2/campus/campus_blockout.obj",
+        "bytes": 5805950,
+        "sha256": "ba55b8db9218d00421c32b11d91b6e3930f0be67adb84766e8793bb020c1e9f9"
+      },
+      "provenance": {
+        "product": "GEDTM30 v1.2",
+        "product_text": "GEDTM30 v1.2",
+        "attribution": "Ho, Yufeng & Hengl, Tom (2026). Global Ensemble Digital Terrain Model 30m (GEDTM30), v1.2.0, OpenGeoHub, https://doi.org/10.5281/zenodo.18887460; licensed CC BY 4.0. Regional crops and subsequent meshes are modified derivatives.",
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "license_text": "https://creativecommons.org/licenses/by/4.0/",
+        "license_url": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "sampling_m": 30
+    },
+    {
+      "region": "tanglang",
+      "metadata": {
+        "path": "output/terrain-v2/tanglang/tanglang_metadata.json",
+        "bytes": 14073,
+        "sha256": "1f1fa7e6eb6aa4986e68c0a60dc50ee7ff4fff14f0d6f7c9bb4f06b8c1b473e5"
+      },
+      "mesh": {
+        "path": "output/terrain-v2/tanglang/tanglang_blockout.obj",
+        "bytes": 7631448,
+        "sha256": "398aaff2660db4b07ac3f0b0bb3cbbfa60aff26c977c7f3c56e0f6cec732138b"
+      },
+      "provenance": {
+        "product": "GEDTM30 v1.2",
+        "product_text": "GEDTM30 v1.2",
+        "attribution": "Ho, Yufeng & Hengl, Tom (2026). Global Ensemble Digital Terrain Model 30m (GEDTM30), v1.2.0, OpenGeoHub, https://doi.org/10.5281/zenodo.18887460; licensed CC BY 4.0. Regional crops and subsequent meshes are modified derivatives.",
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "license_text": "https://creativecommons.org/licenses/by/4.0/",
+        "license_url": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "sampling_m": 30
+    },
+    {
+      "region": "wutai",
+      "metadata": {
+        "path": "output/terrain-v2/wutai/wutai_metadata.json",
+        "bytes": 15834,
+        "sha256": "b37b7dd7c881f049914f50b679271165d3aeb7193f414f11afbd3fd69c6012f5"
+      },
+      "mesh": {
+        "path": "output/terrain-v2/wutai/wutai_blockout.obj",
+        "bytes": 32800913,
+        "sha256": "bec038569c5f09242f2fc8630845070a8cf65ffcbc1839448e1465a7b014ecd5"
+      },
+      "provenance": {
+        "product": "GEDTM30 v1.2",
+        "product_text": "GEDTM30 v1.2",
+        "attribution": "Ho, Yufeng & Hengl, Tom (2026). Global Ensemble Digital Terrain Model 30m (GEDTM30), v1.2.0, OpenGeoHub, https://doi.org/10.5281/zenodo.18887460; licensed CC BY 4.0. Regional crops and subsequent meshes are modified derivatives.",
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "license_text": "https://creativecommons.org/licenses/by/4.0/",
+        "license_url": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "sampling_m": 60
+    },
+    {
+      "region": "muztagh_ata",
+      "metadata": {
+        "path": "output/terrain-v2/muztagh_ata/muztagh_ata_metadata.json",
+        "bytes": 15005,
+        "sha256": "f5bffdbe5616c5eb3616e23ea17608e391e5bd35aab6c8c7f6ff998ed6a81b83"
+      },
+      "mesh": {
+        "path": "output/terrain-v2/muztagh_ata/muztagh_ata_blockout.obj",
+        "bytes": 61119774,
+        "sha256": "1e3e9f793dc79ca3bf034400107e34320f7578e16fb236772af30e7665ea7f88"
+      },
+      "provenance": {
+        "product": "Copernicus GLO-30",
+        "product_text": "Copernicus GLO-30",
+        "attribution": "produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+        "license": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM",
+        "license_text": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM",
+        "license_url": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM"
+      },
+      "sampling_m": 60
+    }
+  ],
+  "campus_reference_check": "skipped at explicit user request on 2026-10-05",
+  "user_preferences_saved": false,
+  "assembled_narrative_model_created": false,
+  "website_modified": false,
+  "status": "passed",
+  "stages": [
+    {
+      "region": "campus",
+      "stage": "import-save",
+      "return_code": 0,
+      "elapsed_seconds": 1.477,
+      "fresh_blender_process": true,
+      "report": "output/blender-terrain-v2/reports/campus_import-save.json",
+      "log": "artifacts/mountain-prep/blender-terrain-v2/campus_import-save.log"
+    },
+    {
+      "region": "campus",
+      "stage": "reopen-export",
+      "return_code": 0,
+      "elapsed_seconds": 10.294,
+      "fresh_blender_process": true,
+      "report": "output/blender-terrain-v2/reports/campus_reopen-export.json",
+      "log": "artifacts/mountain-prep/blender-terrain-v2/campus_reopen-export.log"
+    },
+    {
+      "region": "campus",
+      "stage": "glb-roundtrip",
+      "return_code": 0,
+      "elapsed_seconds": 1.513,
+      "fresh_blender_process": true,
+      "report": "output/blender-terrain-v2/reports/campus_glb-roundtrip.json",
+      "log": "artifacts/mountain-prep/blender-terrain-v2/campus_glb-roundtrip.log"
+    },
+    {
+      "region": "tanglang",
+      "stage": "import-save",
+      "return_code": 0,
+      "elapsed_seconds": 1.843,
+      "fresh_blender_process": true,
+      "report": "output/blender-terrain-v2/reports/tanglang_import-save.json",
+      "log": "artifacts/mountain-prep/blender-terrain-v2/tanglang_import-save.log"
+    },
+    {
+      "region": "tanglang",
+      "stage": "reopen-export",
+      "return_code": 0,
+      "elapsed_seconds": 3.621,
+      "fresh_blender_process": true,
+      "report": "output/blender-terrain-v2/reports/tanglang_reopen-export.json",
+      "log": "artifacts/mountain-prep/blender-terrain-v2/tanglang_reopen-export.log"
+    },
+    {
+      "region": "tanglang",
+      "stage": "glb-roundtrip",
+      "return_code": 0,
+      "elapsed_seconds": 1.829,
+      "fresh_blender_process": true,
+      "report": "output/blender-terrain-v2/reports/tanglang_glb-roundtrip.json",
+      "log": "artifacts/mountain-prep/blender-terrain-v2/tanglang_glb-roundtrip.log"
+    },
+    {
+      "region": "wutai",
+      "stage": "import-save",
+      "return_code": 0,
+      "elapsed_seconds": 4.796,
+      "fresh_blender_process": true,
+      "report": "output/blender-terrain-v2/reports/wutai_import-save.json",
+      "log": "artifacts/mountain-prep/blender-terrain-v2/wutai_import-save.log"
+    },
+    {
+      "region": "wutai",
+      "stage": "reopen-export",
+      "return_code": 0,
+      "elapsed_seconds": 6.792,
+      "fresh_blender_process": true,
+      "report": "output/blender-terrain-v2/reports/wutai_reopen-export.json",
+      "log": "artifacts/mountain-prep/blender-terrain-v2/wutai_reopen-export.log"
+    },
+    {
+      "region": "wutai",
+      "stage": "glb-roundtrip",
+      "return_code": 0,
+      "elapsed_seconds": 4.743,
+      "fresh_blender_process": true,
+      "report": "output/blender-terrain-v2/reports/wutai_glb-roundtrip.json",
+      "log": "artifacts/mountain-prep/blender-terrain-v2/wutai_glb-roundtrip.log"
+    },
+    {
+      "region": "muztagh_ata",
+      "stage": "import-save",
+      "return_code": 0,
+      "elapsed_seconds": 8.056,
+      "fresh_blender_process": true,
+      "report": "output/blender-terrain-v2/reports/muztagh_ata_import-save.json",
+      "log": "artifacts/mountain-prep/blender-terrain-v2/muztagh_ata_import-save.log"
+    },
+    {
+      "region": "muztagh_ata",
+      "stage": "reopen-export",
+      "return_code": 0,
+      "elapsed_seconds": 10.327,
+      "fresh_blender_process": true,
+      "report": "output/blender-terrain-v2/reports/muztagh_ata_reopen-export.json",
+      "log": "artifacts/mountain-prep/blender-terrain-v2/muztagh_ata_reopen-export.log"
+    },
+    {
+      "region": "muztagh_ata",
+      "stage": "glb-roundtrip",
+      "return_code": 0,
+      "elapsed_seconds": 8.563,
+      "fresh_blender_process": true,
+      "report": "output/blender-terrain-v2/reports/muztagh_ata_glb-roundtrip.json",
+      "log": "artifacts/mountain-prep/blender-terrain-v2/muztagh_ata_glb-roundtrip.log"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "output/blender-terrain-v2/campus_validation.blend",
+      "bytes": 2294480,
+      "sha256": "a463613596e1a5e4ca03d5dcb0213ca3f3d1dd667cd8cca28e8975f84be0aed7"
+    },
+    {
+      "path": "output/blender-terrain-v2/campus_validation.glb",
+      "bytes": 2048136,
+      "sha256": "0488685064692989c2f3c14b25dccb3ff6e5d1fe86a0457d3a2aaa0c7dec5dae"
+    },
+    {
+      "path": "output/blender-terrain-v2/campus_preview.png",
+      "bytes": 395585,
+      "sha256": "7c4fcccacff30497f66b89f5a5dba4fe18450c790b9bcadcc438b3aded1ab5b3"
+    },
+    {
+      "path": "output/blender-terrain-v2/reports/campus_import-save.json",
+      "bytes": 3299,
+      "sha256": "68f005841017043b542ba97d1b34ae8006efa6c73f9572ce7afd08e420a4c2b7"
+    },
+    {
+      "path": "output/blender-terrain-v2/reports/campus_reopen-export.json",
+      "bytes": 4196,
+      "sha256": "9769915b12c72ebfab27db23de780b9db5d1f30a952ec43d16e971af9b5fc274"
+    },
+    {
+      "path": "output/blender-terrain-v2/reports/campus_glb-roundtrip.json",
+      "bytes": 3934,
+      "sha256": "0a8fd5e62e80c16603379554a8246a1fef6f884f23119084ce1eb3ad69289d64"
+    },
+    {
+      "path": "output/blender-terrain-v2/tanglang_validation.blend",
+      "bytes": 3003856,
+      "sha256": "2fcca086436a6e46f470ab78be93bd702ea6b8e0ae1bf12abee8b0d642fb7c44"
+    },
+    {
+      "path": "output/blender-terrain-v2/tanglang_validation.glb",
+      "bytes": 2653176,
+      "sha256": "842ddc8014d9222c01b348f8f38b19ae4d76bc19beec13395f09e207c6a76315"
+    },
+    {
+      "path": "output/blender-terrain-v2/tanglang_preview.png",
+      "bytes": 374929,
+      "sha256": "939db4f94817dfc3f57292840949f3b480362620f1e111c854793be4276aea53"
+    },
+    {
+      "path": "output/blender-terrain-v2/reports/tanglang_import-save.json",
+      "bytes": 3322,
+      "sha256": "f67c26b95bed8c5af6d3c47c26ad8731b2ba38112b1f93bdae4b0667dcf8601d"
+    },
+    {
+      "path": "output/blender-terrain-v2/reports/tanglang_reopen-export.json",
+      "bytes": 4223,
+      "sha256": "5d0bc039d157a614f106e03bb7c634053d370c5041721bb86c73422ee54255e5"
+    },
+    {
+      "path": "output/blender-terrain-v2/reports/tanglang_glb-roundtrip.json",
+      "bytes": 3958,
+      "sha256": "b756aec11fd57abef4bc275a6b32727f5e34ac232dbb4083d9eeebcd3ebd99b8"
+    },
+    {
+      "path": "output/blender-terrain-v2/wutai_validation.blend",
+      "bytes": 10786230,
+      "sha256": "3cdacca96f3cb35ef8c686c227058cc8b57278421e38df1110c62aee983b83ca"
+    },
+    {
+      "path": "output/blender-terrain-v2/wutai_validation.glb",
+      "bytes": 13330740,
+      "sha256": "0a482b17f49e528d3e5a9489cf2758237cbd5937ae4cb77270923b687a7abf94"
+    },
+    {
+      "path": "output/blender-terrain-v2/wutai_preview.png",
+      "bytes": 516127,
+      "sha256": "0f433e11aa754e26c573c8a27d742a8ee18a661dff45c1ef70629bc78e9d64dc"
+    },
+    {
+      "path": "output/blender-terrain-v2/reports/wutai_import-save.json",
+      "bytes": 3296,
+      "sha256": "877a81ce66aa04732c0aafa0e5a92c6f73db6b3ef75e5334c7eba743045cdaa2"
+    },
+    {
+      "path": "output/blender-terrain-v2/reports/wutai_reopen-export.json",
+      "bytes": 4193,
+      "sha256": "6b80f2b9aebcc712b7fa6cbddd07d270cdbf0d3af26ec2b7f74d3386ce1af138"
+    },
+    {
+      "path": "output/blender-terrain-v2/reports/wutai_glb-roundtrip.json",
+      "bytes": 3932,
+      "sha256": "c0091663315706fb775db3e50a52d235739acd022f189db9f0232d55c933780a"
+    },
+    {
+      "path": "output/blender-terrain-v2/muztagh_ata_validation.blend",
+      "bytes": 20871054,
+      "sha256": "a6b87aed8f9b22d4902cae7a285dcb33c4db7675dd018f06a250430e5fd8748a"
+    },
+    {
+      "path": "output/blender-terrain-v2/muztagh_ata_validation.glb",
+      "bytes": 24320580,
+      "sha256": "7ce61a15a89629bfd128e3b8890c207853d504f11242adb926e3de9895144e02"
+    },
+    {
+      "path": "output/blender-terrain-v2/muztagh_ata_preview.png",
+      "bytes": 469662,
+      "sha256": "9d1e526a3a5c8dc643bedfedc21cbad2847df360bc3082356710df2f303e85d5"
+    },
+    {
+      "path": "output/blender-terrain-v2/reports/muztagh_ata_import-save.json",
+      "bytes": 3690,
+      "sha256": "a9d4a4a49ec76dd723e424403e3affc49a14ae335d35b2821ddb04016dec9d5a"
+    },
+    {
+      "path": "output/blender-terrain-v2/reports/muztagh_ata_reopen-export.json",
+      "bytes": 4596,
+      "sha256": "08d0d998e422c4c628eb8566119baf89e540ae397d1f5405e819eef8ae88bd96"
+    },
+    {
+      "path": "output/blender-terrain-v2/reports/muztagh_ata_glb-roundtrip.json",
+      "bytes": 4328,
+      "sha256": "a318148d66c3064910c06ae5569c54c6abb1a038981735ed31be8a72c5852fa1"
+    }
+  ],
+  "blender_version": "5.2.2 LTS",
+  "python_version": "3.13.13 (main, May  8 2026, 12:37:03) [MSC v.1944 64 bit (AMD64)]",
+  "finished_at": "2026-10-05T15:26:01+08:00"
+}

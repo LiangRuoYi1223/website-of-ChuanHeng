@@ -1,0 +1,445 @@
+{
+  "schema_version": 2,
+  "invocation_started_utc": "2026-10-05T07:21:55+00:00",
+  "status": "complete",
+  "sources": [
+    {
+      "id": "copernicus_muztagh_N38E074",
+      "product": "Copernicus GLO-30 AWS public 2021 release DSM",
+      "surface_type": "surface_elevation_including_glacier",
+      "source_url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N38_00_E074_00_DEM/Copernicus_DSM_COG_10_N38_00_E074_00_DEM.tif",
+      "source_metadata_url": "https://registry.opendata.aws/copernicus-dem/",
+      "local_path": "artifacts/mountain-prep/terrain-v2/raw/Copernicus_DSM_COG_10_N38_00_E074_00_DEM.tif",
+      "bytes": 38023450,
+      "sha256": "e1732e45ed5f2b8777a73cd06fe31ae8ae969ff628cb97c1056d9c588f258bae",
+      "official_checksum": null,
+      "acquired_utc": "2026-10-05T07:10:52+00:00",
+      "fresh_download": true,
+      "reused_old_file": false,
+      "acquisition_method": "entire original one-degree GeoTIFF via HTTP 200",
+      "response": {
+        "Content-Length": "38023450",
+        "Content-Range": null,
+        "ETag": "\"9622fa0d32ca42bbc1ead2e5426cc68a\"",
+        "Last-Modified": "Mon, 09 May 2022 14:19:56 GMT",
+        "Accept-Ranges": "bytes",
+        "Content-Type": "image/tiff"
+      },
+      "attribution": "produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "license_url": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM",
+      "license": "Copernicus DEM licence; attribution required",
+      "source_resolution_m_approx": 30,
+      "status": "complete",
+      "crs": "EPSG:4326",
+      "vertical_datum": "EGM2008 (EPSG:3855), metres",
+      "width": 3600,
+      "height": 3600,
+      "dtype": "float32",
+      "nodata": null,
+      "transform": [
+        0.0002777777777777778,
+        0.0,
+        73.99986111111112,
+        0.0,
+        -0.0002777777777777778,
+        39.00013888888889
+      ],
+      "bounds": [
+        73.99986111111112,
+        38.00013888888889,
+        74.99986111111112,
+        39.00013888888889
+      ],
+      "resolution_degrees": [
+        0.0002777777777777778,
+        0.0002777777777777778
+      ],
+      "scale": 1.0,
+      "offset": 0.0,
+      "tags": {
+        "AREA_OR_POINT": "Point"
+      },
+      "area_or_point": "Point",
+      "validation": {
+        "all_local_blocks_decoded": true,
+        "valid_pixels": 12960000,
+        "masked_pixels": 0,
+        "height_min_m": 3277.44580078125,
+        "height_max_m": 5872.4912109375,
+        "local_sha256_computed": true
+      }
+    },
+    {
+      "id": "copernicus_muztagh_N38E075",
+      "product": "Copernicus GLO-30 AWS public 2021 release DSM",
+      "surface_type": "surface_elevation_including_glacier",
+      "source_url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N38_00_E075_00_DEM/Copernicus_DSM_COG_10_N38_00_E075_00_DEM.tif",
+      "source_metadata_url": "https://registry.opendata.aws/copernicus-dem/",
+      "local_path": "artifacts/mountain-prep/terrain-v2/raw/Copernicus_DSM_COG_10_N38_00_E075_00_DEM.tif",
+      "bytes": 40363569,
+      "sha256": "ca81e041c68120947c8f3ec54af4a696457859e6aa0828a39d06f68501a5ce18",
+      "official_checksum": null,
+      "acquired_utc": "2026-10-05T07:10:56+00:00",
+      "fresh_download": true,
+      "reused_old_file": false,
+      "acquisition_method": "entire original one-degree GeoTIFF via HTTP 200",
+      "response": {
+        "Content-Length": "40363569",
+        "Content-Range": null,
+        "ETag": "\"f360fb74cfb4246e0b48517114b1326b\"",
+        "Last-Modified": "Mon, 09 May 2022 14:19:56 GMT",
+        "Accept-Ranges": "bytes",
+        "Content-Type": "image/tiff"
+      },
+      "attribution": "produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+      "license_url": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM",
+      "license": "Copernicus DEM licence; attribution required",
+      "source_resolution_m_approx": 30,
+      "status": "complete",
+      "crs": "EPSG:4326",
+      "vertical_datum": "EGM2008 (EPSG:3855), metres",
+      "width": 3600,
+      "height": 3600,
+      "dtype": "float32",
+      "nodata": null,
+      "transform": [
+        0.0002777777777777778,
+        0.0,
+        74.99986111111112,
+        0.0,
+        -0.0002777777777777778,
+        39.00013888888889
+      ],
+      "bounds": [
+        74.99986111111112,
+        38.00013888888889,
+        75.99986111111112,
+        39.00013888888889
+      ],
+      "resolution_degrees": [
+        0.0002777777777777778,
+        0.0002777777777777778
+      ],
+      "scale": 1.0,
+      "offset": 0.0,
+      "tags": {
+        "AREA_OR_POINT": "Point"
+      },
+      "area_or_point": "Point",
+      "validation": {
+        "all_local_blocks_decoded": true,
+        "valid_pixels": 12960000,
+        "masked_pixels": 0,
+        "height_min_m": 1388.044677734375,
+        "height_max_m": 7597.7783203125,
+        "local_sha256_computed": true
+      }
+    },
+    {
+      "id": "gedtm30_campus_tanglang",
+      "product": "GEDTM30 v1.2.0 predicted bare-earth DTM",
+      "surface_type": "estimated_bare_earth",
+      "source_url": "https://s3.opengeohub.org/global/dtm/v1.2/gedtm_rf_m_30m_s_20060101_20151231_go_epsg.4326.3855_v1.2.tif",
+      "source_metadata_url": "https://zenodo.org/records/18887460",
+      "source_resolution_m_approx": 30,
+      "source_global_properties": {
+        "crs": "EPSG:4326",
+        "vertical_datum": "EGM2008 (EPSG:3855), metres",
+        "width": 1296009,
+        "height": 540009,
+        "dtype": "float32",
+        "nodata": 3.4028234663852886e+38,
+        "transform": [
+          0.00027777777777799305,
+          0.0,
+          -180.00125,
+          0.0,
+          -0.00027777777777799305,
+          85.00125
+        ],
+        "bounds": [
+          -180.00125,
+          -65.00125000011624,
+          180.001250000279,
+          85.00125
+        ],
+        "resolution_degrees": [
+          0.00027777777777799305,
+          0.00027777777777799305
+        ],
+        "scale": 0.1,
+        "offset": 0.0,
+        "tags": {
+          "VERTICAL_DATUM": "EGM2008/EPSG:3855",
+          "AREA_OR_POINT": "Area"
+        },
+        "area_or_point": "Area"
+      },
+      "response": {
+        "Content-Length": "432407644715",
+        "Content-Range": null,
+        "ETag": "\"8bf9b35f45e9befaa9b91d877bf230d7-3107\"",
+        "Last-Modified": "Wed, 23 Sep 2026 14:42:14 GMT",
+        "Accept-Ranges": "bytes",
+        "Content-Type": "image/tiff"
+      },
+      "native_source_window": [
+        1058116,
+        224464,
+        505,
+        469
+      ],
+      "requested_bounds_wgs84": [
+        113.94,
+        22.54,
+        114.04,
+        22.63
+      ],
+      "padded_bounds_wgs84": [
+        113.92,
+        22.52,
+        114.06,
+        22.65
+      ],
+      "acquisition_method": "HTTP Range reads from global 30m COG; regional native pixel crop",
+      "global_file_downloaded": false,
+      "network_bytes_not_measured": true,
+      "local_path": "artifacts/mountain-prep/terrain-v2/raw/gedtm30_campus_tanglang_native.tif",
+      "bytes": 402498,
+      "sha256": "fa9956b60f9a82e83153eb849f4bbd88aaf27370c1cf35415a553d80f1a0a10a",
+      "official_checksum": null,
+      "fresh_download": true,
+      "reused_old_file": false,
+      "acquired_utc": "2026-10-05T07:13:41+00:00",
+      "attribution": "Ho, Yufeng & Hengl, Tom (2026). Global Ensemble Digital Terrain Model 30m (GEDTM30), v1.2.0, OpenGeoHub, https://doi.org/10.5281/zenodo.18887460; licensed CC BY 4.0. Regional crops and subsequent meshes are modified derivatives.",
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "limitations": "Machine-learning estimate; residual tree/building heights and smoothing can remain. Not surveyed ground or 30m vertical accuracy.",
+      "status": "complete",
+      "crs": "EPSG:4326",
+      "vertical_datum": "EGM2008 (EPSG:3855), metres",
+      "width": 505,
+      "height": 469,
+      "dtype": "float32",
+      "nodata": 3.4028234663852886e+38,
+      "transform": [
+        0.00027777777777799305,
+        0.0,
+        113.91986111133892,
+        0.0,
+        -0.00027777777777799305,
+        22.650138888840566
+      ],
+      "bounds": [
+        113.91986111133892,
+        22.51986111106269,
+        114.0601388891168,
+        22.650138888840566
+      ],
+      "resolution_degrees": [
+        0.00027777777777799305,
+        0.00027777777777799305
+      ],
+      "scale": 0.1,
+      "offset": 0.0,
+      "tags": {
+        "ATTRIBUTION": "GEDTM30 v1.2.0, Global Ensemble Digital Terrain Model, OpenGeoHub/OpenLandMap contributors; source https://zenodo.org/records/18887460; licensed CC BY 4.0. Regional crops and subsequent meshes are modified derivatives.",
+        "CROP": "Native pixel-aligned regional crop; no resampling",
+        "SOURCE_PRODUCT": "GEDTM30 v1.2.0",
+        "SOURCE_URL": "https://s3.opengeohub.org/global/dtm/v1.2/gedtm_rf_m_30m_s_20060101_20151231_go_epsg.4326.3855_v1.2.tif",
+        "VERTICAL_DATUM": "EGM2008/EPSG:3855",
+        "AREA_OR_POINT": "Area"
+      },
+      "area_or_point": "Area",
+      "validation": {
+        "all_local_blocks_decoded": true,
+        "valid_pixels": 236845,
+        "masked_pixels": 0,
+        "height_min_m": -10.199999809265137,
+        "height_max_m": 429.29998779296875,
+        "local_sha256_computed": true,
+        "source_native_samples_exact": 225
+      },
+      "effective_scale": 1.0,
+      "effective_offset": 0.0,
+      "scale_interpretation": {
+        "source_band_scale_metadata": 0.1,
+        "effective_scale_to_metres": 1.0,
+        "original_native_values_and_scale_tag_retained": true,
+        "decision": "Float32 values are already metres; ignore the inconsistent 0.1 band scale in this 30m COG for derived products.",
+        "official_metadata": "https://zenodo.org/records/18887460 (v1.2 Float32 terrain layer, scale 1)",
+        "exact_30m_url_metadata": "https://codeberg.org/openlandmap/GEDTM30/raw/branch/main/metadata/cog_list.csv (same URL: scale=1, Float32, unit=meter)",
+        "cross_check": [
+          {
+            "lon": 113.980943,
+            "lat": 22.576248,
+            "gedtm_raw_m": 421.6,
+            "copernicus_m": 428.0511
+          },
+          {
+            "lon": 113.56764,
+            "lat": 39.08029,
+            "gedtm_raw_m": 3058.8999,
+            "copernicus_m": 3059.8291
+          }
+        ],
+        "publisher_confirmation_obtained": false
+      }
+    },
+    {
+      "id": "gedtm30_wutai",
+      "product": "GEDTM30 v1.2.0 predicted bare-earth DTM",
+      "surface_type": "estimated_bare_earth",
+      "source_url": "https://s3.opengeohub.org/global/dtm/v1.2/gedtm_rf_m_30m_s_20060101_20151231_go_epsg.4326.3855_v1.2.tif",
+      "source_metadata_url": "https://zenodo.org/records/18887460",
+      "source_resolution_m_approx": 30,
+      "source_global_properties": {
+        "crs": "EPSG:4326",
+        "vertical_datum": "EGM2008 (EPSG:3855), metres",
+        "width": 1296009,
+        "height": 540009,
+        "dtype": "float32",
+        "nodata": 3.4028234663852886e+38,
+        "transform": [
+          0.00027777777777799305,
+          0.0,
+          -180.00125,
+          0.0,
+          -0.00027777777777799305,
+          85.00125
+        ],
+        "bounds": [
+          -180.00125,
+          -65.00125000011624,
+          180.001250000279,
+          85.00125
+        ],
+        "resolution_degrees": [
+          0.00027777777777799305,
+          0.00027777777777799305
+        ],
+        "scale": 0.1,
+        "offset": 0.0,
+        "tags": {
+          "VERTICAL_DATUM": "EGM2008/EPSG:3855",
+          "AREA_OR_POINT": "Area"
+        },
+        "area_or_point": "Area"
+      },
+      "response": {
+        "Content-Length": "432407644715",
+        "Content-Range": null,
+        "ETag": "\"8bf9b35f45e9befaa9b91d877bf230d7-3107\"",
+        "Last-Modified": "Wed, 23 Sep 2026 14:42:14 GMT",
+        "Accept-Ranges": "bytes",
+        "Content-Type": "image/tiff"
+      },
+      "native_source_window": [
+        1056244,
+        165028,
+        1225,
+        1153
+      ],
+      "requested_bounds_wgs84": [
+        113.42,
+        38.86,
+        113.72,
+        39.14
+      ],
+      "padded_bounds_wgs84": [
+        113.4,
+        38.839999999999996,
+        113.74,
+        39.160000000000004
+      ],
+      "acquisition_method": "HTTP Range reads from global 30m COG; regional native pixel crop",
+      "global_file_downloaded": false,
+      "network_bytes_not_measured": true,
+      "local_path": "artifacts/mountain-prep/terrain-v2/raw/gedtm30_wutai_native.tif",
+      "bytes": 3128120,
+      "sha256": "79202f1c1c5ca836c65814ff788e8ba4ab11e510342a3e847062f4a517114857",
+      "official_checksum": null,
+      "fresh_download": true,
+      "reused_old_file": false,
+      "acquired_utc": "2026-10-05T07:13:56+00:00",
+      "attribution": "Ho, Yufeng & Hengl, Tom (2026). Global Ensemble Digital Terrain Model 30m (GEDTM30), v1.2.0, OpenGeoHub, https://doi.org/10.5281/zenodo.18887460; licensed CC BY 4.0. Regional crops and subsequent meshes are modified derivatives.",
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "limitations": "Machine-learning estimate; residual tree/building heights and smoothing can remain. Not surveyed ground or 30m vertical accuracy.",
+      "status": "complete",
+      "crs": "EPSG:4326",
+      "vertical_datum": "EGM2008 (EPSG:3855), metres",
+      "width": 1225,
+      "height": 1153,
+      "dtype": "float32",
+      "nodata": 3.4028234663852886e+38,
+      "transform": [
+        0.00027777777777799305,
+        0.0,
+        113.39986111133848,
+        0.0,
+        -0.00027777777777799305,
+        39.16013888885336
+      ],
+      "bounds": [
+        113.39986111133848,
+        38.83986111107534,
+        113.74013888911652,
+        39.16013888885336
+      ],
+      "resolution_degrees": [
+        0.00027777777777799305,
+        0.00027777777777799305
+      ],
+      "scale": 0.1,
+      "offset": 0.0,
+      "tags": {
+        "ATTRIBUTION": "GEDTM30 v1.2.0, Global Ensemble Digital Terrain Model, OpenGeoHub/OpenLandMap contributors; source https://zenodo.org/records/18887460; licensed CC BY 4.0. Regional crops and subsequent meshes are modified derivatives.",
+        "CROP": "Native pixel-aligned regional crop; no resampling",
+        "SOURCE_PRODUCT": "GEDTM30 v1.2.0",
+        "SOURCE_URL": "https://s3.opengeohub.org/global/dtm/v1.2/gedtm_rf_m_30m_s_20060101_20151231_go_epsg.4326.3855_v1.2.tif",
+        "VERTICAL_DATUM": "EGM2008/EPSG:3855",
+        "AREA_OR_POINT": "Area"
+      },
+      "area_or_point": "Area",
+      "validation": {
+        "all_local_blocks_decoded": true,
+        "valid_pixels": 1412425,
+        "masked_pixels": 0,
+        "height_min_m": 1104.9000244140625,
+        "height_max_m": 3061.39990234375,
+        "local_sha256_computed": true,
+        "source_native_samples_exact": 225
+      },
+      "effective_scale": 1.0,
+      "effective_offset": 0.0,
+      "scale_interpretation": {
+        "source_band_scale_metadata": 0.1,
+        "effective_scale_to_metres": 1.0,
+        "original_native_values_and_scale_tag_retained": true,
+        "decision": "Float32 values are already metres; ignore the inconsistent 0.1 band scale in this 30m COG for derived products.",
+        "official_metadata": "https://zenodo.org/records/18887460 (v1.2 Float32 terrain layer, scale 1)",
+        "exact_30m_url_metadata": "https://codeberg.org/openlandmap/GEDTM30/raw/branch/main/metadata/cog_list.csv (same URL: scale=1, Float32, unit=meter)",
+        "cross_check": [
+          {
+            "lon": 113.980943,
+            "lat": 22.576248,
+            "gedtm_raw_m": 421.6,
+            "copernicus_m": 428.0511
+          },
+          {
+            "lon": 113.56764,
+            "lat": 39.08029,
+            "gedtm_raw_m": 3058.8999,
+            "copernicus_m": 3059.8291
+          }
+        ],
+        "publisher_confirmation_obtained": false
+      }
+    }
+  ],
+  "checksum_scope": "SHA256 computed locally for downloaded/copied regional files, not an official checksum or entire global GEDTM file checksum.",
+  "updated_utc": "2026-10-05T07:21:55+00:00",
+  "errors": [],
+  "first_source_acquired_utc": "2026-10-05T07:10:52+00:00"
+}

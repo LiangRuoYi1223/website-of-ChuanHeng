@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "status": "failed",
+  "started_at": "2026-10-07T13:03:48+08:00",
+  "timezone": "Asia/Shanghai",
+  "input": {
+    "path": "docs/campus-model-v2/buildings.json",
+    "bytes": 626676,
+    "sha256": "d9658037fa1402943b86a7e704ee762623aed327ef53fe5f5412c1d5ccff40f1"
+  },
+  "prepared": {
+    "path": "output/campus-model-v2/campus-prepared.json",
+    "bytes": 3787359,
+    "sha256": "2485ada29e3c989f93a12de8d749dc32c234138d8858d6504aca2132a8628c43"
+  },
+  "terrain_sources": {
+    "blend": {
+      "path": "output/blender-terrain-v2/campus_validation.blend",
+      "bytes": 2294480,
+      "sha256": "a463613596e1a5e4ca03d5dcb0213ca3f3d1dd667cd8cca28e8975f84be0aed7"
+    },
+    "metadata": {
+      "path": "output/terrain-v2/campus/campus_metadata.json",
+      "bytes": 13147,
+      "sha256": "16e5d3b447a8376705bb8b16c7ae64afc3ee032e5d586c210b7954964e267b40"
+    },
+    "npy": {
+      "path": "output/terrain-v2/campus/campus_elevation_float32.npy",
+      "bytes": 186544,
+      "sha256": "5a268aaad2d5649a59f36260b7321ff07b76d747859c0cc06ad6ab5e0582cf4b"
+    },
+    "transform": [
+      30.0,
+      0.0,
+      805290.0,
+      0.0,
+      -30.0,
+      2505780.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "origin_m": [
+      807450.0,
+      2500665.0
+    ],
+    "projected_crs": "EPSG:32649",
+    "vertical_datum": "EGM2008 (EPSG:3855), metres",
+    "attribution": "Ho, Yufeng & Hengl, Tom (2026). Global Ensemble Digital Terrain Model 30m (GEDTM30), v1.2.0, OpenGeoHub, https://doi.org/10.5281/zenodo.18887460; licensed CC BY 4.0. Regional crops and subsequent meshes are modified derivatives.",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "building_features": 113,
+  "blender_executable": "D:\\blender\\blender.exe",
+  "original_dtm_modified": false,
+  "website_modified": false,
+  "limits": [
+    "DTM is globally predicted rather than locally surveyed.",
+    "Building heights/detail estimates retain confidence and sources.",
+    "Facade repetition is illustrative; footprints/parts follow supplied geometry.",
+    "Original DTM geometry remains intact; foundations/platforms are separate meshes."
+  ],
+  "stages": [],
+  "outputs": [],
+  "failure": {
+    "stage": "build-save",
+    "message": "Campus Blender stage failed: build-save; see artifacts/campus-model-v2/logs/build-save.log",
+    "log": "artifacts/campus-model-v2/logs/build-save.log"
+  }
+}

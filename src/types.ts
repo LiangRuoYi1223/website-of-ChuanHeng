@@ -1,6 +1,7 @@
 export interface Activity {
   id: string; title: string; category: string; kind: 'upcoming' | 'past';
   date: string; location: string; difficulty: string; summary: string;
+  routeName?: string; cityCode?: string;
   description: string; image: string; signupUrl: string; qrImage: string;
   status: 'draft' | 'published'; isDemo: boolean; revision?: number;
   duration?: string; cost?: string; meetingPoint?: string;

@@ -1,0 +1,469 @@
+{
+  "schema_version": 2,
+  "region": {
+    "id": "wutai",
+    "name": "五台山顺朝区域 · 预测裸地基底",
+    "bounds_wgs84": [
+      113.42,
+      38.86,
+      113.72,
+      39.14
+    ],
+    "projected_crs": "EPSG:32649",
+    "source_ids": [
+      "gedtm30_wutai"
+    ],
+    "product": "GEDTM30 v1.2",
+    "surface_model": "predicted_bare_earth",
+    "is_dtm": true,
+    "mesh_sampling_m": 60,
+    "reference_points": [
+      {
+        "name": "东台（路线参考）",
+        "lon": 113.660367,
+        "lat": 39.043333,
+        "source": "https://www.foooooot.com/trip/23426/",
+        "coordinate_status": "original track CRS unspecified; approximate coverage check only"
+      },
+      {
+        "name": "南台（路线参考）",
+        "lon": 113.5337,
+        "lat": 38.923083,
+        "source": "https://www.foooooot.com/trip/23426/",
+        "coordinate_status": "original track CRS unspecified; approximate coverage check only"
+      },
+      {
+        "name": "西台（路线参考）",
+        "lon": 113.490693,
+        "lat": 39.037244,
+        "source": "https://www.foooooot.com/footprint/1620475/",
+        "coordinate_status": "original track CRS unspecified; approximate coverage check only"
+      },
+      {
+        "name": "中台（路线参考）",
+        "lon": 113.531483,
+        "lat": 39.046167,
+        "source": "https://www.foooooot.com/trip/23426/",
+        "coordinate_status": "original track CRS unspecified; approximate coverage check only"
+      },
+      {
+        "name": "北台（GPS参考）",
+        "lon": 113.56764,
+        "lat": 39.08029,
+        "source": "https://www.prominent-mountains.no/mountains/3000mtn/wutai.html",
+        "coordinate_status": "traveller GPS; approximate location, not a survey control",
+        "peak_window_radius_m": 1200
+      }
+    ],
+    "limits": [
+      "GEDTM30 is a globally predicted bare-earth DTM, not high-resolution surveying of the five terraces.",
+      "Tree/building corrections and terrain residuals may remain; snow is not independently separated."
+    ]
+  },
+  "product": "GEDTM30 v1.2",
+  "surface_model": "predicted_bare_earth",
+  "source_ids": [
+    "gedtm30_wutai"
+  ],
+  "source_tiles": [
+    "gedtm30_wutai"
+  ],
+  "source_rasters": [
+    {
+      "id": "gedtm30_wutai",
+      "product": "GEDTM30 v1.2.0 predicted bare-earth DTM",
+      "local_path": "artifacts/mountain-prep/terrain-v2/raw/gedtm30_wutai_native.tif",
+      "sha256": "79202f1c1c5ca836c65814ff788e8ba4ab11e510342a3e847062f4a517114857",
+      "crs": "EPSG:4326",
+      "vertical_datum": "EGM2008 (EPSG:3855), metres",
+      "scale": 0.1,
+      "offset": 0.0,
+      "effective_scale": 1.0,
+      "effective_offset": 0.0,
+      "scale_interpretation": {
+        "source_band_scale_metadata": 0.1,
+        "effective_scale_to_metres": 1.0,
+        "original_native_values_and_scale_tag_retained": true,
+        "decision": "Float32 values are already metres; ignore the inconsistent 0.1 band scale in this 30m COG for derived products.",
+        "official_metadata": "https://zenodo.org/records/18887460 (v1.2 Float32 terrain layer, scale 1)",
+        "exact_30m_url_metadata": "https://codeberg.org/openlandmap/GEDTM30/raw/branch/main/metadata/cog_list.csv (same URL: scale=1, Float32, unit=meter)",
+        "cross_check": [
+          {
+            "lon": 113.980943,
+            "lat": 22.576248,
+            "gedtm_raw_m": 421.6,
+            "copernicus_m": 428.0511
+          },
+          {
+            "lon": 113.56764,
+            "lat": 39.08029,
+            "gedtm_raw_m": 3058.8999,
+            "copernicus_m": 3059.8291
+          }
+        ],
+        "publisher_confirmation_obtained": false
+      },
+      "attribution": "Ho, Yufeng & Hengl, Tom (2026). Global Ensemble Digital Terrain Model 30m (GEDTM30), v1.2.0, OpenGeoHub, https://doi.org/10.5281/zenodo.18887460; licensed CC BY 4.0. Regional crops and subsequent meshes are modified derivatives.",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/"
+    }
+  ],
+  "source_crs": "EPSG:4326",
+  "vertical_datum": "EGM2008 (EPSG:3855), metres",
+  "vertical_units": "metres",
+  "vertical_correction_m": 0,
+  "vertical_origin_m": 0,
+  "vertical_exaggeration": 1,
+  "is_dtm": true,
+  "dtm_status": "machine-learning predicted, not a locally surveyed DTM",
+  "buildings_and_vegetation_removed": null,
+  "object_removal_status": "predicted bare-earth reduction; residuals possible",
+  "is_subglacial_bedrock": false,
+  "processing": [
+    "source SHA256 and full local block decoding",
+    "masked native scale/offset decoding",
+    "native pixel-grid-aligned mosaic",
+    "native AOI crop",
+    "one bilinear reprojection to master 30m grid",
+    "integer-pixel master-grid region crop",
+    "16-bit heightmap",
+    "local XY / absolute EGM2008 Z OBJ"
+  ],
+  "projected_crs": "EPSG:32649",
+  "projected_bounds_m": [
+    709140,
+    4304010,
+    736020,
+    4335840
+  ],
+  "projected_transform": [
+    30.0,
+    0.0,
+    709140.0,
+    0.0,
+    -30.0,
+    4335840.0,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "resolution_m": 30,
+  "geographic_crop_actual_bounds_wgs84": [
+    113.41986111133849,
+    38.85986111107535,
+    113.7201388891165,
+    39.14013888885334
+  ],
+  "geographic_crop_statistics": {
+    "shape_rows_columns": [
+      1009,
+      1081
+    ],
+    "valid_samples": 1090729,
+    "invalid_samples": 0,
+    "min_m": 1150.9000244140625,
+    "max_m": 3061.39990234375,
+    "mean_m": 1975.2042236328125,
+    "percentiles_m": {
+      "1": 1269.699951171875,
+      "5": 1427.0,
+      "50": 1966.0999755859375,
+      "95": 2573.0,
+      "99": 2783.800048828125
+    }
+  },
+  "projected_statistics": {
+    "shape_rows_columns": [
+      1061,
+      896
+    ],
+    "valid_samples": 950656,
+    "invalid_samples": 0,
+    "min_m": 1150.7703857421875,
+    "max_m": 3060.382080078125,
+    "mean_m": 1960.917236328125,
+    "percentiles_m": {
+      "1": 1260.1707763671875,
+      "5": 1415.365478515625,
+      "50": 1950.3880615234375,
+      "95": 2563.158935546875,
+      "99": 2778.203857421875
+    }
+  },
+  "projected_extent_km": [
+    26.88,
+    31.83
+  ],
+  "grid": {
+    "rows": 1061,
+    "columns": 896,
+    "resolution_m": 30,
+    "master_id": "wutai",
+    "window_in_master_row_col_height_width": [
+      0,
+      0,
+      1061,
+      896
+    ],
+    "master_projected_bounds_m": [
+      709140,
+      4304010,
+      736020,
+      4335840
+    ],
+    "master_projected_xy_origin_m": [
+      722580.0,
+      4319925.0
+    ],
+    "coordinate_units": "metres"
+  },
+  "grid_join_checks": [],
+  "native_grid_alignment_check": {
+    "source_cells_checked": 225,
+    "all_equal_to_scaled_original_source_cells": true,
+    "all_equal_to_original_source_cells": true,
+    "comparison_units": "scaled metres"
+  },
+  "reference_checks": [
+    {
+      "name": "东台（路线参考）",
+      "lon": 113.660367,
+      "lat": 39.043333,
+      "source": "https://www.foooooot.com/trip/23426/",
+      "coordinate_status": "original track CRS unspecified; approximate coverage check only",
+      "projected_x_m": 730242.5219924746,
+      "projected_y_m": 4324953.721909876,
+      "within_crop": true,
+      "nearest_raster_elevation_m": 2758.467529296875,
+      "local_mesh_xyz_m": [
+        7662.521992474562,
+        5028.7219098759815,
+        2758.467529296875
+      ]
+    },
+    {
+      "name": "南台（路线参考）",
+      "lon": 113.5337,
+      "lat": 38.923083,
+      "source": "https://www.foooooot.com/trip/23426/",
+      "coordinate_status": "original track CRS unspecified; approximate coverage check only",
+      "projected_x_m": 719650.098143063,
+      "projected_y_m": 4311293.484973999,
+      "within_crop": true,
+      "nearest_raster_elevation_m": 2438.3896484375,
+      "local_mesh_xyz_m": [
+        -2929.90185693698,
+        -8631.51502600126,
+        2438.3896484375
+      ]
+    },
+    {
+      "name": "西台（路线参考）",
+      "lon": 113.490693,
+      "lat": 39.037244,
+      "source": "https://www.foooooot.com/footprint/1620475/",
+      "coordinate_status": "original track CRS unspecified; approximate coverage check only",
+      "projected_x_m": 715574.5416567435,
+      "projected_y_m": 4323861.745911776,
+      "within_crop": true,
+      "nearest_raster_elevation_m": 2774.431396484375,
+      "local_mesh_xyz_m": [
+        -7005.458343256498,
+        3936.745911776088,
+        2774.431396484375
+      ]
+    },
+    {
+      "name": "中台（路线参考）",
+      "lon": 113.531483,
+      "lat": 39.046167,
+      "source": "https://www.foooooot.com/trip/23426/",
+      "coordinate_status": "original track CRS unspecified; approximate coverage check only",
+      "projected_x_m": 719077.8933918986,
+      "projected_y_m": 4324949.677453675,
+      "within_crop": true,
+      "nearest_raster_elevation_m": 2892.213134765625,
+      "local_mesh_xyz_m": [
+        -3502.1066081013996,
+        5024.677453675307,
+        2892.213134765625
+      ]
+    },
+    {
+      "name": "北台（GPS参考）",
+      "lon": 113.56764,
+      "lat": 39.08029,
+      "source": "https://www.prominent-mountains.no/mountains/3000mtn/wutai.html",
+      "coordinate_status": "traveller GPS; approximate location, not a survey control",
+      "peak_window_radius_m": 1200,
+      "projected_x_m": 722100.367821096,
+      "projected_y_m": 4328824.957959545,
+      "within_crop": true,
+      "nearest_raster_elevation_m": 3058.406494140625,
+      "local_mesh_xyz_m": [
+        -479.632178904023,
+        8899.957959544845,
+        3058.406494140625
+      ],
+      "nearby_peak_max_m": 3060.382080078125,
+      "nearby_peak_search_shape": "projected circle, raster pixel centres"
+    }
+  ],
+  "maximum_sample_location": {
+    "lon": 113.5667825799137,
+    "lat": 39.08066964247805,
+    "height_m": 3060.382080078125,
+    "meaning": "highest sample in crop, not a surveyed summit"
+  },
+  "heightmap": {
+    "path": "output/terrain-v2/wutai/wutai_height16.png",
+    "zero_m": 1150.7703857421875,
+    "one_m": 3060.382080078125,
+    "decode": "elevation_m = pixel/65535 * (one_m-zero_m) + zero_m",
+    "row_zero": "north",
+    "colour_space": "Non-Color / linear data",
+    "mesh_pixel_center_extent_m": [
+      26850,
+      31800
+    ],
+    "max_roundtrip_error_m": 0.01467801489343401,
+    "quantization_limit_m": 0.016569403329029814
+  },
+  "mesh": {
+    "path": "output/terrain-v2/wutai/wutai_blockout.obj",
+    "vertices": 238419,
+    "triangles": 474880,
+    "uv_coordinates": 238419,
+    "uv_mapping": "original raster pixel centres",
+    "uv_heightmap_alignment_verified": true,
+    "sampling_m": 60,
+    "open_surface": true,
+    "axis_convention": {
+      "X": "east",
+      "Y": "north",
+      "Z": "up"
+    },
+    "projected_xy_origin_m": [
+      722580.0,
+      4319925.0
+    ],
+    "vertical_origin_m": 0,
+    "units": "metres",
+    "grid_rows_columns": [
+      531,
+      449
+    ],
+    "sampled_elevation_min_m": 1150.7703857421875,
+    "sampled_elevation_max_m": 3059.6748046875,
+    "max_serialization_height_error_m": 0.0005000000001018634,
+    "max_serialization_xy_error_m": 0.0,
+    "max_uv_error": 4.910461814944256e-09,
+    "topology_verified": true,
+    "all_triangle_normals_positive_z": true
+  },
+  "attribution": "Ho, Yufeng & Hengl, Tom (2026). Global Ensemble Digital Terrain Model 30m (GEDTM30), v1.2.0, OpenGeoHub, https://doi.org/10.5281/zenodo.18887460; licensed CC BY 4.0. Regional crops and subsequent meshes are modified derivatives.",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "license_urls": [
+    "https://creativecommons.org/licenses/by/4.0/"
+  ],
+  "limits": [
+    "GEDTM30 is a globally predicted bare-earth DTM, not high-resolution surveying of the five terraces.",
+    "Tree/building corrections and terrain residuals may remain; snow is not independently separated.",
+    "30m reprojection does not add terrain detail.",
+    "Reference positions are approximate coverage checks, not survey controls.",
+    "No buildings, glacier thickness, near-field rock details or narrative layout are constructed here."
+  ],
+  "outputs": [
+    {
+      "path": "output/terrain-v2/wutai/wutai_dtm_native_wgs84.tif",
+      "bytes": 2080720,
+      "sha256": "fcd64085da1affdf992b992b0fb895f496a3d30afc117fafb3c8d37b360a181b"
+    },
+    {
+      "path": "output/terrain-v2/wutai/wutai_dtm_utm30m.tif",
+      "bytes": 2344532,
+      "sha256": "97ca52179febd9574616c9b555f9755f2db35d9428756e60d74bcbf505528fe0"
+    },
+    {
+      "path": "output/terrain-v2/wutai/wutai_elevation_float32.npy",
+      "bytes": 3802752,
+      "sha256": "f8acfa496e27cb00b2d7d67bf1a29829703b6704f992abe28207e5c066e40761"
+    },
+    {
+      "path": "output/terrain-v2/wutai/wutai_height16.png",
+      "bytes": 1416817,
+      "sha256": "4c662549fde87bc358bdc2b7fba6f992a00669cce6bb68af41cf8dc38b970ea5"
+    },
+    {
+      "path": "output/terrain-v2/wutai/wutai_blockout.obj",
+      "bytes": 32800913,
+      "sha256": "bec038569c5f09242f2fc8630845070a8cf65ffcbc1839448e1465a7b014ecd5"
+    },
+    {
+      "path": "output/terrain-v2/wutai/wutai_map.png",
+      "bytes": 2071173,
+      "sha256": "1d0f583ecfe557e90e5fcf7cba5ae6eecd31b463c1c263f472bee44a0097f99f"
+    },
+    {
+      "path": "output/terrain-v2/wutai/wutai_surface.png",
+      "bytes": 681747,
+      "sha256": "6ee352110470f1d63d4889d6a2556e599c283689de6ad53be0de8cbf5021f561"
+    },
+    {
+      "path": "output/terrain-v2/wutai/wutai_old_dsm_minus_new_terrain.tif",
+      "bytes": 2411458,
+      "sha256": "d911c63cde3e3e8cd83329b1565c2f0cfceb2ee0bbbababaae238066c2aca865"
+    },
+    {
+      "path": "output/terrain-v2/wutai/wutai_old_dsm_minus_new_terrain.png",
+      "bytes": 1439892,
+      "sha256": "40ae199ecc596841ee9bbea6e30aaa6e5352d0e0224f2cf9a1bee7f25218c962"
+    }
+  ],
+  "old_dsm_comparison": {
+    "meaning": "old DSM minus new terrain; diagnostic only, not measured canopy/building height",
+    "status": "reported",
+    "outputs": [
+      {
+        "path": "output/terrain-v2/wutai/wutai_old_dsm_minus_new_terrain.tif",
+        "bytes": 2411458,
+        "sha256": "d911c63cde3e3e8cd83329b1565c2f0cfceb2ee0bbbababaae238066c2aca865"
+      },
+      {
+        "path": "output/terrain-v2/wutai/wutai_old_dsm_minus_new_terrain.png",
+        "bytes": 1439892,
+        "sha256": "40ae199ecc596841ee9bbea6e30aaa6e5352d0e0224f2cf9a1bee7f25218c962"
+      }
+    ],
+    "differences_do_not_gate_processing": true,
+    "old_source": {
+      "path": "output/terrain/wutai/wutai_dsm_utm30m.tif",
+      "bytes": 2347094,
+      "sha256": "c462e8a630cde59920acfac8c9dbeeae937dec9906a0eb57ac0ebb4d75b548a0"
+    },
+    "old_vertical_datum_tag": "EGM2008",
+    "comparison_valid_pixels": 950656,
+    "comparison_invalid_pixels": 0,
+    "statistics": {
+      "shape_rows_columns": [
+        1061,
+        896
+      ],
+      "valid_samples": 950656,
+      "invalid_samples": 0,
+      "min_m": -15.4202880859375,
+      "max_m": 32.61962890625,
+      "mean_m": 2.852405071258545,
+      "percentiles_m": {
+        "1": -3.63671875,
+        "5": -2.2451171875,
+        "50": 1.73388671875,
+        "95": 11.17919921875,
+        "99": 15.422826766967773
+      }
+    },
+    "positive_fraction": 0.7107428975360173,
+    "negative_fraction": 0.2892297529285041,
+    "absolute_difference_p95_m": 11.179595947265625,
+    "warning": "Source prediction, dates, masks and interpolation can differ; do not interpret as exact removed object heights."
+  }
+}

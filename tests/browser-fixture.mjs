@@ -35,7 +35,7 @@ for (const [role, displayName, permissions] of [
 }
 await request('/admin/activities', {
   title: '浏览器验证活动', category: '轻松徒步', kind: 'upcoming', date: '2099-10-18',
-  location: '隔离测试场地', difficulty: '测试安排', summary: '仅用于功能验证的合成内容。',
+  routeName: '隔离测试路线', cityCode: '440300', difficulty: '测试安排', summary: '仅用于功能验证的合成内容。',
   description: '临时隔离数据库中的合成活动，用于验证登录、社员报名与取消报名。',
   image: '/images/hiking.webp', signupUrl: '', qrImage: '', status: 'published', isDemo: false, registrationOpen: true,
 });

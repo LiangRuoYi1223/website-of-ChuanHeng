@@ -7,7 +7,8 @@ import { DatabaseSync } from 'node:sqlite';
 import { createHash, scryptSync } from 'node:crypto';
 import { createApp } from '../server/index.mjs';
 import { contentPermissions } from '../server/permissions.mjs';
-import { initialSettings, legacyAboutDescription } from '../server/seed.mjs';
+import { initialSettings, initialActivities, legacyAboutDescription } from '../server/seed.mjs';
+import { findCity } from '../src/features/map-data/cities.ts';
 
 const initialPassword = 'test-initial-only-24-characters';
 const readyPassword = 'test-ready-password-1234';
@@ -61,6 +62,7 @@ test('public seed exposes demonstration markers and never exposes account creden
   assert.equal(result.body.settings.logoUrl, '');
   assert.equal(result.body.activities.length, 7);
   assert.ok(result.body.activities.every(item => item.isDemo && item.title.includes('示例') && item.revision === 1));
+  assert.ok(result.body.activities.every(item => typeof item.routeName === 'string' && item.location === item.routeName && findCity(item.cityCode)));
   assert.equal(result.body.projects.length, 3);
   assert.ok(result.body.projects.every(item => item.status === 'published' && item.isDemo));
   assert.equal(result.body.settings.semesterName, '2026 秋季学期');
@@ -99,9 +101,11 @@ test('activities persist across restart; drafts stay private; stale updates and 
   assert.equal(draft.revision, 1);
   assert.ok(!(await client.request('/api/content')).body.activities.some(item => item.id === draft.id));
   assert.ok((await client.request('/api/admin/content', { cookie })).body.activities.some(item => item.id === draft.id));
-  const published = await client.request(`/api/admin/activities/${draft.id}`, { method: 'PUT', cookie, body: { ...draft, title: '已发布活动', status: 'published' } });
+  const published = await client.request(`/api/admin/activities/${draft.id}`, { method: 'PUT', cookie, body: { ...draft, title: '已发布活动', image: '/images/forest.webp', status: 'published' } });
   assert.equal(published.status, 200);
   assert.equal(published.body.activity.revision, 2);
+  assert.equal(published.body.activity.image, '/images/forest.webp');
+  assert.equal((await client.request('/api/content')).body.activities.find(item => item.id === draft.id).image, '/images/forest.webp');
   assert.equal((await client.request(`/api/admin/activities/${draft.id}`, { method: 'PUT', cookie, body: draft })).status, 409);
   const missingRevision = { ...published.body.activity }; delete missingRevision.revision;
   assert.equal((await client.request(`/api/admin/activities/${draft.id}`, { method: 'PUT', cookie, body: missingRevision })).status, 409);
@@ -110,8 +114,114 @@ test('activities persist across restart; drafts stay private; stale updates and 
   cookie = (await login(client, 'admin', readyPassword)).cookie;
   const persisted = (await client.request('/api/content')).body.activities.find(item => item.id === draft.id);
   assert.equal(persisted.title, '已发布活动'); assert.equal(persisted.revision, 2);
+  assert.equal(persisted.image, '/images/forest.webp');
   assert.equal((await client.request(`/api/admin/activities/${draft.id}?revision=2`, { method: 'DELETE', cookie })).status, 200);
   assert.equal((await client.request(`/api/admin/activities/${draft.id}`, { method: 'DELETE', cookie })).status, 404);
+});
+
+test('activity routes and city codes validate independently, persist, and ignore client coordinates', async t => {
+  const client = await fixture(t), { cookie } = await loginReady(client);
+  const seed = (await client.request('/api/content')).body.activities[0];
+  for (const changes of [{ cityCode: 'unknown-city' }, { cityCode: 440300 }, { cityCode: null }, { routeName: null }]) {
+    assert.equal((await client.request('/api/admin/activities', { method: 'POST', cookie, body: { ...seed, id: '', ...changes } })).status, 400);
+  }
+  const created = await client.request('/api/admin/activities', { method: 'POST', cookie, body: {
+    ...seed, id: '', routeName: '梧桐山徒步 · 测试路线', location: '旧地点字段应被路线取代', cityCode: '440300',
+    longitude: 0, latitude: 0, cityName: '伪造城市名',
+  } });
+  assert.equal(created.status, 201);
+  assert.equal(created.body.activity.routeName, '梧桐山徒步 · 测试路线');
+  assert.equal(created.body.activity.location, created.body.activity.routeName);
+  assert.equal(created.body.activity.cityCode, '440300');
+  assert.ok(!('longitude' in created.body.activity) && !('latitude' in created.body.activity) && !('cityName' in created.body.activity));
+  const routeChanged = await client.request(`/api/admin/activities/${created.body.activity.id}`, { method: 'PUT', cookie, body: { ...created.body.activity, routeName: '第二条测试路线' } });
+  assert.equal(routeChanged.status, 200);
+  assert.equal(routeChanged.body.activity.cityCode, '440300');
+  assert.equal(routeChanged.body.activity.location, '第二条测试路线');
+  const cityChanged = await client.request(`/api/admin/activities/${created.body.activity.id}`, { method: 'PUT', cookie, body: { ...routeChanged.body.activity, cityCode: '450300' } });
+  assert.equal(cityChanged.status, 200);
+  assert.equal(cityChanged.body.activity.routeName, '第二条测试路线');
+  await client.restart();
+  const persisted = (await client.request('/api/content')).body.activities.find(item => item.id === created.body.activity.id);
+  assert.equal(persisted.cityCode, '450300');
+  assert.equal(persisted.routeName, '第二条测试路线');
+  assert.equal(persisted.revision, 3);
+  const legacyInput = { ...seed, id: '', location: '旧客户端的宣传路线' };
+  delete legacyInput.routeName; delete legacyInput.cityCode;
+  const legacy = await client.request('/api/admin/activities', { method: 'POST', cookie, body: legacyInput });
+  assert.equal(legacy.status, 201);
+  assert.equal(legacy.body.activity.routeName, legacyInput.location);
+  assert.equal(legacy.body.activity.location, legacyInput.location);
+  assert.equal(legacy.body.activity.cityCode, '');
+});
+
+test('route/city migration retains edited activities, assigns only unchanged demo locations, and is idempotent', async t => {
+  const oldActivity = id => {
+    const activity = { ...initialActivities.find(item => item.id === id) };
+    delete activity.routeName; delete activity.cityCode;
+    return activity;
+  };
+  const unchangedDemo = { ...oldActivity('demo-autumn-hike'), title: '保留编辑过的标题', image: '/images/forest.webp' };
+  const editedLocation = { ...oldActivity('demo-rope-training'), location: '用户记录的另一个地点' };
+  const realActivity = { ...oldActivity('demo-forest-walk'), isDemo: false };
+  const assignedActivity = { ...initialActivities.find(item => item.id === 'demo-november-trail'), routeName: '已经维护好的宣传路线', location: '已经维护好的宣传路线', cityCode: '440300' };
+  const editedRoute = { ...oldActivity('demo-january-training'), routeName: '用户已经修改的路线名称' };
+  const customActivity = { ...oldActivity('demo-forest-walk'), id: 'real-custom-activity', routeName: '正式活动路线', location: '正式活动路线', isDemo: false };
+  const rows = [[unchangedDemo, 7], [editedLocation, 9], [realActivity, 11], [assignedActivity, 13], [editedRoute, 15], [customActivity, 17]];
+  const client = await fixture(t, { async beforeCreate(config) {
+    await mkdir(config.dataDir, { recursive: true });
+    const database = new DatabaseSync(path.join(config.dataDir, 'chuanheng.sqlite'));
+    database.exec(`CREATE TABLE site_settings (id INTEGER PRIMARY KEY CHECK(id = 1), payload TEXT NOT NULL, revision INTEGER NOT NULL);
+      CREATE TABLE activities (id TEXT PRIMARY KEY, payload TEXT NOT NULL, revision INTEGER NOT NULL);`);
+    database.prepare('INSERT INTO site_settings VALUES (1, ?, 1)').run(JSON.stringify(initialSettings));
+    const insert = database.prepare('INSERT INTO activities VALUES (?, ?, ?)');
+    for (const [activity, revision] of rows) insert.run(activity.id, JSON.stringify(activity), revision);
+    database.close();
+  } });
+  const migrated = (await client.request('/api/content')).body.activities;
+  const byId = new Map(migrated.map(item => [item.id, item]));
+  assert.equal(migrated.length, rows.length);
+  assert.equal(byId.get(unchangedDemo.id).cityCode, initialActivities.find(item => item.id === unchangedDemo.id).cityCode);
+  assert.equal(byId.get(unchangedDemo.id).routeName, unchangedDemo.location);
+  assert.equal(byId.get(unchangedDemo.id).title, unchangedDemo.title);
+  assert.equal(byId.get(unchangedDemo.id).image, unchangedDemo.image);
+  assert.equal(byId.get(unchangedDemo.id).revision, 8);
+  assert.equal(byId.get(editedLocation.id).routeName, editedLocation.location);
+  assert.equal(byId.get(editedLocation.id).cityCode, '');
+  assert.equal(byId.get(realActivity.id).cityCode, '');
+  assert.equal(byId.get(assignedActivity.id).routeName, assignedActivity.routeName);
+  assert.equal(byId.get(assignedActivity.id).cityCode, assignedActivity.cityCode);
+  assert.equal(byId.get(assignedActivity.id).revision, 13);
+  assert.equal(byId.get(editedRoute.id).routeName, editedRoute.routeName);
+  assert.equal(byId.get(editedRoute.id).cityCode, '');
+  assert.equal(byId.get(customActivity.id).routeName, customActivity.routeName);
+  assert.equal(byId.get(customActivity.id).cityCode, '');
+  assert.ok(!byId.has('demo-climbing') && !byId.has('demo-december-forest'));
+  const { cookie } = await loginReady(client);
+  assert.equal((await client.request(`/api/admin/activities/${unchangedDemo.id}`, { method: 'PUT', cookie, body: { ...byId.get(unchangedDemo.id), revision: 7 } })).status, 409);
+  await client.restart();
+  assert.deepEqual((await client.request('/api/content')).body.activities, migrated);
+});
+
+test('route/city migration rolls back all rows if stored activity data is malformed', async t => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'chuanheng-migration-test-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const dataDir = path.join(root, 'data');
+  await mkdir(dataDir);
+  const databasePath = path.join(dataDir, 'chuanheng.sqlite');
+  const database = new DatabaseSync(databasePath);
+  database.exec('CREATE TABLE activities (id TEXT PRIMARY KEY, payload TEXT NOT NULL, revision INTEGER NOT NULL)');
+  const activity = { ...initialActivities[0] };
+  delete activity.routeName; delete activity.cityCode;
+  const payload = JSON.stringify(activity);
+  database.prepare('INSERT INTO activities VALUES (?, ?, ?)').run(activity.id, payload, 5);
+  database.prepare('INSERT INTO activities VALUES (?, ?, ?)').run('malformed-activity', 'invalid-json', 1);
+  database.close();
+  assert.throws(() => createApp({ dataDir, uploadDir: path.join(root, 'uploads'), distDir: path.join(root, 'dist'), initialPassword }), SyntaxError);
+  const reopened = new DatabaseSync(databasePath);
+  try {
+    assert.deepEqual({ ...reopened.prepare('SELECT payload, revision FROM activities WHERE id = ?').get(activity.id) }, { payload, revision: 5 });
+  } finally { reopened.close(); }
 });
 
 test('settings use optimistic locking and validate contact links', async t => {
@@ -390,7 +500,7 @@ test('legacy accounts migrate without changing credentials; old editors gain no 
   assert.equal(content.settings.aboutDescription, initialSettings.aboutDescription);
   assert.equal(content.activities.length, 4);
   const editedActivity = content.activities.find(activity => activity.id === 'demo-autumn-hike');
-  assert.equal(editedActivity.title, '用户已编辑活动标题'); assert.equal(editedActivity.revision, 4);
+  assert.equal(editedActivity.title, '用户已编辑活动标题'); assert.equal(editedActivity.revision, 5);
   assert.ok(editedActivity.preparation.items.length);
   assert.ok(!content.activities.some(activity => activity.id === 'demo-forest-walk'));
   assert.equal(content.projects.length, 3);

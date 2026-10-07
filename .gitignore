@@ -147,3 +147,7 @@ data/
 uploads/
 .sites-runtime/
 artifacts/
+
+# Temporary local test account credentials
+/data/local-test-accounts.json
+__pycache__/
