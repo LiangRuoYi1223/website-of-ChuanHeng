@@ -9,7 +9,7 @@ export function handbookData() {
   return {
     settings: demoContent.settings,
     cooperation: demoContent.cooperation,
-    projects: demoContent.projects.filter(project => project.status === 'published'),
+    projects: demoContent.projects.filter((project) => project.status === 'published'),
   };
 }
 
@@ -23,9 +23,13 @@ export function fileHash(buffer) {
 
 export function assetHashes(data = handbookData()) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-  const urls = [...new Set([data.settings.heroTeam, ...data.projects.map(project => project.image)])].sort();
-  return Object.fromEntries(urls.map(url => {
-    const file = path.join(root, 'public', url.replace(/^\//, ''));
-    return [url, fs.existsSync(file) ? fileHash(fs.readFileSync(file)) : null];
-  }));
+  const urls = [
+    ...new Set([data.settings.heroTeam, ...data.projects.map((project) => project.image)]),
+  ].sort();
+  return Object.fromEntries(
+    urls.map((url) => {
+      const file = path.join(root, 'public', url.replace(/^\//, ''));
+      return [url, fs.existsSync(file) ? fileHash(fs.readFileSync(file)) : null];
+    }),
+  );
 }

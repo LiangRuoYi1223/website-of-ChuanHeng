@@ -1,0 +1,28 @@
+# Dependencies, builds, local data and private configuration
+node_modules/
+dist/
+coverage/
+.wrangler/
+.vercel/
+.sites-runtime/
+.impeccable/
+data/
+uploads/
+artifacts/
+output/
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+*.tsbuildinfo
+package-lock.json
+
+# Generated assets, source snapshots and machine-written reports
+public/fonts/
+public/docs/handbook-manifest.json
+docs/**/*.json
+src/fonts.css
+src/features/map-data/cities.ts
+src/features/map-data/china-paths.ts
+src/features/map-data/*.json
+src/features/map-data/*.geojson

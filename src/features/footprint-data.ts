@@ -25,9 +25,17 @@ export function aggregateFootprints(activities: readonly Activity[]): FootprintP
     let point = groups.get(city.code);
     if (!point) {
       point = {
-        id: city.code, city: city.name, region: city.provinceName === city.name ? city.name : `${city.provinceName} · ${city.name}`,
-        provinceCode: city.provinceCode, longitude: city.longitude, latitude: city.latitude,
-        status: 'past', upcomingCount: 0, completedCount: 0, demoOnly: true, activities: [],
+        id: city.code,
+        city: city.name,
+        region: city.provinceName === city.name ? city.name : `${city.provinceName} · ${city.name}`,
+        provinceCode: city.provinceCode,
+        longitude: city.longitude,
+        latitude: city.latitude,
+        status: 'past',
+        upcomingCount: 0,
+        completedCount: 0,
+        demoOnly: true,
+        activities: [],
       };
       groups.set(city.code, point);
     }
@@ -40,16 +48,21 @@ export function aggregateFootprints(activities: readonly Activity[]): FootprintP
     }
     point.demoOnly = point.demoOnly && activity.isDemo;
   }
-  return [...groups.values()].sort((a, b) => a.id.localeCompare(b.id)).map(point => ({
-    ...point,
-    activities: [...point.activities].sort((a, b) => {
-      if (a.kind !== b.kind) return a.kind === 'upcoming' ? -1 : 1;
-      return a.kind === 'upcoming' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date);
-    }),
-  }));
+  return [...groups.values()]
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map((point) => ({
+      ...point,
+      activities: [...point.activities].sort((a, b) => {
+        if (a.kind !== b.kind) return a.kind === 'upcoming' ? -1 : 1;
+        return a.kind === 'upcoming' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date);
+      }),
+    }));
 }
 
 /** A removed or unpublished selected city falls back to the first remaining city. */
-export function selectFootprint(points: readonly FootprintPoint[], selectedId: string): FootprintPoint | undefined {
-  return points.find(point => point.id === selectedId) ?? points[0];
+export function selectFootprint(
+  points: readonly FootprintPoint[],
+  selectedId: string,
+): FootprintPoint | undefined {
+  return points.find((point) => point.id === selectedId) ?? points[0];
 }

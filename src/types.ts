@@ -1,11 +1,26 @@
 export interface Activity {
-  id: string; title: string; category: string; kind: 'upcoming' | 'past';
-  date: string; location: string; difficulty: string; summary: string;
-  routeName?: string; cityCode?: string;
-  description: string; image: string; signupUrl: string; qrImage: string;
-  status: 'draft' | 'published'; isDemo: boolean; revision?: number;
-  duration?: string; cost?: string; meetingPoint?: string;
-  beginnerFriendly?: string; registrationStatus?: string;
+  id: string;
+  title: string;
+  category: string;
+  kind: 'upcoming' | 'past';
+  date: string;
+  location: string;
+  difficulty: string;
+  summary: string;
+  routeName?: string;
+  cityCode?: string;
+  description: string;
+  image: string;
+  signupUrl: string;
+  qrImage: string;
+  status: 'draft' | 'published';
+  isDemo: boolean;
+  revision?: number;
+  duration?: string;
+  cost?: string;
+  meetingPoint?: string;
+  beginnerFriendly?: string;
+  registrationStatus?: string;
   registrationOpen?: boolean;
   timeCommitment?: 'half-day' | 'full-day' | 'multi-day';
   experience?: 'relaxed' | 'scenic' | 'skills';
@@ -13,20 +28,48 @@ export interface Activity {
   preparation?: { notice?: string; items: { id: string; title: string; description: string }[] };
 }
 export interface Project {
-  id: string; title: string; mountain: string; elevation: string;
-  plannedDate: string; duration: string; summary: string; description: string;
-  trainingPlan: string; supportNeeds: string; cooperationValue: string;
-  image: string; status: 'draft' | 'published'; isDemo: boolean; revision?: number;
+  id: string;
+  title: string;
+  mountain: string;
+  elevation: string;
+  plannedDate: string;
+  duration: string;
+  summary: string;
+  description: string;
+  trainingPlan: string;
+  supportNeeds: string;
+  cooperationValue: string;
+  image: string;
+  status: 'draft' | 'published';
+  isDemo: boolean;
+  revision?: number;
 }
 export interface SiteSettings {
-  logoUrl?: string; demoMode?: boolean;
-  semesterName?: string; semesterStart?: string; semesterEnd?: string;
-  clubName: string; school: string; founded: string; intro: string;
-  aboutDescription: string; teamDescription: string; teamTraining: string;
-  teamAchievements: string; heroActivities: string; heroAbout: string; heroTeam: string;
-  storyHiking: string; storyClimbing: string;
-  officialSignupUrl: string; officialQrImage: string; signupInstructions: string;
-  contactEmail: string; contactWechat: string; contactName: string;
+  logoUrl?: string;
+  demoMode?: boolean;
+  semesterName?: string;
+  semesterStart?: string;
+  semesterEnd?: string;
+  clubName: string;
+  school: string;
+  founded: string;
+  intro: string;
+  aboutDescription: string;
+  teamDescription: string;
+  teamTraining: string;
+  teamAchievements: string;
+  heroActivities: string;
+  heroAbout: string;
+  heroTeam: string;
+  storyHiking: string;
+  storyClimbing: string;
+  chapterBackgrounds?: { activities?: Record<string, string>; about?: Record<string, string> };
+  officialSignupUrl: string;
+  officialQrImage: string;
+  signupInstructions: string;
+  contactEmail: string;
+  contactWechat: string;
+  contactName: string;
   growthSteps: { title: string; description: string }[];
   revision?: number;
 }
@@ -65,10 +108,24 @@ export interface PublicContent {
   cooperation?: CooperationContent;
 }
 export type UserRole = 'admin' | 'member' | 'viewer';
-export type ContentPermission = 'settings:write' | 'activities:write' | 'projects:write' | 'uploads:write';
+export type ContentPermission =
+  'settings:write' | 'activities:write' | 'projects:write' | 'uploads:write';
 export interface User {
-  id: string; username: string; displayName: string; role: UserRole; isPresident: boolean;
-  permissions: string[]; mustChangePassword?: boolean; active?: boolean;
+  id: string;
+  username: string;
+  displayName: string;
+  role: UserRole;
+  isPresident: boolean;
+  permissions: string[];
+  mustChangePassword?: boolean;
+  active?: boolean;
 }
-export interface Registration { id: string; activityId: string; createdAt: string; }
-export interface SiteStatus { paused: boolean; revision: number; }
+export interface Registration {
+  id: string;
+  activityId: string;
+  createdAt: string;
+}
+export interface SiteStatus {
+  paused: boolean;
+  revision: number;
+}

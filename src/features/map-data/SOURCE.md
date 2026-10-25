@@ -44,7 +44,7 @@ DataV 的台湾省要素 `childrenNum=0`，无县市子层，因此没有把台�
 
 - 官方目录：[直轄市、縣市界線（TWD97經緯度）](https://data.gov.tw/dataset/7442)
 - 官方下载页：[国土测绘图资服务云](https://maps.nlsc.gov.tw/pro/download.jsp)
-- ZIP：[縣市界線(TWD97經緯度).zip](https://maps.nlsc.gov.tw/download/%E7%B8%A3%E5%B8%82%E7%95%8C%E7%B7%9A(TWD97%E7%B6%93%E7%B7%AF%E5%BA%A6).zip)
+- ZIP：[縣市界線(TWD97經緯度).zip](<https://maps.nlsc.gov.tw/download/%E7%B8%A3%E5%B8%82%E7%95%8C%E7%B7%9A(TWD97%E7%B6%93%E7%B7%AF%E5%BA%A6).zip>)
 - 获取日期：2026-10-05（Asia/Shanghai）；原 ZIP 为 3,708,666 bytes。
 - SHA-256：`0c6fca34a92b92ef3e9a41957e403cb89e814bb64942ca7c7e51c746f913d49d`
 - 实际包内源文件：`COUNTY_MOI_1090820.shp`（2020 版；获取日期不表示边界年份）。

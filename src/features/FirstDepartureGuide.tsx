@@ -1,12 +1,21 @@
 import { useId, useRef, useState, type KeyboardEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ArrowUpRight, BellRing, BookOpen, Footprints, MessageCircle } from 'lucide-react';
+import {
+  ArrowRight,
+  ArrowUpRight,
+  BellRing,
+  BookOpen,
+  Footprints,
+  MessageCircle,
+} from 'lucide-react';
 import type { SiteSettings } from '../types';
 import './first-departure-guide.css';
 
 const steps = [
   {
-    title: '了解活动', hint: '找到适合自己的那一次', icon: BookOpen,
+    title: '了解活动',
+    hint: '找到适合自己的那一次',
+    icon: BookOpen,
     heading: '先读完一份活动预告。',
     description: '不急着决定走多远。先认识这次活动，再选择自己愿意尝试的起点。',
     details: [
@@ -16,7 +25,9 @@ const steps = [
     ],
   },
   {
-    title: '公众号报名', hint: '沿着正式通知完成报名', icon: MessageCircle,
+    title: '公众号报名',
+    hint: '沿着正式通知完成报名',
+    icon: MessageCircle,
     heading: '通过公众号，完成报名。',
     description: '报名入口、开放时间和填写方式，都以对应活动的公众号通知为准。',
     details: [
@@ -26,7 +37,9 @@ const steps = [
     ],
   },
   {
-    title: '查看集合通知', hint: '让时间与地点都清楚', icon: BellRing,
+    title: '查看集合通知',
+    hint: '让时间与地点都清楚',
+    icon: BellRing,
     heading: '把集合信息，放在手边。',
     description: '报完名，再留意后续通知。把需要确认的小事提前理顺，出发就多一份从容。',
     details: [
@@ -36,7 +49,9 @@ const steps = [
     ],
   },
   {
-    title: '一起出发', hint: '从一次同行认识伙伴', icon: Footprints,
+    title: '一起出发',
+    hint: '从一次同行认识伙伴',
+    icon: Footprints,
     heading: '下一段路，和同路人一起。',
     description: '第一次见面不需要很熟练。从按通知到达集合点、和伙伴打个招呼开始就好。',
     details: [
@@ -54,29 +69,109 @@ export function FirstDepartureGuide({ settings }: { settings: SiteSettings }) {
   const selected = steps[active];
   const signupUrl = settings.officialSignupUrl.trim();
   function navigate(event: KeyboardEvent<HTMLButtonElement>, index: number) {
-    const next = event.key === 'ArrowRight' ? (index + 1) % steps.length : event.key === 'ArrowLeft' ? (index + steps.length - 1) % steps.length : event.key === 'Home' ? 0 : event.key === 'End' ? steps.length - 1 : null;
+    const next =
+      event.key === 'ArrowRight'
+        ? (index + 1) % steps.length
+        : event.key === 'ArrowLeft'
+          ? (index + steps.length - 1) % steps.length
+          : event.key === 'Home'
+            ? 0
+            : event.key === 'End'
+              ? steps.length - 1
+              : null;
     if (next === null) return;
-    event.preventDefault(); setActive(next); buttons.current[next]?.focus();
+    event.preventDefault();
+    setActive(next);
+    buttons.current[next]?.focus();
   }
-  return <section id="first-departure" className="departure-guide" aria-labelledby={`${id}-heading`}>
-    <div className="departure-shell">
-      <header className="departure-header">
-        <div><span className="departure-eyebrow">YOUR FIRST DEPARTURE</span><h2 id={`${id}-heading`}>第一次出发，<br />也可以很从容<span>。</span></h2></div>
-        <p>从了解一次活动开始。<br />四个小步骤，走近下一次同行。</p>
-      </header>
-      <div className="departure-steps" role="group" aria-label="选择首次出发的步骤">
-        {steps.map((step, index) => <button key={step.title} type="button" ref={element => { buttons.current[index] = element; }} className={`departure-step${active === index ? ' departure-step-active' : ''}`} aria-pressed={active === index} aria-controls={`${id}-detail`} onClick={() => setActive(index)} onKeyDown={event => navigate(event, index)}>
-          <span className="departure-step-top"><span className="departure-number">0{index + 1}</span><step.icon size={25} strokeWidth={1.4} aria-hidden="true" /></span>
-          <span className="departure-step-title">{step.title}</span><span className="departure-step-hint">{step.hint}</span><ArrowRight className="departure-step-arrow" size={18} aria-hidden="true" />
-        </button>)}
-      </div>
-      <div id={`${id}-detail`} className="departure-detail" aria-live="polite" aria-atomic="true">
-        <div key={active} className="departure-detail-inner">
-          <div className="departure-detail-copy"><span className="departure-detail-kicker">STEP 0{active + 1} / 04</span><h3>{selected.heading}</h3><p>{selected.description}</p>{active === 1 && settings.signupInstructions && <p className="departure-channel-note">{settings.signupInstructions}</p>}</div>
-          <ol className="departure-checklist">{selected.details.map(([title, description], index) => <li key={title}><span className="departure-check-number">{index + 1}</span><div><h4>{title}</h4><p>{description}</p></div></li>)}</ol>
+  return (
+    <section id="first-departure" className="departure-guide" aria-labelledby={`${id}-heading`}>
+      <div className="departure-shell">
+        <header className="departure-header">
+          <div>
+            <span className="departure-eyebrow">YOUR FIRST DEPARTURE</span>
+            <h2 id={`${id}-heading`}>
+              第一次出发，
+              <br />
+              也可以很从容<span>。</span>
+            </h2>
+          </div>
+          <p>
+            从了解一次活动开始。
+            <br />
+            四个小步骤，走近下一次同行。
+          </p>
+        </header>
+        <div className="departure-steps" role="group" aria-label="选择首次出发的步骤">
+          {steps.map((step, index) => (
+            <button
+              key={step.title}
+              type="button"
+              ref={(element) => {
+                buttons.current[index] = element;
+              }}
+              className={`departure-step${active === index ? ' departure-step-active' : ''}`}
+              aria-pressed={active === index}
+              aria-controls={`${id}-detail`}
+              onClick={() => setActive(index)}
+              onKeyDown={(event) => navigate(event, index)}
+            >
+              <span className="departure-step-top">
+                <span className="departure-number">0{index + 1}</span>
+                <step.icon size={25} strokeWidth={1.4} aria-hidden="true" />
+              </span>
+              <span className="departure-step-title">{step.title}</span>
+              <span className="departure-step-hint">{step.hint}</span>
+              <ArrowRight className="departure-step-arrow" size={18} aria-hidden="true" />
+            </button>
+          ))}
         </div>
+        <div id={`${id}-detail`} className="departure-detail" aria-live="polite" aria-atomic="true">
+          <div key={active} className="departure-detail-inner">
+            <div className="departure-detail-copy">
+              <span className="departure-detail-kicker">STEP 0{active + 1} / 04</span>
+              <h3>{selected.heading}</h3>
+              <p>{selected.description}</p>
+              {active === 1 && settings.signupInstructions && (
+                <p className="departure-channel-note">{settings.signupInstructions}</p>
+              )}
+            </div>
+            <ol className="departure-checklist">
+              {selected.details.map(([title, description], index) => (
+                <li key={title}>
+                  <span className="departure-check-number">{index + 1}</span>
+                  <div>
+                    <h4>{title}</h4>
+                    <p>{description}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+        <footer className="departure-footer">
+          <p>具体报名与集合安排，以每次活动的正式通知为准。</p>
+          <div className="departure-actions">
+            <Link className="departure-link departure-link-primary" to="/#calendar">
+              看看近期活动 <ArrowRight size={17} aria-hidden="true" />
+            </Link>
+            {signupUrl ? (
+              <a
+                className="departure-link"
+                href={signupUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                查看公众号报名 <ArrowUpRight size={17} aria-hidden="true" />
+              </a>
+            ) : (
+              <Link className="departure-link" to="/about#join">
+                查看公众号报名 <ArrowRight size={17} aria-hidden="true" />
+              </Link>
+            )}
+          </div>
+        </footer>
       </div>
-      <footer className="departure-footer"><p>具体报名与集合安排，以每次活动的正式通知为准。</p><div className="departure-actions"><Link className="departure-link departure-link-primary" to="/#calendar">看看近期活动 <ArrowRight size={17} aria-hidden="true" /></Link>{signupUrl ? <a className="departure-link" href={signupUrl} target="_blank" rel="noopener noreferrer">查看公众号报名 <ArrowUpRight size={17} aria-hidden="true" /></a> : <Link className="departure-link" to="/about#join">查看公众号报名 <ArrowRight size={17} aria-hidden="true" /></Link>}</div></footer>
-    </div>
-  </section>;
+    </section>
+  );
 }

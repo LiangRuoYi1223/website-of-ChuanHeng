@@ -2,41 +2,41 @@
 name: 川衡网站
 description: 延续现有山野杂志视觉
 colors:
-  paper: "#F5F6F4"
-  surface: "#FCFDFC"
-  soft: "#E7EBE6"
-  green: "#315447"
-  ink: "#202923"
-  muted: "#606B63"
-  line: "#D6DED8"
-  alpine: "#17241F"
-  alpine-ink: "#F2F5F3"
-  ice: "#B3CBC0"
+  paper: '#F5F6F4'
+  surface: '#FCFDFC'
+  soft: '#E7EBE6'
+  green: '#315447'
+  ink: '#202923'
+  muted: '#606B63'
+  line: '#D6DED8'
+  alpine: '#17241F'
+  alpine-ink: '#F2F5F3'
+  ice: '#B3CBC0'
 typography:
   display:
-    fontFamily: "Chuanheng Han Serif SC, Songti SC, SimSun, serif"
-    fontSize: "5rem"
+    fontFamily: 'Chuanheng Han Serif SC, Songti SC, SimSun, serif'
+    fontSize: '5rem'
     fontWeight: 500
     lineHeight: 1.15
   body:
-    fontFamily: "DM Sans, Chuanheng Han Sans CN, PingFang SC, Microsoft YaHei, sans-serif"
-    fontSize: "1rem"
+    fontFamily: 'DM Sans, Chuanheng Han Sans CN, PingFang SC, Microsoft YaHei, sans-serif'
+    fontSize: '1rem'
     fontWeight: 400
     lineHeight: 1.75
 rounded:
-  image: "4px"
-  button: "4px"
-  panel: "8px"
+  image: '4px'
+  button: '4px'
+  panel: '8px'
 spacing:
-  grid: "32px"
-  gutter: "48px"
-  section: "96px"
+  grid: '32px'
+  gutter: '48px'
+  section: '96px'
 components:
   button-primary:
-    backgroundColor: "{colors.green}"
-    textColor: "{colors.surface}"
-    rounded: "{rounded.button}"
-    height: "48px"
+    backgroundColor: '{colors.green}'
+    textColor: '{colors.surface}'
+    rounded: '{rounded.button}'
+    height: '48px'
 ---
 
 # Design System: 川衡网站

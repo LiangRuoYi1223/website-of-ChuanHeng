@@ -19,12 +19,59 @@ import './auth/auth.css';
 const AdminApp = lazy(() => import('./admin/AdminApp'));
 
 const ContentContext = createContext<PublicContent | null>(null);
-export function useContent() { const value = useContext(ContentContext); if (!value) throw new Error('Content is unavailable'); return value; }
+export function useContent() {
+  const value = useContext(ContentContext);
+  if (!value) throw new Error('Content is unavailable');
+  return value;
+}
 
 function PublicApp() {
   const content = useContent();
   const { pathname } = useLocation();
-  return <><a href="#main-content" className="skip-link">跳到页面内容</a><Header settings={content.settings}/><main id="main-content"><Routes key={pathname}><Route path="/" element={<ActivitiesPage/>}/><Route path="/activities" element={<ActivitiesPage/>}/><Route path="/activities/:id" element={<ActivityDetail/>}/><Route path="/about" element={<AboutPage/>}/><Route path="/team" element={<TeamPage/>}/><Route path="/cooperation" element={<CooperationPage/>}/><Route path="/projects/:id" element={<ProjectDetail/>}/><Route path="/login" element={<LoginPage/>}/><Route path="/account" element={<AccountPage/>}/><Route path="*" element={<PageReader title="页面未找到" chapters={[{ id: 'not-found', title: '页面未找到', content: <div className="not-found container"><span className="eyebrow">404 · LOST ON THE TRAIL</span><h1>这条路还未开辟。</h1><Link to="/" className="button button-green">回到活动首页</Link></div> }]}/>}/></Routes></main></>;
+  return (
+    <>
+      <a href="#main-content" className="skip-link">
+        跳到页面内容
+      </a>
+      <Header settings={content.settings} />
+      <main id="main-content">
+        <Routes key={pathname}>
+          <Route path="/" element={<ActivitiesPage />} />
+          <Route path="/activities" element={<ActivitiesPage />} />
+          <Route path="/activities/:id" element={<ActivityDetail />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/team" element={<TeamPage />} />
+          <Route path="/cooperation" element={<CooperationPage />} />
+          <Route path="/projects/:id" element={<ProjectDetail />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/account" element={<AccountPage />} />
+          <Route
+            path="*"
+            element={
+              <PageReader
+                title="页面未找到"
+                chapters={[
+                  {
+                    id: 'not-found',
+                    title: '页面未找到',
+                    content: (
+                      <div className="not-found container">
+                        <span className="eyebrow">404 · LOST ON THE TRAIL</span>
+                        <h1>这条路还未开辟。</h1>
+                        <Link to="/" className="button button-green">
+                          回到活动首页
+                        </Link>
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+            }
+          />
+        </Routes>
+      </main>
+    </>
+  );
 }
 
 export default function App() {
@@ -35,20 +82,49 @@ export default function App() {
   useEffect(() => {
     let current = true;
     if (!status || (status.paused && user?.role !== 'admin')) return;
-    api<PublicContent>('/content').then(result => {
-      if (current) setContent({ ...result, cooperation: result.cooperation ?? demoContent.cooperation });
-    }).catch(() => { /* Service status gates public content separately. */ });
-    return () => { current = false; };
+    api<PublicContent>('/content')
+      .then((result) => {
+        if (current)
+          setContent({ ...result, cooperation: result.cooperation ?? demoContent.cooperation });
+      })
+      .catch(() => {
+        /* Service status gates public content separately. */
+      });
+    return () => {
+      current = false;
+    };
   }, [pathname, status?.paused, status?.revision, user?.id, user?.role]);
   const manager = user?.role === 'admin';
   const managementRoute = pathname === '/admin' || pathname.startsWith('/admin/');
   const gated = !manager && !managementRoute && (status?.paused || !status || !!statusError);
   if (gated) {
-    if ((authChecking || statusChecking) && pathname !== '/login') return <div className="auth-loading" role="status">正在连接网站…</div>;
-    return <MaintenancePage login={pathname === '/login'}/>;
+    if ((authChecking || statusChecking) && pathname !== '/login')
+      return (
+        <div className="auth-loading" role="status">
+          正在连接网站…
+        </div>
+      );
+    return <MaintenancePage login={pathname === '/login'} />;
   }
-  return <ContentContext.Provider value={content}><Routes>
-    <Route path="/admin/*" element={<Suspense fallback={<div className="auth-loading" role="status">正在打开内容管理…</div>}><AdminApp/></Suspense>}/>
-    <Route path="*" element={<PublicApp/>}/>
-  </Routes></ContentContext.Provider>;
+  return (
+    <ContentContext.Provider value={content}>
+      <Routes>
+        <Route
+          path="/admin/*"
+          element={
+            <Suspense
+              fallback={
+                <div className="auth-loading" role="status">
+                  正在打开内容管理…
+                </div>
+              }
+            >
+              <AdminApp />
+            </Suspense>
+          }
+        />
+        <Route path="*" element={<PublicApp />} />
+      </Routes>
+    </ContentContext.Provider>
+  );
 }

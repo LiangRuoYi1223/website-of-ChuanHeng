@@ -9,4 +9,12 @@ import './design-tokens.css';
 import './styles.css';
 
 const router = createBrowserRouter([{ path: '*', element: <App /> }]);
-ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><AuthProvider><SiteStatusProvider><RouterProvider router={router} /></SiteStatusProvider></AuthProvider></React.StrictMode>);
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <AuthProvider>
+      <SiteStatusProvider>
+        <RouterProvider router={router} />
+      </SiteStatusProvider>
+    </AuthProvider>
+  </React.StrictMode>,
+);

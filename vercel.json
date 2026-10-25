@@ -1,0 +1,33 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "npm run build:cloud",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/index.mjs": {
+      "maxDuration": 60,
+      "includeFiles": "{public/images/**,public/docs/**}",
+      "excludeFiles": "{output/**,artifacts/**,data/**,uploads/**,docs/**,scripts/**,tests/**}"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/index?__route=/api/:path*" },
+    { "source": "/uploads/:path*", "destination": "/api/index?__route=/uploads/:path*" },
+    { "source": "/images/:path*", "destination": "/api/index?__route=/images/:path*" },
+    { "source": "/docs/:path*", "destination": "/api/index?__route=/docs/:path*" },
+    {
+      "source": "/((?!api|uploads|images|docs|assets|fonts|favicon\\.svg).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    }
+  ]
+}

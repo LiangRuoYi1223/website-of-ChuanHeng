@@ -11,10 +11,11 @@ const webPort = 5173;
 function checkPort(port) {
   return new Promise((resolve, reject) => {
     const probe = net.createServer();
-    probe.once('error', error => {
-      const reason = error.code === 'EADDRINUSE'
-        ? `端口 ${port} 已被占用，请先停止已有的开发服务再重试。`
-        : `无法使用端口 ${port}：${error.message}`;
+    probe.once('error', (error) => {
+      const reason =
+        error.code === 'EADDRINUSE'
+          ? `端口 ${port} 已被占用，请先停止已有的开发服务再重试。`
+          : `无法使用端口 ${port}：${error.message}`;
       reject(new Error(reason));
     });
     probe.listen({ port, host }, () => probe.close(resolve));
@@ -49,7 +50,7 @@ try {
       env: { ...process.env, HOST: host, PORT: String(apiPort) },
     });
     processes.push(child);
-    child.on('error', error => {
+    child.on('error', (error) => {
       process.stderr.write(`${error.message}\n`);
       process.exitCode = 1;
       stop();

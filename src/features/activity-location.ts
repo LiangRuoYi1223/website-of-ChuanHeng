@@ -7,5 +7,9 @@ export function activityRoute(activity: Activity): string {
 
 export function activityCity(activity: Activity): string {
   const city = findCity(activity.cityCode);
-  return city ? (city.provinceName === city.name ? city.name : `${city.provinceName} · ${city.name}`) : '';
+  return city
+    ? city.provinceName === city.name
+      ? city.name
+      : `${city.provinceName} · ${city.name}`
+    : '';
 }

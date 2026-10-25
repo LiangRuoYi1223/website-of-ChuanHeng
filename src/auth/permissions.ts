@@ -1,7 +1,9 @@
 import type { ContentPermission, User, UserRole } from '../types';
 
 export const roleLabels: Record<UserRole, string> = {
-  admin: '管理员', member: '社员', viewer: '浏览者',
+  admin: '管理员',
+  member: '社员',
+  viewer: '浏览者',
 };
 export const roleDescriptions: Record<UserRole, string> = {
   admin: '可修改网站全部内容，并管理账号。社长属于管理员，另可暂停和恢复网站服务。',
@@ -9,8 +11,10 @@ export const roleDescriptions: Record<UserRole, string> = {
   viewer: '可浏览网站公开内容。',
 };
 export const permissionLabels: Record<ContentPermission, string> = {
-  'settings:write': '协会设置', 'activities:write': '活动管理',
-  'projects:write': '攀登项目', 'uploads:write': '图片上传',
+  'settings:write': '协会设置',
+  'activities:write': '活动管理',
+  'projects:write': '攀登项目',
+  'uploads:write': '图片上传',
 };
 export function canManageContent(user: User | null): boolean {
   return user?.role === 'admin';
@@ -27,4 +31,18 @@ export function canRegister(user: User | null): boolean {
 
 export function userRoleLabel(user: User): string {
   return user.role === 'admin' && user.isPresident ? '管理员 · 社长' : roleLabels[user.role];
+}
+
+export function userPermissionLabels(user: User): string[] {
+  if (user.role === 'viewer') return ['公开内容浏览'];
+  if (user.role === 'member') return ['公开内容浏览', '社员活动查看', '活动报名'];
+  return [
+    ...user.permissions
+      .filter((permission) => Object.hasOwn(permissionLabels, permission))
+      .map((permission) => permissionLabels[permission as ContentPermission]),
+    '全部账号查看',
+    '账号与权限管理',
+    '社员活动与报名',
+    ...(user.isPresident ? ['网站暂停与恢复'] : []),
+  ];
 }

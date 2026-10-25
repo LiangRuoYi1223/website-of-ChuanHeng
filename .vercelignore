@@ -1,0 +1,12 @@
+data/
+uploads/
+output/
+artifacts/
+.env*
+!.env.example
+.git/
+.codex/
+.agents/
+.aws/
+node_modules/
+__pycache__/
