@@ -1,0 +1,30 @@
+/* Shared map palette. Obsidian is the selected default; samples may override it. */
+.footprint-explorer[data-map-theme]{background:var(--map-panel);border-color:var(--map-chrome);color:var(--map-text)}
+.footprint-explorer[data-map-theme] .f-toolbar{background:var(--map-panel);border-color:var(--map-chrome)}
+.footprint-explorer[data-map-theme] .f-map-heading>span{border-color:var(--map-chrome);color:var(--map-muted)}
+.footprint-explorer[data-map-theme] .f-filters select{background:var(--map-land)!important;border-color:var(--map-chrome);color:var(--map-text)}
+.footprint-explorer[data-map-theme] .f-filters label>svg,.footprint-explorer[data-map-theme] .f-expand{color:var(--map-muted)}
+.footprint-explorer[data-map-theme] .f-expand:hover{color:#f07827}
+.footprint-explorer[data-map-theme] .f-map{background:var(--map-background)}
+.footprint-explorer[data-map-theme] .f-province{fill:var(--map-land);stroke:var(--map-border)}
+.footprint-explorer[data-map-theme] .f-province:hover,.footprint-explorer[data-map-theme] .f-province.is-selected,.footprint-explorer[data-map-theme] .f-province:focus-visible{fill:var(--map-hover);stroke:#f07827}
+.footprint-explorer[data-map-theme] .f-province-labels text{fill:var(--map-label);stroke:var(--map-land)}
+.footprint-explorer[data-map-theme] .f-graticule path{stroke:var(--map-border);opacity:.12}
+.footprint-explorer[data-map-theme] .f-south-sea rect{fill:var(--map-background);stroke:var(--map-border)}
+.footprint-explorer[data-map-theme] .f-south-sea path{fill:var(--map-land);stroke:var(--map-border)}
+.footprint-explorer[data-map-theme] .f-south-sea text{fill:var(--map-label)}
+.footprint-explorer[data-map-theme] .f-map-top,.footprint-explorer[data-map-theme] .f-instructions,.footprint-explorer[data-map-theme] .f-map-bottom{color:var(--map-muted)}
+.footprint-explorer[data-map-theme] .f-record-count{color:var(--map-text)}
+.footprint-explorer[data-map-theme] .f-controls{background:var(--map-panel);border-color:var(--map-chrome)}
+.footprint-explorer[data-map-theme] .f-controls button{border-color:var(--map-chrome);color:var(--map-text)}
+.footprint-explorer[data-map-theme] .f-controls button:disabled{color:var(--map-muted);opacity:.4}
+.footprint-explorer[data-map-theme] .f-controls button:hover:not(:disabled){background:var(--map-hover);color:#f07827}
+.footprint-explorer[data-map-theme] .f-empty-message,.footprint-explorer[data-map-theme] .f-popup,.footprint-explorer[data-map-theme] .f-province-info{background:var(--map-panel);border-color:var(--map-chrome)}
+.footprint-explorer[data-map-theme] .f-empty-message strong,.footprint-explorer[data-map-theme] .f-popup h3,.footprint-explorer[data-map-theme] .f-province-info{color:var(--map-text)}
+.footprint-explorer[data-map-theme] .f-empty-message p,.footprint-explorer[data-map-theme] .f-popup p{color:var(--map-muted)!important}
+.footprint-explorer[data-map-theme] .f-popup-close,.footprint-explorer[data-map-theme] .f-province-info>button{color:var(--map-muted)}
+.footprint-explorer[data-map-theme] .f-footnote,.footprint-explorer[data-map-theme] .f-records{background:var(--map-panel);border-color:var(--map-chrome)}
+.footprint-explorer[data-map-theme] .f-footnote p,.footprint-explorer[data-map-theme] .f-footnote>a,.footprint-explorer[data-map-theme] .f-footnote>svg{color:var(--map-muted)!important}
+.footprint-explorer[data-map-theme] .f-records-heading>span,.footprint-explorer[data-map-theme] .f-record-empty,.footprint-explorer[data-map-theme] .f-record-empty>svg,.footprint-explorer[data-map-theme] .f-record-empty p,.footprint-explorer[data-map-theme] .f-records-note,.footprint-explorer[data-map-theme] .f-record-card small,.footprint-explorer[data-map-theme] .f-record-card>svg:last-child{color:var(--map-muted)}
+.footprint-explorer[data-map-theme] .f-record-empty h4{color:var(--map-text)}
+.footprint-explorer[data-map-theme] .f-records-note,.footprint-explorer[data-map-theme] .f-record-card{border-color:var(--map-chrome)}

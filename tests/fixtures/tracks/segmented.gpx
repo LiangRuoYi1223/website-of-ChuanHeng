@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="local parser test" xmlns="http://www.topografix.com/GPX/1/1">
+  <wpt lat="80" lon="99"><ele>9999</ele></wpt>
+  <trk><name>沿海测试</name>
+    <trkseg><trkpt lat="0" lon="0"><ele>10</ele></trkpt><trkpt lat="0" lon="0.01"><ele>20</ele></trkpt><trkpt lat="0" lon="0.02"><ele>15</ele></trkpt></trkseg>
+    <trkseg><trkpt lat="0" lon="10"><ele>1000</ele></trkpt><trkpt lat="0" lon="10.01"><ele>1010</ele></trkpt></trkseg>
+  </trk>
+  <rte><rtept lat="60" lon="70"/><rtept lat="60" lon="71"/></rte>
+</gpx>

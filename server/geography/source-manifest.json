@@ -1,0 +1,162 @@
+{
+  "retrievedAt": "2026-10-31",
+  "featureCount": 391,
+  "vertexCount": 174021,
+  "datasetBytes": 1731353,
+  "datasetSHA256": "30fb2076c1ba9cc37dd558178e8e89e72c725dfc9661d86c1779cc1f1d714829",
+  "sources": [
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json",
+      "bytes": 582522,
+      "sha256": "99adfeded5223848bbe37a0a12f8023e11ee12161c7800521c27db42fdeac275"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/130000_full.json",
+      "bytes": 73454,
+      "sha256": "c7e8f6d81bf815b309e081b17325f73134bfa6929332e1c135398e82216f70f7"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/140000_full.json",
+      "bytes": 60906,
+      "sha256": "5da8144cc2d3a6ab6be40a63fd2ed099a33f1deae8e727214542e73f410ff607"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/150000_full.json",
+      "bytes": 79281,
+      "sha256": "9a4a3b95d903b064c8e815b78d4f80f391b4bdafd3b52dabd854755457385660"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/210000_full.json",
+      "bytes": 161469,
+      "sha256": "679ec739045413f4de0898a9d6a7957f6ffc551809f3f52c786a30d6242b02c5"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/220000_full.json",
+      "bytes": 147299,
+      "sha256": "828be8771e676322a81f560611821230d66e1e1dca87308efd7865b27423e605"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/230000_full.json",
+      "bytes": 146797,
+      "sha256": "f8d3bdbee4068811237efd23fe349a4c6e3bc99334079f9746f19e7df5ea4854"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/320000_full.json",
+      "bytes": 97545,
+      "sha256": "6af17f07a3c83bad7d4d552efdd7f59ba8f7574363d1a686f59bc1d0f91733e7"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/330000_full.json",
+      "bytes": 120401,
+      "sha256": "f87241d47687264861aa619b8dc37ffeb61a2be5d6018a8c01ec0ce0acb5cb38"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/340000_full.json",
+      "bytes": 127323,
+      "sha256": "7ca3290e0458f34086df4d61fa9804e2c624d55dfe5f8f6a841844b5dcd43207"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/350000_full.json",
+      "bytes": 114243,
+      "sha256": "0c749acd0048a5042a5ee701ddd5a87c17ff91afb9b728d23b7253799135b58f"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/360000_full.json",
+      "bytes": 121694,
+      "sha256": "ee9696faaca6e644fb0f1aebfc0bd800beb938dd2eb1737fcb8b244072405d9e"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/370000_full.json",
+      "bytes": 167872,
+      "sha256": "04d600e257db17869aa7fabcfcd6a87a7236791a7f02dd891636f5f58da0133f"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/410000_full.json",
+      "bytes": 153774,
+      "sha256": "34119256db754324763c8484122d71524818c9cec974207bd27a9aafe2d8ad63"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/420000_full.json",
+      "bytes": 155792,
+      "sha256": "0acb559fcfe2ab2c5d2707c2477e60facdf4328ad89b8ab7d9126c5166675502"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/430000_full.json",
+      "bytes": 175676,
+      "sha256": "091cb4e77e2bc73fb37c8a9b3b174db9b2008db5f544a7156f5a8ad34e77dd66"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/440000_full.json",
+      "bytes": 192961,
+      "sha256": "209ad617a296b154c4fd0828180b2a9ab2b270044990ab34e72a344ce913c8c7"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/450000_full.json",
+      "bytes": 167980,
+      "sha256": "5bdcaa8808d78065be4a496718b449c5b97d1ef27900bbfcd2407f69c5f6c041"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/460000_full.json",
+      "bytes": 34123,
+      "sha256": "ae44b392cf32ff7f7df5466ca16fa7f1b70b9fb9c36f00f54d6f142d011c65e4"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/510000_full.json",
+      "bytes": 164814,
+      "sha256": "e8e3a3820d97ca3453c18c6335703f4e4f93df95ba394a1259eebab59e7072b1"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/520000_full.json",
+      "bytes": 130185,
+      "sha256": "3336ddee76a8d33a5841f928c764ec4e4bb33988ec59d08efc75000251af1cf6"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/530000_full.json",
+      "bytes": 122596,
+      "sha256": "c11c7adf7581fc53e965bf0fd2b3217213f118c59ebddf4cab929c51ee00aa6e"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/540000_full.json",
+      "bytes": 134516,
+      "sha256": "ba95ab3f6b9183942c183d66d1258ac710dcdf9cb49c51f79915532379747c81"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/610000_full.json",
+      "bytes": 71735,
+      "sha256": "969ca94cc865bf3a37c22e30d7c0125196fd22175f7c212953185f7c67921682"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/620000_full.json",
+      "bytes": 105622,
+      "sha256": "5252d2ce49a7b6f721d5ca9404a2960b428fab09b6f62256fe62db0218d1123e"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/630000_full.json",
+      "bytes": 97941,
+      "sha256": "42caf689c3c37630aa725bac2351153bac00fb626a01fbe5f141c3a279706936"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/640000_full.json",
+      "bytes": 49533,
+      "sha256": "99e03114c3f7dff3fad5b87a88ddf2fb08687d117c62bf999236191ca29d78f9"
+    },
+    {
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/650000_full.json",
+      "bytes": 119226,
+      "sha256": "587b5069eddcad4b5a2f784380351f756f0ba955211721091b85a6528ae74745"
+    },
+    {
+      "url": "https://maps.nlsc.gov.tw/download/%E7%B8%A3%E5%B8%82%E7%95%8C%E7%B7%9A(TWD97%E7%B6%93%E7%B7%AF%E5%BA%A6).zip",
+      "bytes": 3708666,
+      "sha256": "0c6fca34a92b92ef3e9a41957e403cb89e814bb64942ca7c7e51c746f913d49d",
+      "file": "COUNTY_MOI_1090820.shp",
+      "projection": "GEOGCS[\"GCS_TWD_1997\",DATUM[\"D_TWD_1997\",SPHEROID[\"GRS_1980\",6378137.0,298.257222101]],PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]]",
+      "license": "政府資料開放授權條款－第1版"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/wandergis/coordtransform/master/LICENSE",
+      "bytes": 1083,
+      "sha256": "801448faad6ec70fbd0d1bf384f6b20cdbd332f333898b1b8122ec26cb0b5d79"
+    }
+  ]
+}

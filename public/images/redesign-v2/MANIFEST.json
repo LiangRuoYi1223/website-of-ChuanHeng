@@ -1,0 +1,71 @@
+{
+  "generation": "redesign-v2",
+  "referenceDirectory": "C:/Users/ander/Desktop/徒步新设计",
+  "method": "Built-in image_gen; PNG to WebP only; no reused old photos",
+  "assets": [
+    {
+      "file": "activities-snow.webp",
+      "width": 1672,
+      "height": 941,
+      "bytes": 328326,
+      "sha256": "df7f31ac5a5006b323bf711db7514ae2b074e6a6f55a1621425acf3d7c10fa13",
+      "source": "activities-snow-SOURCE.md"
+    },
+    {
+      "file": "alpine-lake.webp",
+      "width": 1672,
+      "height": 941,
+      "bytes": 420254,
+      "sha256": "ed7b17ceb8104a4a1c55038f6f1ce4003b6fc296c4cef310096ef1949a14cfbc",
+      "source": "alpine-lake-SOURCE.md"
+    },
+    {
+      "file": "camp-night.webp",
+      "width": 1672,
+      "height": 941,
+      "bytes": 289160,
+      "sha256": "28eeb23460ecce86bf166d91e2412b2160b3a4fdaece04d8f77d87fd165fd699",
+      "source": "camp-night-SOURCE.md"
+    },
+    {
+      "file": "gallery-sunset.webp",
+      "width": 1774,
+      "height": 887,
+      "bytes": 378816,
+      "sha256": "a145944a9b676380fac546673cb25060b1604e9ff049e6c542a405c84d912ac8",
+      "source": "gallery-sunset.SOURCE.md"
+    },
+    {
+      "file": "home-summit.webp",
+      "width": 1672,
+      "height": 941,
+      "bytes": 323058,
+      "sha256": "ba5a8c8955f4de21e26322e61cc7e87ba96440c4e2e14f8983779352a7521853",
+      "source": "home-summit-SOURCE.md"
+    },
+    {
+      "file": "join-hiker.webp",
+      "width": 1672,
+      "height": 941,
+      "bytes": 425548,
+      "sha256": "bdbf8fdb5387d2fab3bdb6a46923299cced893b75b5890c9fc21300890972ca7",
+      "source": "join-hiker-SOURCE.md"
+    },
+    {
+      "file": "routes-coast.webp",
+      "width": 1774,
+      "height": 887,
+      "bytes": 454826,
+      "sha256": "955c669185af481c1d6079c191d5bac05a2f6a4e2bc125eb4f8e1ed4c0417fb6",
+      "source": "routes-coast-SOURCE.md"
+    },
+    {
+      "file": "team-ridge.webp",
+      "width": 1774,
+      "height": 887,
+      "bytes": 286786,
+      "sha256": "fbe5bc1eb1a02de61dcc20f6c1d812efbc3433c50a01bbc5e418652031eb094e",
+      "source": "team-ridge.SOURCE.md"
+    }
+  ]
+}

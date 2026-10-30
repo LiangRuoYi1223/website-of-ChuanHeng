@@ -1,0 +1,6 @@
+[
+  {"id":"obsidian","letter":"A","name":"曜石黑","description":"中性黑灰，最贴近参考图。橙色更突出，整体更克制。","recommended":true,"background":"#0C0C0C","land":"#242424","border":"#777777","label":"#C8C8C8","hover":"#3D3833","panel":"#171717","text":"#F5F5F5","muted":"#B0B0B0","chrome":"#3B3B3B"},
+  {"id":"granite","letter":"B","name":"深岩灰","description":"带一点暖灰，陆地更明亮，省界和文字更清楚。","background":"#171513","land":"#35312D","border":"#8C8176","label":"#E3DDD5","hover":"#51473E","panel":"#211E1B","text":"#FAF6EF","muted":"#C1B8AC","chrome":"#494038"},
+  {"id":"forest","letter":"C","name":"松林墨绿","description":"低饱和绿灰，呼应森林和山野，更有户外气息。","background":"#101411","land":"#29332C","border":"#7C8B7E","label":"#DCE4DB","hover":"#405044","panel":"#18201A","text":"#F0F4ED","muted":"#B7C5B8","chrome":"#3C4A40"},
+  {"id":"glacier","letter":"D","name":"冰川夜蓝","description":"冷调蓝灰，呼应雪山摄影，比当前青色更沉稳。","background":"#11141A","land":"#29313E","border":"#7E8CA3","label":"#DFE5F0","hover":"#3D4D63","panel":"#181E27","text":"#F3F6FC","muted":"#B6C4D7","chrome":"#3D495C"}
+]

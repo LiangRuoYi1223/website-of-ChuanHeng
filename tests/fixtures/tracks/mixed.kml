@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2"><Document><name>海岸与雪线</name>
+  <Placemark><name>线与点</name><MultiGeometry>
+    <Point><coordinates>99,80,9000</coordinates></Point>
+    <LineString><altitudeMode>absolute</altitudeMode><coordinates>0,0,100 0.01,0,110</coordinates></LineString>
+    <LineString><altitudeMode>relativeToGround</altitudeMode><coordinates>1,1,50 1.01,1,60</coordinates></LineString>
+  </MultiGeometry></Placemark>
+  <Placemark><name>分段行程</name><gx:MultiTrack><altitudeMode>absolute</altitudeMode>
+    <gx:Track><gx:coord>2 2 20</gx:coord><gx:coord>2.01 2 25</gx:coord><gx:coord/><gx:coord>2.02 2 30</gx:coord><gx:coord>2.03 2 35</gx:coord></gx:Track>
+    <gx:Track><gx:coord>3 3 5</gx:coord><gx:coord>3.01 3 2</gx:coord></gx:Track>
+  </gx:MultiTrack></Placemark>
+</Document></kml>

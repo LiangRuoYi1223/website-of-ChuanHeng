@@ -1,33 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "chuanheng-website",
-  "account_id": "7d19cea1b6c812b64d640d14799bea70",
-  "main": "worker/index.mjs",
-  "compatibility_date": "2026-10-06",
-  "compatibility_flags": ["nodejs_compat"],
-  "workers_dev": true,
-  "preview_urls": false,
-  "vars": {
-    "SITE_ORIGIN": "https://chuanheng-website.vulhusky.workers.dev",
-    "SUPABASE_STORAGE_BUCKET": "chuanheng-uploads",
-    "SUPABASE_URL": "https://gftecgpbhiubrkmazlcu.supabase.co",
-  },
-  "alias": {
-    "node:sqlite": "./server/cloudflare-sqlite.mjs",
-  },
-  "assets": {
-    "directory": "./dist",
-    "binding": "ASSETS",
-    "run_worker_first": true,
-    "not_found_handling": "single-page-application",
-  },
-  "observability": {
-    "enabled": true,
-  },
-  "hyperdrive": [
-    {
-      "binding": "HYPERDRIVE",
-      "id": "c2971b4e88094625bf97d9ce07826e7d",
-    },
-  ],
+  "name": "chuanheng",
+  "main": "server/worker.mjs",
+  "compatibility_date": "2026-10-30",
+  "assets": { "binding": "ASSETS", "run_worker_first": ["/api/*"], "directory": "./dist", "not_found_handling": "single-page-application" }
 }
