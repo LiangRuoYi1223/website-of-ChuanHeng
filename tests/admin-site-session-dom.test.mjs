@@ -23,6 +23,7 @@ const admin = { id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', email: 'admin@exampl
 const member = { id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', email: 'member@example.invalid', app_metadata: {}, user_metadata: { role: 'admin' } };
 const controller = { session: null, verified: null, subscribers: new Set(), calls: [], nextVerification: null, verificationError: null };
 const backend = {
+  async rpc(name){assert.equal(name,'get_member_profile');if(controller.nextProfile){const result=controller.nextProfile;controller.nextProfile=null;return result;}return {data:{userId:controller.verified?.id,username:controller.username || '',realName:'',phone:'',updatedAt:null}};},
   auth: {
     async getSession() { controller.calls.push('getSession'); return { data: { session: controller.session ? { user: controller.session } : null }, error: null }; },
     async getUser() {
@@ -75,7 +76,7 @@ function emit(event, user) {
 }
 async function reset(user = null) {
   for (const root of roots.values()) await act(async () => root.unmount()); roots.clear();
-  controller.session = user; controller.verified = user; controller.calls = []; controller.nextVerification = null; controller.verificationError = null;
+  controller.session = user; controller.verified = user; controller.calls = []; controller.nextVerification = null; controller.verificationError = null; controller.username='';controller.nextProfile=null;
   assert.equal(controller.subscribers.size, 0, 'all auth subscriptions must be released');
   localStorage.clear();
 }
@@ -99,28 +100,28 @@ test('administrator and public pages share verified login state', async t => {
     assert.ok(website, 'administrator must be able to open the website while keeping the workspace');
     assert.equal(website.getAttribute('href'), '/'); assert.equal(website.target, '_blank'); assert.match(website.rel, /noopener/);
     await mount('public', '/');
-    await waitFor(() => findLink(header(), '已登录 · 管理后台'), 'public administrator navigation');
+    await waitFor(() => findLink(header(), '管理后台'), 'public administrator navigation');
     assert.equal(findLink(header(), '登录 / 注册'), undefined);
-    const management = findLink(header(), '已登录 · 管理后台');
+    const management = findLink(header(), '管理后台');
     assert.equal(management.getAttribute('href'), '/admin'); assert.equal(management.target, '_blank'); assert.match(management.rel, /noopener/);
     assert.ok(containers.admin.querySelector('.admin-shell'));
     assert.equal(controller.calls.includes('signOut'), false);
     await mount('public', '/routes');
-    await waitFor(() => findLink(header(), '已登录 · 管理后台'), 'restored session on reload');
+    await waitFor(() => findLink(header(), '管理后台'), 'restored session on reload');
     assert.equal(controller.session.id, admin.id);
   });
 
   await t.test('mobile menu also shows the authenticated administrator entrance', async () => {
     await reset(admin); await mount('public', '/');
-    await waitFor(() => findLink(header(), '已登录 · 管理后台'), 'administrator header');
+    await waitFor(() => findLink(header(), '管理后台'), 'administrator header');
     await act(async () => header().querySelector('[aria-controls="mobile-menu"]').click());
-    assert.ok(findLink(containers.public.querySelector('#mobile-menu'), '已登录 · 管理后台'));
+    assert.ok(findLink(containers.public.querySelector('#mobile-menu'), '管理后台'));
     assert.equal(findLink(containers.public.querySelector('#mobile-menu'), '登录 / 注册'), undefined);
   });
 
   await t.test('a member is shown as logged in without trusting an editable admin claim', async () => {
     await reset(member); await mount('public', '/');
-    await waitFor(() => text(header()).includes('已登录'), 'member header');
+    await waitFor(() => Boolean(findLink(header(), '个人设置')), 'member header');
     assert.equal(header().querySelector('a[href="/admin"]'), null);
     assert.equal(findLink(header(), '登录 / 注册'), undefined);
   });
@@ -128,25 +129,25 @@ test('administrator and public pages share verified login state', async t => {
   await t.test('cached administrator claims never replace server-verified membership', async () => {
     await reset(member); controller.session = admin;
     await mount('public', '/');
-    await waitFor(() => text(header()).includes('已登录'), 'verified member despite cached admin');
+    await waitFor(() => Boolean(findLink(header(), '个人设置')), 'verified member despite cached admin');
     assert.equal(header().querySelector('a[href="/admin"]'), null);
   });
 
   await t.test('token refresh and user updates recheck the current role', async () => {
     await reset(admin); await mount('public', '/');
-    await waitFor(() => findLink(header(), '已登录 · 管理后台'), 'initial administrator');
+    await waitFor(() => findLink(header(), '管理后台'), 'initial administrator');
     await act(async () => emit('TOKEN_REFRESHED', member));
-    await waitFor(() => text(header()).includes('已登录'), 'refreshed member');
+    await waitFor(() => Boolean(findLink(header(), '个人设置')), 'refreshed member');
     assert.equal(header().querySelector('a[href="/admin"]'), null);
     await act(async () => emit('USER_UPDATED', admin));
-    await waitFor(() => findLink(header(), '已登录 · 管理后台'), 'updated administrator');
+    await waitFor(() => findLink(header(), '管理后台'), 'updated administrator');
   });
 
   await t.test('other-tab login and signout events update both open surfaces', async () => {
     await reset(); await mount('public', '/'); await mount('admin', '/admin');
     await waitFor(() => findLink(header(), '登录 / 注册'), 'guest header');
     await act(async () => emit('SIGNED_IN', admin));
-    await waitFor(() => findLink(header(), '已登录 · 管理后台') && text(containers.admin).includes('欢迎回来'), 'shared login event');
+    await waitFor(() => findLink(header(), '管理后台') && text(containers.admin).includes('欢迎回来'), 'shared login event');
     await act(async () => emit('SIGNED_OUT', null));
     await waitFor(() => findLink(header(), '登录 / 注册') && text(containers.admin).includes('请先登录管理账号'), 'shared signout event');
   });
@@ -163,7 +164,7 @@ test('administrator and public pages share verified login state', async t => {
     await act(async () => finish({ data: { user: admin }, error: null }));
     assert.equal(header().querySelector('a[href="/admin"]'), null);
     await act(async () => emit('SIGNED_IN', member));
-    await waitFor(() => text(header()).includes('已登录'), 'replacement member');
+    await waitFor(() => Boolean(findLink(header(), '个人设置')), 'replacement member');
     assert.equal(header().querySelector('a[href="/admin"]'), null);
   });
 
@@ -174,4 +175,9 @@ test('administrator and public pages share verified login state', async t => {
     assert.equal(header().querySelector('a[href="/admin"]'), null);
     assert.equal(findLink(header(), '登录 / 注册'), undefined);
   });
+});
+
+test('verified username links to settings and late profile cannot restore a previous account',async()=>{
+ await reset(member);controller.username='山野同行';await mount('public','/');await waitFor(()=>findLink(header(),'山野同行'),'verified username');assert.equal(findLink(header(),'山野同行').getAttribute('href'),'/settings');assert.doesNotMatch(text(header()),/member@example/);
+ await reset(member);let release;controller.nextProfile=new Promise(resolve=>release=resolve);await mount('public','/');await waitFor(()=>findLink(header(),'个人设置'),'profile pending fallback');await act(async()=>emit('SIGNED_OUT',null));await act(async()=>release({data:{userId:member.id,username:'旧用户名',realName:'',phone:'',updatedAt:null}}));assert.ok(findLink(header(),'登录 / 注册'));assert.doesNotMatch(text(header()),/旧用户名/);
 });

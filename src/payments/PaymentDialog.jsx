@@ -58,7 +58,7 @@ export default function PaymentDialog({open,qrUrl='',onClose,onSubmit,busy=false
         <p>上传微信缴费记录截图，保留收款人、金额和付款时间，方便管理员核实。</p>
         <label className="payment-file-label" htmlFor={inputId}>缴费记录图片</label>
         <input ref={selection} id={inputId} type="file" accept={types.join(',')} disabled={processing} onChange={event=>{selectFile(event.target.files?.[0]);event.target.value='';}}/>
-        <small>JPEG、PNG 或 WebP，最多 8 MiB。图片仅对本人和协会管理员可见。</small>
+        <small>JPEG、PNG 或 WebP，原图最多 8 MiB，自动压缩至 1 MiB 以内。图片仅对本人和协会管理员可见，活动结束后自动清理。</small>
         {preview&&<img className="payment-receipt-preview" src={preview} alt="待提交的缴费记录预览"/>}
         {error&&<p className="payment-upload-error" role="alert">{error}</p>}
         <button className="payment-primary" type="submit" disabled={!file||processing}>{processing?'正在提交缴费记录…':'提交缴费记录'}</button>

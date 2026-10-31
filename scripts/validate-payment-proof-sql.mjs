@@ -21,10 +21,10 @@ const setPayment=(app,status,previous,proofId)=>admin(()=>rpc('set_activity_regi
 async function object(n,objectPath,metadata={size:1024,mimetype:'image/webp'}){return as(n,()=>q("insert into storage.objects(bucket_id,name,owner_id,owner,metadata) values('payment-proofs',$1,$2,$3,$4)",[objectPath,id(n),id(n),metadata]));}
 async function seed(){
  await admin(()=>q("insert into public.content_items(id,kind,published,payload) values($1,'activity',true,$2)",[id(100),{title:'合成缴费活动',registrationCapacity:1,registrationOpen:true,registrationStart:'2020-01-01T00:00:00Z',registrationDeadline:'2099-01-01T00:00:00Z',dateStart:'2099-01-02T00:00:00Z',dateEnd:'2099-01-03T00:00:00Z'}]));
- const a=await as(1,()=>rpc('register_activity',[id(100),id(1)]));const b=await as(2,()=>rpc('register_activity',[id(100),id(2)]));return{a:a.application,b:b.application};
+ const a=await as(1,()=>rpc('register_activity',[id(100),id(1),'测试甲','11010519491231002X','13800138000',true]));const b=await as(2,()=>rpc('register_activity',[id(100),id(2),'测试乙','11010519491231002X','13800138000',true]));return{a:a.application,b:b.application};
 }
 before(async()=>{
- db=new PGlite();await db.exec(`create role anon;create role authenticated;create schema auth;grant usage on schema auth,public to anon,authenticated;
+ db=new PGlite();await db.exec(`create role service_role;create role anon;create role authenticated;create schema auth;grant usage on schema auth,public to anon,authenticated;
  create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb default '{}'::jsonb);
  create function auth.jwt() returns jsonb language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claims',true),'')::jsonb,'{}'::jsonb)$$;
  create function auth.uid() returns uuid language sql stable as $$select (auth.jwt()->>'sub')::uuid$$;
@@ -51,7 +51,7 @@ after(async()=>db?.close());beforeEach(async()=>db.exec('begin'));afterEach(asyn
 test('proof migration preserves historical data and exposes only a private bounded bucket',async()=>{
  const current=(await q('select * from public.applications where user_id=$1',[id(77)]))[0];for(const [key,val] of Object.entries(legacy))assert.deepEqual(current[key],val);
  assert.equal(current.current_payment_proof_id,null);assert.equal(await value('select v from chuanheng.sentinel'),'untouched');
- const bucket=(await q("select * from storage.buckets where id='payment-proofs'"))[0];assert.equal(bucket.public,false);assert.equal(bucket.file_size_limit,3145728);assert.deepEqual(bucket.allowed_mime_types,['image/webp']);
+ const bucket=(await q("select * from storage.buckets where id='payment-proofs'"))[0];assert.equal(bucket.public,false);assert.equal(bucket.file_size_limit,1048576);assert.deepEqual(bucket.allowed_mime_types,['image/webp']);
  assert.equal((await q('select * from public.application_payment_proofs')).length,0);assert.equal((await q('select * from public.registration_events')).length,0);
  for(const signature of ['public.set_activity_registration_payment(uuid,text,text,uuid)','private.set_activity_registration_payment(uuid,text,text,uuid)'])assert.equal(await value('select to_regprocedure($1)::text v',[signature]),null);
  assert.ok((await q("select prosecdef from pg_proc where pronamespace='public'::regnamespace")).every(p=>!p.prosecdef));
@@ -61,16 +61,16 @@ test('own valid proof atomically becomes pending, is returned only to owner/admi
  await object(1,objectPath);const result=await submit(1,objectPath);assert.equal(result.application.paymentStatus,'pending');assert.equal(result.canSubmitPaymentProof,false);assert.equal(result.application.paymentProofs.length,1);
  const proof=result.application.paymentProofs[0];assert.equal(proof.objectPath,objectPath);assert.equal(result.application.currentPaymentProofId,proof.id);assert.ok(proof.submittedAt);
  const other=await read(2);assert.deepEqual(other.application.paymentProofs,[]);assert.equal(other.application.currentPaymentProofId,null);
- const all=await admin(()=>rpc('get_activity_registrations',[id(100)]));const event=all.events.find(e=>e.action==='payment_proof_submitted');assert.equal(event.actorId,id(1));assert.equal(event.source,'self_service');assert.equal(event.details.paymentStatus.before,'unpaid');assert.equal(event.details.paymentStatus.after,'pending');assert.ok(JSON.stringify(event.details).includes(proof.id));assert.ok(JSON.stringify(event.details).includes(objectPath));
+ const all=await admin(()=>rpc('get_activity_registrations',[id(100)]));assert.equal('events' in all,false);const event=(await q("select actor_id as \"actorId\",source,details from public.registration_events where action='payment_proof_submitted'"))[0];assert.equal(event.actorId,id(1));assert.equal(event.source,'self_service');assert.equal(event.details.paymentStatus.before,'unpaid');assert.equal(event.details.paymentStatus.after,'pending');assert.ok(JSON.stringify(event.details).includes(proof.id));assert.ok(JSON.stringify(event.details).includes(objectPath));
  assert.equal(all.applications.find(x=>x.id===a.id).paymentProofs[0].id,proof.id);
- await as(1,async()=>{assert.equal((await q("select * from storage.objects where bucket_id='payment-proofs'")).length,1);assert.equal((await q('select * from public.application_payment_proofs')).length,1);assert.equal((await q('select * from public.registration_events')).length,0);});
+ await as(1,async()=>{assert.equal((await q("select * from storage.objects where bucket_id='payment-proofs'")).length,1);assert.equal((await q('select * from public.application_payment_proofs')).length,1);await rejected(()=>q('select * from public.registration_events'),/permission/);});
  await as(2,async()=>{assert.equal((await q("select * from storage.objects where bucket_id='payment-proofs'")).length,0);assert.equal((await q('select * from public.application_payment_proofs')).length,0);});
 });
 test('missing, foreign, malformed and incorrectly owned objects cannot claim pending',async()=>{
  const {a}=await seed();const own=path(1,a.id);await rejected(()=>submit(1,own),/PROOF|OBJECT/);
  for(const invalid of [`${id(1)}/${a.id}/../x.webp`,`${id(2)}/${a.id}/${id(200)}.webp`,`${id(1)}/${a.id}/not-a-uuid.webp`])await rejected(()=>submit(1,invalid),/PROOF|OBJECT|PATH/);
  await q("insert into storage.objects(bucket_id,name,owner_id,owner,metadata) values('payment-proofs',$1,$2::text,($2::text)::uuid,$3)",[own,id(2),{size:1024,mimetype:'image/webp'}]);await rejected(()=>submit(1,own),/PROOF|OWNER|OBJECT/);await q('delete from storage.objects where name=$1',[own]);
- for(const metadata of [{size:0,mimetype:'image/webp'},{size:3145729,mimetype:'image/webp'},{size:1024,mimetype:'image/png'},{size:'forged',mimetype:'image/webp'},{}]){
+ for(const metadata of [{size:0,mimetype:'image/webp'},{size:1048577,mimetype:'image/webp'},{size:3145729,mimetype:'image/webp'},{size:1024,mimetype:'image/png'},{size:'forged',mimetype:'image/webp'},{}]){
   await object(1,own,metadata);await rejected(()=>submit(1,own),/PROOF|OBJECT|METADATA/);await q('delete from storage.objects where name=$1',[own]);
  }
  assert.equal((await read(1)).application.paymentStatus,'unpaid');assert.equal((await q('select * from public.application_payment_proofs')).length,0);
@@ -89,7 +89,7 @@ test('anonymous, changed account, candidate, withdrawn, archived and unpublished
  await as(null,()=>rejected(()=>rpc('submit_activity_payment_proof',[id(100),own,null,'unpaid',null]),/permission/),{},'anon');
  await rejected(()=>object(2,path(2,b.id)),/policy/);await rejected(()=>submit(2,own),/PROOF|PATH|ELIGIB|CONFIRMED/);
  await as(1,()=>rpc('withdraw_activity_registration',[id(100),id(1)]));await rejected(()=>submit(1,own),/ELIGIB|CONFIRMED/);assert.equal((await read(1)).canSubmitPaymentProof,false);
- await as(2,()=>rpc('withdraw_activity_registration',[id(100),id(2)]));await as(1,()=>rpc('register_activity',[id(100),id(1)]));
+ await as(2,()=>rpc('withdraw_activity_registration',[id(100),id(2)]));await as(1,()=>rpc('register_activity',[id(100),id(1),'测试甲','11010519491231002X','13800138000',true]));
  for(const patch of [{archived:true},{isDemo:true}]){await admin(()=>q('update public.content_items set payload=payload||$2 where id=$1',[id(100),patch]));assert.equal((await read(1)).canSubmitPaymentProof,false);await rejected(()=>submit(1,own),/ELIGIB|CONFIRMED/);await admin(()=>q('update public.content_items set payload=payload-$2 where id=$1',[id(100),Object.keys(patch)[0]]));}
  await admin(()=>q('update public.content_items set published=false where id=$1',[id(100)]));await rejected(()=>submit(1,own),/ELIGIB|CONFIRMED/);
 });
@@ -147,7 +147,7 @@ test('one global QR setting has verified admin access, timestamp/account CAS and
   await rejected(()=>q('truncate public.payment_settings'),/permission/);await rejected(()=>q('insert into public.payment_settings(singleton) values(false)'),/permission/);
   await rejected(()=>q('insert into public.payment_settings_events(actor_id,actor_label) values($1,$2)',[id(n),'forged']),/permission/);
   await rejected(()=>q('update public.payment_settings_events set after_url=null'),/permission/);await rejected(()=>q('delete from public.payment_settings_events'),/permission/);await rejected(()=>q('truncate public.payment_settings_events'),/permission/);
-  if(n===1){assert.equal((await q('select * from public.payment_settings')).length,0);assert.equal((await q('select * from public.payment_settings_events')).length,0);}
+  if(n===1){assert.equal((await q('select * from public.payment_settings')).length,0);await rejected(()=>q('select * from public.payment_settings_events'),/permission/);}
  },n===900?{app_metadata:{role:'admin'}}:{});
 });
 test('global QR configuration rejects foreign, missing and incorrectly typed storage objects',async()=>{

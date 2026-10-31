@@ -1,0 +1,4 @@
+# Scheduler authenticates with its Vault token; service-only leases authorize work.
+# No user-provided activity, path or bucket is accepted by the executor.
+[functions.activity-data-cleanup]
+verify_jwt = false

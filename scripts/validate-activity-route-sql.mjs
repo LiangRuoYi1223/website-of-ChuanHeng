@@ -36,7 +36,7 @@ async function fails(run, pattern = /./) {
 }
 before(async () => {
   db = new PGlite();
-  await db.exec(`create role anon; create role authenticated; create schema auth;
+  await db.exec(`create role service_role;create role anon; create role authenticated; create schema auth;
     grant usage on schema auth,public to anon,authenticated;
     create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb default '{}'::jsonb);
     create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims',true),'')::jsonb,'{}'::jsonb) $$;
@@ -169,8 +169,8 @@ test('registration RPC enforces server window boundaries; malformed legacy fails
   for(let n=0;n<patches.length;n++) await insert(activity(n+1,{...dates,...patches[n]},true));
   await db.exec('alter table public.content_items enable trigger user');
   await identity(member,async()=>{
-    for(const n of [1,2]) await val('select public.register_activity($1,auth.uid()) as value',[uuid(n)]);
-    for(const n of [3,4,5,6,800]) await fails(()=>val('select public.register_activity($1,auth.uid()) as value',[uuid(n)]),/REGISTRATION_CLOSED|REGISTRATION_CAPACITY_REQUIRED/);
+    for(const n of [1,2]) await val('select public.register_activity($1,auth.uid(),$$测试甲$$,$$11010519491231002X$$,$$13800138000$$,true) as value',[uuid(n)]);
+    for(const n of [3,4,5,6,800]) await fails(()=>val('select public.register_activity($1,auth.uid(),$$测试甲$$,$$11010519491231002X$$,$$13800138000$$,true) as value',[uuid(n)]),/REGISTRATION_CLOSED|REGISTRATION_CAPACITY_REQUIRED|ACTIVITY_DATA_CLOSED/);
   });
 });
 test('members and user_metadata cannot save; anon no RPC access',async()=>{
@@ -236,7 +236,7 @@ test('activity deletion with application FK rejects atomically and retains autom
     const r={...route(1),payload:{...route(1).payload,generatedFromActivityId:uuid(2)}};await insert(r);
     a=(await save({...activity(2,{routeId:r.id,registrationCapacity:5,registrationOpen:true,registrationStart:iso(-60000),registrationDeadline:iso(60000),dateStart:iso(120000),dateEnd:iso(180000)},true),routeExpectedPayload:r.payload})).activity;
   });
-  await identity(member,async()=>val('select public.register_activity($1,auth.uid()) as value',[a.id]));
+  await identity(member,async()=>val('select public.register_activity($1,auth.uid(),$$测试甲$$,$$11010519491231002X$$,$$13800138000$$,true) as value',[a.id]));
   const before=await q('select * from public.content_items order by id');
   await identity(admin,async()=>fails(()=>val('select public.delete_content_with_links($1) as value',[a.id]),/foreign key/));
   assert.deepEqual(await q('select * from public.content_items order by id'),before);

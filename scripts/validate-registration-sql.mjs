@@ -9,11 +9,11 @@ test('registration migration: ordered queue, retained data, role isolation and i
  const q=async(s,a=[])=>(await db.query(s,a)).rows;
  const v=async(s,a=[])=>(await q(s,a))[0]?.v;
  const writes=new Set(['register_activity','withdraw_activity_registration','set_activity_registration_payment']);
- const rpc=(name,args=[])=>v(`select public.${name}(${args.map((_,i)=>'$'+(i+1)).join(',')}${writes.has(name)?(name==='set_activity_registration_payment'?',auth.uid(),null':',auth.uid()'):''}) v`,args);
+ const rpc=(name,args=[])=>v(`select public.${name}(${args.map((_,i)=>'$'+(i+1)).join(',')}${writes.has(name)?(name==='set_activity_registration_payment'?',auth.uid(),null':name==='register_activity'?",auth.uid(),'测试甲','11010519491231002X','13800138000',true":',auth.uid()'):''}) v`,args);
  const as=async(n,fn,extra={},role='authenticated')=>{await db.exec(`set role ${role}`);await q("select set_config('request.jwt.claims',$1,false)",[JSON.stringify({sub:n?id(n):undefined,email:`u${n}@example.test`,user_metadata:{displayName:`会员${n}`},...extra})]);try{return await fn();}finally{await db.exec('reset role');}};
  const fail=async(fn,re=/./)=>{await assert.rejects(fn,re)};
  try{
- await db.exec(`create role anon;create role authenticated;create schema auth;grant usage on schema auth,public to anon,authenticated;
+ await db.exec(`create role service_role;create role anon;create role authenticated;create schema auth;grant usage on schema auth,public to anon,authenticated;
  create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb);
  create function auth.jwt() returns jsonb language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claims',true),'')::jsonb,'{}'::jsonb)$$;
  create function auth.uid() returns uuid language sql stable as $$select (auth.jwt()->>'sub')::uuid$$;
@@ -59,15 +59,15 @@ test('registration migration: ordered queue, retained data, role isolation and i
  const beforeWrongEvents=await q('select * from public.registration_events order by id');
  await as(3,async()=>{
  for(const expected of [id(1),null]) {
- await fail(()=>v('select public.register_activity($1,$2) v',[id(100),expected]),/AUTH_CHANGED/);
- await fail(()=>v('select private.register_activity($1,$2) v',[id(100),expected]),/AUTH_CHANGED/);
+ await fail(()=>v('select public.register_activity($1,$2,$$测试甲$$,$$11010519491231002X$$,$$13800138000$$,true) v',[id(100),expected]),/AUTH_CHANGED/);
+ await fail(()=>v('select private.register_activity($1,$2,$$测试甲$$,$$11010519491231002X$$,$$13800138000$$,true) v',[id(100),expected]),/AUTH_CHANGED/);
  }
  });
  assert.deepEqual(await q('select * from public.applications order by id'),beforeWrongRegister);
  assert.deepEqual(await q('select * from public.registration_events order by id'),beforeWrongEvents);
  await as(3,async()=>{
  await fail(()=>rpc('register_activity',[id(100)]),/AUTH_REQUIRED/);
- await fail(()=>v('select private.register_activity($1,auth.uid()) v',[id(100)]),/AUTH_REQUIRED/);
+ await fail(()=>v('select private.register_activity($1,auth.uid(),$$测试甲$$,$$11010519491231002X$$,$$13800138000$$,true) v',[id(100)]),/AUTH_REQUIRED/);
  await fail(()=>rpc('get_activity_registration',[id(100)]),/AUTH_REQUIRED/);
  await fail(()=>rpc('withdraw_activity_registration',[id(100)]),/AUTH_REQUIRED/);
  },{is_anonymous:true});
@@ -92,7 +92,7 @@ test('registration migration: ordered queue, retained data, role isolation and i
  },{app_metadata:{role:'admin'}});
  assert.deepEqual(await q('select * from public.applications order by id'),beforeWrongWrites);
  assert.deepEqual(await q('select * from public.registration_events order by id'),beforeWrongWriteEvents);
- await as(1,async()=>{const again=await rpc('register_activity',[id(100)]);assert.equal(again.application.id,a.application.id);assert.equal(again.activeCount,3);assert.equal((await q('select * from public.applications')).length,1);assert.equal((await q('select * from public.registration_events')).length,0);});
+ await as(1,async()=>{const again=await rpc('register_activity',[id(100)]);assert.equal(again.application.id,a.application.id);assert.equal(again.activeCount,3);assert.equal((await q('select * from public.applications')).length,1);await fail(()=>q('select * from public.registration_events'),/permission/);});
  await as(900,async()=>{const paid=await rpc('set_activity_registration_payment',[a.application.id,'paid','unpaid']);assert.equal(paid.applications.find(x=>x.id===a.application.id).paymentStatus,'paid');await fail(()=>rpc('set_activity_registration_payment',[a.application.id,'unpaid','unpaid']),/STALE/);},{app_metadata:{role:'admin'}});
  await as(1,()=>rpc('withdraw_activity_registration',[id(100)]));b=await as(2,()=>rpc('get_activity_registration',[id(100)]));assert.equal(b.application.position,1);assert.equal(b.application.selectionStatus,'confirmed');
  await as(1,()=>rpc('withdraw_activity_registration',[id(100)]));a=await as(1,()=>rpc('register_activity',[id(100)]));assert.equal(a.application.position,3);assert.equal(a.application.paymentStatus,'paid');
@@ -118,9 +118,7 @@ test('registration migration: ordered queue, retained data, role isolation and i
  await as(null,()=>fail(()=>v('select private.registration_state($1,false) v',[id(100)]),/AUTH/),{app_metadata:{role:'admin'}});
  await as(900,async()=>{
  await q(`update public.content_items set payload=jsonb_set(payload,'{registrationCapacity}','2') where id=$1`,[id(100)]);
- const all=await rpc('get_activity_registrations',[id(100)]);assert.equal(all.applications.length,3);assert.equal(all.confirmedCount,2);assert.equal(all.events.length,8);
- const event=all.events.find(e=>e.action==='payment_changed');assert.equal(event.actorId,id(900));assert.equal(event.actorLabel,'会员900');assert.equal(event.source,'manual');assert.equal(event.actorType,'admin');assert.equal(all.events.filter(e=>e.action==='withdrawn').length,1);
- assert.equal(all.events.find(e=>e.action==='rejoined').source,'self_service');
+ const all=await rpc('get_activity_registrations',[id(100)]);assert.equal(all.applications.length,3);assert.equal(all.confirmedCount,2);assert.equal('events' in all,false);await fail(()=>q('select * from public.registration_events'),/permission/);
  await fail(()=>q(`update public.content_items set payload=jsonb_set(payload,'{registrationCapacity}','0') where id=$1`,[id(100)]),/CAPACITY/);
  },{app_metadata:{role:'admin'}});
  await as(900,async()=>{
@@ -150,10 +148,10 @@ test('registration migration: ordered queue, retained data, role isolation and i
  await q(`insert into public.content_items(id,kind,published,payload) values($1,'activity',false,$2)`,[id(101),{title:'从无报名可删除活动',registrationCapacity:10}]);
  await rpc('delete_content_with_links',[id(101)]);
  assert.equal((await q('select * from public.content_items where id=$1',[id(101)])).length,0);
- const log=(await q('select details from public.registration_events where activity_id=$1',[id(101)]))[0];
- assert.equal(log.details.activityTitle,'从无报名可删除活动');assert.equal(log.details.capacity.after,10);
+ await fail(()=>q('select details from public.registration_events where activity_id=$1',[id(101)]),/permission/);
  await fail(()=>rpc('delete_content_with_links',[id(100)]),/foreign key/);
  },{app_metadata:{role:'admin'}});
+ const log=(await q('select details from public.registration_events where activity_id=$1',[id(101)]))[0];assert.equal(log.details.activityTitle,'从无报名可删除活动');assert.equal(log.details.capacity.after,10);
  for(const signature of ['public.register_activity(uuid)','private.register_activity(uuid)','public.withdraw_activity_registration(uuid)','private.withdraw_activity_registration(uuid)','public.set_activity_registration_payment(uuid,text,text)','private.set_activity_registration_payment(uuid,text,text)']) assert.equal(await v('select to_regprocedure($1)::text v',[signature]),null,'old unbound write overload must not exist');
  const beforePlatformMaintenance=await q('select * from public.registration_events order by id');
  await db.exec('begin');

@@ -14,6 +14,8 @@ for (const key of ['window', 'document', 'navigator', 'HTMLElement', 'Element', 
 expose('localStorage', dom.window.localStorage);
 expose('IS_REACT_ACT_ENVIRONMENT', true);
 expose('fetch', () => { throw Error('No real network requests are allowed in production-auth tests'); });
+dom.window.HTMLDialogElement.prototype.showModal = function(){this.setAttribute('open','');};
+dom.window.HTMLDialogElement.prototype.close = function(){this.removeAttribute('open');};
 const { createRoot } = await import('react-dom/client');
 const { MemoryRouter, Routes, Route } = await import('react-router-dom');
 const member = { id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', email: 'member@example.invalid', app_metadata: {}, user_metadata: { role: 'admin' } };
@@ -30,14 +32,16 @@ const mockBackend = {
   },
   async rpc(name,args) {
     const verified=controller.verified;
+    if(name==='get_member_profile')return {data:{userId:verified.id,username:'合成会员',realName:'合成姓名',phone:'13800138000',updatedAt:null},error:null};
     const key=`${args.p_activity_id}:${verified?.id}`;
     const state=()=>{
       const application=controller.applications.get(key)||null;
       const active=[...controller.applications.values()].filter(row=>row.status==='active');
       return {capacity:5,activeCount:active.length,confirmedCount:Math.min(active.length,5),waitlistCount:Math.max(active.length-5,0),canWithdraw:application?.status==='active',application};
     };
-    if(name==='get_activity_registration') {controller.calls.push({operation:'application-read',rpc:name,args});return {data:state(),error:null};}
+    if(name==='get_activity_registration') {controller.calls.push({operation:'application-read',rpc:name,args,userId:verified?.id});return {data:state(),error:null};}
     assert.equal(name,'register_activity');
+    assert.deepEqual(args,{p_activity_id:activity.id,p_expected_user_id:verified.id,p_real_name:'合成姓名',p_id_number:'11010519491231002X',p_phone:'13800138000',p_consent:true});
     controller.calls.push({operation:'application-insert',rpc:name,args});
     if(controller.insertBarrier)await controller.insertBarrier;
     if(controller.writeError)return {data:null,error:controller.writeError};
@@ -100,6 +104,14 @@ const button = label => [...container.querySelectorAll('button')].find(node => t
 async function click(node) { assert.ok(node); await act(async () => { node.focus(); node.click(); }); }
 async function waitFor(predicate, reason) { const deadline = Date.now() + 4000; while (Date.now() < deadline) { if (predicate()) return; await act(async () => { await new Promise(resolve => setTimeout(resolve, 10)); }); } assert.fail(`Timed out waiting for ${reason}: ${text(container).slice(-900)}`); }
 async function fill(name, value) { const input = container.querySelector(`[name="${name}"]`); assert.ok(input); await act(async () => { input.value = value; input.dispatchEvent(new dom.window.Event('input', { bubbles: true })); }); }
+async function submitRegistrationDetails(){
+  await click(button('确认提交报名申请'));
+  await waitFor(()=>document.querySelector('[name="phone"]')?.value==='13800138000','profile prefill');
+  const id=document.querySelector('[name="idNumber"]');
+  await act(async()=>{Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype,'value').set.call(id,'11010519491231002x');id.dispatchEvent(new Event('input',{bubbles:true}));});
+  await act(async()=>document.querySelector('[name="consent"]').click());
+  await act(async()=>document.querySelector('.registration-details-dialog form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+}
 async function mount(location) {
   if (root) await act(async () => root.unmount());
   root = createRoot(container);
@@ -154,14 +166,14 @@ test('production auth and activity application use verified identities and real 
     await waitFor(() => button('确认提交报名申请'), 'authenticated activity return');
     let release;
     controller.insertBarrier = new Promise(resolve => { release = resolve; });
-    await click(button('确认提交报名申请'));
+    await submitRegistrationDetails();
     assert.ok(!text(container).includes('报名申请已提交'), 'an in-flight request must not simulate success');
-    assert.equal(button('正在提交…').disabled, true);
+    assert.equal(document.querySelector('.registration-details-dialog button[type="submit"]').disabled, true);
     await act(async () => release());
     await waitFor(() => text(container).includes('报名申请已提交'), 'confirmed application row');
     const insertion = controller.calls.find(call => call.operation === 'application-insert');
     assert.equal(insertion.rpc,'register_activity');
-    assert.deepEqual(insertion.args,{p_activity_id:activity.id,p_expected_user_id:member.id});
+    assert.deepEqual(insertion.args,{p_activity_id:activity.id,p_expected_user_id:member.id,p_real_name:'合成姓名',p_id_number:'11010519491231002X',p_phone:'13800138000',p_consent:true});
     assert.equal(controller.calls.filter(call => call.operation === 'application-insert').length, 1);
   });
 
@@ -169,7 +181,7 @@ test('production auth and activity application use verified identities and real 
     reset(); controller.session = member; controller.verified = member; controller.writeError = { code: '42501' };
     await mount(`/activities/${activity.id}`);
     await waitFor(() => button('确认提交报名申请'), 'application form');
-    await click(button('确认提交报名申请'));
+    await submitRegistrationDetails();
     await waitFor(() => container.querySelector('[role="alert"]'), 'application write failure');
     assert.match(text(container.querySelector('[role="alert"]')), /报名未完成/);
     assert.ok(!text(container).includes('报名申请已提交'));
@@ -182,16 +194,22 @@ test('production auth and activity application use verified identities and real 
     await waitFor(() => button('确认提交报名申请'), 'member application form');
     let release;
     controller.insertBarrier = new Promise(resolve => { release = resolve; });
-    await click(button('确认提交报名申请'));
+    await submitRegistrationDetails();
     await act(async () => {
       controller.session = admin; controller.verified = admin;
       for (const callback of controller.subscribers) callback('SIGNED_IN', { user: admin });
     });
-    await waitFor(() => text(container).includes(admin.email), 'new account application form');
+    await waitFor(() => controller.calls.some(call=>call.operation==='application-read'&&call.userId===admin.id)&&button('确认提交报名申请'), 'new verified account application form');
+    assert.equal(document.querySelector('.registration-details-dialog'),null);
     await act(async () => release());
     assert.ok(!text(container).includes('报名申请已提交'), 'the old account response must not become the new account success state');
-    assert.ok(text(container).includes(admin.email));
+    assert.ok(button('确认提交报名申请'));
+    assert.equal(controller.calls.find(call=>call.operation==='application-insert').args.p_expected_user_id,member.id);
     assert.equal(controller.applications.has(`${activity.id}:${admin.id}`), false);
+  });
+
+  await t.test('anonymous identities cannot submit activity details or create an application',async()=>{
+    reset();controller.session={...member,is_anonymous:true};controller.verified=controller.session;await mount(`/activities/${activity.id}`);await waitFor(()=>text(container).includes('登录后报名'),'anonymous login requirement');assert.equal(button('确认提交报名申请'),undefined);assert.equal(document.querySelector('.registration-details-dialog'),null);assert.equal(controller.calls.filter(call=>call.operation==='application-insert').length,0);
   });
 
   await t.test('external login return URLs are ignored', async () => {

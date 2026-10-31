@@ -18,7 +18,7 @@ const member={id:'member',email:'member@example.invalid'};
 const app={id:'application',userId:'member',createdAt:new Date().toISOString(),registeredAt:new Date().toISOString(),status:'active',paymentStatus:'unpaid',position:10,selectionStatus:'waitlisted'};
 const initial={capacity:5,activeCount:10,confirmedCount:5,waitlistCount:5,canWithdraw:true,application:app};
 const controller={state:initial,user:member,subscribers:new Set(),calls:[],error:null,barrier:null};
-globalThis.__MEMBER_BACKEND={auth:{getSession:async()=>({data:{session:controller.user?{user:controller.user}:null}}),getUser:async()=>({data:{user:controller.user}}),onAuthStateChange(callback){controller.subscribers.add(callback);return{data:{subscription:{unsubscribe:()=>controller.subscribers.delete(callback)}}};}},async rpc(name){controller.calls.push(name); const result=controller.state; if(controller.barrier)await controller.barrier; return{data:result,error:controller.error};}};
+globalThis.__MEMBER_BACKEND={auth:{getSession:async()=>({data:{session:controller.user?{user:controller.user}:null}}),getUser:async()=>({data:{user:controller.user}}),onAuthStateChange(callback){controller.subscribers.add(callback);return{data:{subscription:{unsubscribe:()=>controller.subscribers.delete(callback)}}};}},async rpc(name){controller.calls.push(name);if(name==='get_member_profile')return {data:{userId:controller.user.id,username:'同行者',realName:'测试姓名',phone:'13800138000',updatedAt:null}}; const result=controller.state; if(controller.barrier)await controller.barrier; return{data:result,error:controller.error};}};
 const project=await realpath(fileURLToPath(new URL('../',import.meta.url)));await mkdir(path.join(project,'artifacts'),{recursive:true});const scratch=await mkdtemp(path.join(project,'artifacts','member-dom-'));const bundle=path.join(scratch,'component.mjs');
 await build({stdin:{contents:"export {default} from './src/applications/ActivityApplication.jsx';export {default as Sidebar} from './src/activities/ActivitySidebar.jsx'",resolveDir:project,loader:'jsx'},bundle:true,platform:'node',format:'esm',packages:'external',jsx:'automatic',loader:{'.css':'empty'},outfile:bundle,plugins:[{name:'backend',setup(b){b.onResolve({filter:/backend\.js$/},()=>({path:'backend',namespace:'mock'}));b.onResolve({filter:/payment-proof\.js$/},()=>({path:'proof',namespace:'proof-mock'}));b.onLoad({filter:/.*/,namespace:'proof-mock'},()=>({contents:'export async function uploadPaymentProof(...args){return globalThis.__MEMBER_PROOF_UPLOAD(...args)};export async function downloadPaymentProof(){return new Blob(["private"],{type:"image/webp"})}',loader:'js'}));b.onLoad({filter:/.*/,namespace:'mock'},()=>({contents:'export const supabase=globalThis.__MEMBER_BACKEND;',loader:'js'}));}}]});
 const {default:Component,Sidebar}=await import(pathToFileURL(bundle));let root;const container=document.getElementById('app');
@@ -27,11 +27,13 @@ const text=()=>container.textContent;const button=label=>[...container.querySele
 async function wait(predicate){for(let i=0;i<100;i++){if(predicate())return;await act(async()=>new Promise(r=>setTimeout(r,10)));}assert.fail(text());}
 async function mount(overrides={},children,viewer=member,MountedComponent=Component){if(root)await act(async()=>root.unmount());root=createRoot(container);controller.error=null;controller.calls=[];controller.user=viewer;controller.barrier=null;await act(async()=>root.render(createElement(MemoryRouter,null,createElement(MountedComponent,{activity:{...activity,...overrides}},children))));await wait(()=>!text().includes('正在确认'));}
 async function click(label){assert.ok(button(label),text());await act(async()=>button(label).click());}
+async function confirmDetails(){await wait(()=>document.querySelector('[name="phone"]')?.value==='13800138000');await act(async()=>{const input=document.querySelector('[name="idNumber"]');Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype,'value').set.call(input,'11010519491231002X');input.dispatchEvent(new Event('input',{bubbles:true}));});await act(async()=>document.querySelector('[name="consent"]').click());await act(async()=>document.querySelector('.registration-details-dialog form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));}
+
 after(async()=>{if(root)await act(async()=>root.unmount());dom.window.close();assert.equal(path.dirname(scratch),path.join(project,'artifacts'));await rm(scratch,{recursive:true});});
 test('member sees waitlist rank without payment request, and can withdraw/rejoin',async()=>{
  controller.state=initial;await mount();assert.match(text(),/10\s*\/\s*5/);assert.match(text(),/候补/);assert.doesNotMatch(text(),/请使用活动通知中的渠道缴费/);
  controller.state={...initial,application:{...app,status:'withdrawn',position:null,selectionStatus:'withdrawn',paymentStatus:'paid'}};await click('退出本次报名');await wait(()=>text().includes('已退出'));assert.match(text(),/已缴费/);assert.ok(button('重新报名'));
- controller.state={...initial,application:{...app,position:11}};await click('重新报名');await wait(()=>text().includes('11/5'));assert.ok(controller.calls.includes('register_activity'));
+ controller.state={...initial,application:{...app,position:11}};await click('重新报名');await confirmDetails();await wait(()=>text().includes('11/5'));assert.ok(controller.calls.includes('register_activity'));
 });
 test('confirmed unpaid members receive activity instructions, paid members do not',async()=>{
  controller.state={...initial,application:{...app,position:2,selectionStatus:'confirmed'}};await mount();assert.match(text(),/入选/);assert.match(text(),/请使用活动通知中的渠道缴费/);
@@ -62,7 +64,7 @@ test('sidebar slots keep a single registration source and working withdrawal/rej
  controller.state={...initial,application:{...app,status:'withdrawn',position:null,selectionStatus:'withdrawn'}};
  await click('退出本次报名');await wait(()=>slot('summary').textContent.includes('已退出'));
  assert.ok(slot('actions').querySelector('form'));assert.ok(button('重新报名'));
- controller.state={...initial,application:{...app,position:11}};await click('重新报名');await wait(()=>slot('summary').textContent.includes('11/5'));
+ controller.state={...initial,application:{...app,position:11}};await click('重新报名');await confirmDetails();await wait(()=>slot('summary').textContent.includes('11/5'));
  assert.equal(controller.subscribers.size,1);
 });
 test('sidebar keeps long payment instructions in details, with correct candidate and paid states',async()=>{
@@ -156,4 +158,13 @@ test('signing out during proof submission clears the popup and ignores a late pa
 test('an administrator-set pending status without a receipt never claims that an image was submitted',async()=>{
  controller.state={...initial,canSubmitPaymentProof:false,application:{...app,selectionStatus:'confirmed',paymentStatus:'pending',paymentProofs:[]}};await mount({},splitView);
  assert.match(slot('summary').textContent,/应已缴费/);assert.doesNotMatch(slot('details').textContent,/缴费记录已提交/);assert.match(slot('details').textContent,/缴费状态待管理员核实/);assert.equal(button('缴费'),undefined);
+});
+
+test('legacy active application supplements insurance without changing its queue position',async()=>{
+ controller.state=initial;await mount();assert.match(text(),/保险资料待补全/);await click('补充保险资料');controller.state={...initial,application:{...app,detailsComplete:true,insuranceStatus:'uninsured'}};await confirmDetails();assert.ok(controller.calls.includes('save_activity_registration_details'));assert.ok(!controller.calls.includes('register_activity'));assert.match(text(),/10\/5/);
+});
+test('end time and cleanup close temporary details and payment image actions',async()=>{
+ const confirmed={...initial,canSubmitPaymentProof:true,application:{...app,selectionStatus:'confirmed',paymentProofs:[]}};
+ for(const retention of [{status:'cleaning'},{status:'verifying'},{status:'completed'}]){controller.state={...confirmed,retention};await mount();assert.equal(button('缴费'),undefined);assert.equal(button('补充保险资料'),undefined);assert.match(text(),/临时资料和缴费图片暂不可操作/);}
+ controller.state=confirmed;await mount({dateEnd:new Date(Date.now()-1000).toISOString()});assert.equal(button('缴费'),undefined);assert.equal(button('补充保险资料'),undefined);
 });

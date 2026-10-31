@@ -1,5 +1,6 @@
-.payment-status-unpaid{--payment-status-color:#eee;--payment-status-background:#1b1b1b;--payment-status-border:#686868}
-.payment-status-pending{--payment-status-color:#77baff;--payment-status-background:#142334;--payment-status-border:#477eac}
-.payment-status-paid{--payment-status-color:#78d9a2;--payment-status-background:#14281d;--payment-status-border:#407c58}
-.payment-status,.registration-admin select[class*="payment-status-"],.application-status-line span[class*="payment-status-"]{color:var(--payment-status-color,#eee);background:var(--payment-status-background,#1b1b1b);border-color:var(--payment-status-border,#686868)}
+.payment-status-unpaid{--payment-status-color:#fff;--payment-dot-color:#fff;--payment-status-background:#1b1b1b;--payment-status-border:#686868}
+.payment-status-pending{--payment-status-color:#fff;--payment-dot-color:#77baff;--payment-status-background:#1b1b1b;--payment-status-border:#686868}
+.payment-status-paid{--payment-status-color:#fff;--payment-dot-color:#78d9a2;--payment-status-background:#1b1b1b;--payment-status-border:#686868}
+.payment-status,.registration-admin select[class*="payment-status-"],.application-status-line span[class*="payment-status-"]{color:var(--payment-status-color,#fff);background:var(--payment-status-background,#1b1b1b);border-color:var(--payment-status-border,#686868)}
 .payment-status{display:inline-flex;align-items:center;border:1px solid var(--payment-status-border,#686868);border-radius:3px;padding:2px 8px;font-size:12px;line-height:1.7}
+.payment-status-dot{display:inline-block;width:9px;height:9px;flex:0 0 9px;border-radius:50%;background:var(--payment-dot-color,#fff)}

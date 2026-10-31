@@ -51,15 +51,16 @@ export function validRegistrationState(state, userId) {
   return app === null || Boolean(app && typeof app.id === 'string' && app.id && app.userId === userId && ['active','withdrawn'].includes(app.status) && ['paid','pending','unpaid'].includes(app.paymentStatus) && ['confirmed','waitlisted','withdrawn','unconfirmed'].includes(app.selectionStatus) && (app.position === null || (Number.isInteger(app.position) && app.position > 0)));
 }
 
-async function requestState(client, rpc, activityId, userId, message) {
+async function requestState(client, rpc, activityId, userId, message, details) {
   if (!activityId) fail('SERVICE_UNAVAILABLE', '报名服务暂时不可用，请稍后重试。');
   let result;
   const args = { p_activity_id: activityId };
-  if (rpc === 'register_activity' || rpc === 'withdraw_activity_registration') args.p_expected_user_id = userId;
+  if (rpc !== 'get_activity_registration') args.p_expected_user_id = userId;
+  if (details) Object.assign(args,{p_real_name:details.realName,p_id_number:details.idNumber,p_phone:details.phone,p_consent:details.consent});
   try { result = await client.rpc(rpc, args); }
   catch { fail('REGISTRATION_FAILED', message); }
   if (result?.error || !validRegistrationState(result?.data, userId)) fail('REGISTRATION_FAILED', message);
-  const expectedStatus = rpc === 'register_activity' ? 'active' : rpc === 'withdraw_activity_registration' ? 'withdrawn' : null;
+  const expectedStatus = ['register_activity','save_activity_registration_details'].includes(rpc) ? 'active' : rpc === 'withdraw_activity_registration' ? 'withdrawn' : null;
   if (expectedStatus && result.data.application?.status !== expectedStatus) fail('REGISTRATION_FAILED', message);
   return result.data;
 }
@@ -74,14 +75,34 @@ export async function readOwnApplication(client, activityId, userId) {
   return (await readActivityRegistration(client, activityId, userId)).application;
 }
 
-export async function submitActivityApplication(client, activity, { expectedUserId } = {}) {
+export async function submitActivityApplication(client, activity, { expectedUserId, ...input } = {}) {
   const user = await verifyIdentity(client, expectedUserId);
   const availability = registrationAvailability(activity);
   if (!availability.open) fail('REGISTRATION_CLOSED', availability.reason);
-  return requestState(client, 'register_activity', activity.id, user.id, '报名未完成。活动可能已截止或尚未开放，请重新检查后重试。');
+  return requestState(client, 'register_activity', activity.id, user.id, '报名未完成。活动可能已截止、清理中或尚未开放，请刷新后重试。', validateRegistrationDetails(input));
 }
 
 export async function withdrawActivityRegistration(client, activityId, { expectedUserId } = {}) {
   const user = await verifyIdentity(client, expectedUserId);
   return requestState(client, 'withdraw_activity_registration', activityId, user.id, '退出未完成。活动可能已开始，请重新检查后重试。');
+}
+
+export function validateRegistrationDetails(input = {}) {
+  const realName = String(input.realName || '').trim(), idNumber = String(input.idNumber || '').trim().toUpperCase(), phone = String(input.phone || '').trim();
+  if (!realName || realName.length > 80) fail('INVALID_DETAILS','请填写真实姓名（最多80字）。');
+  if (!/^\d{17}[0-9X]$/.test(idNumber) || idNumber.startsWith('000000')) fail('INVALID_DETAILS','请检查18位中国大陆身份证号。');
+  const year = +idNumber.slice(6,10), month = +idNumber.slice(10,12), day = +idNumber.slice(12,14), date = new Date(Date.UTC(year,month-1,day));
+  const weights = [7,9,10,5,8,4,2,1,6,3,7,9,10,5,8,4,2];
+  if (year < 1800 || date.getUTCFullYear() !== year || date.getUTCMonth() !== month-1 || date.getUTCDate() !== day || date.getTime() > Date.now() || '10X98765432'[[...idNumber.slice(0,17)].reduce((sum,n,i)=>sum + +n*weights[i],0)%11] !== idNumber[17]) fail('INVALID_DETAILS','身份证出生日期或校验码有误，请检查。');
+  if (!/^1[3-9]\d{9}$/.test(phone)) fail('INVALID_DETAILS','请填写中国大陆11位手机号。');
+  if (input.consent !== true) fail('CONSENT_REQUIRED','请阅读并主动同意资料用途与保存期限。');
+  return {realName,idNumber,phone,consent:true};
+}
+export async function saveRegistrationDetails(client, activityId, {expectedUserId,...input} = {}) {
+  const user = await verifyIdentity(client,expectedUserId);
+  return requestState(client,'save_activity_registration_details',activityId,user.id,'资料未能保存。活动可能已结束、清理中或已购买保险，请刷新后重试。',validateRegistrationDetails(input));
+}
+export function activitySensitiveAccess(activity, retention, now = Date.now()) {
+  const end = scheduleInstant(activity?.dateEnd);
+  return (!Number.isFinite(end) || now < end) && !['cleaning','verifying','completed'].includes(retention?.status);
 }

@@ -1,7 +1,9 @@
 import { validRegistrationState } from '../applications/registration.js';
 import { PAYMENT_STATUSES } from './status.js';
 
-const MAX_SOURCE = 8 * 1024 * 1024, MAX_OUTPUT = 3 * 1024 * 1024;
+const MAX_SOURCE = 8 * 1024 * 1024, MAX_OUTPUT = 1024 * 1024;
+// Existing proofs keep their original access limit until the activity cleanup.
+const MAX_HISTORICAL_DOWNLOAD = 3 * 1024 * 1024;
 const uuid = value => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 const validPath = path => typeof path === 'string' && path.split('/').length === 3 && uuid(path.split('/')[0]) && uuid(path.split('/')[1]) && path.endsWith('.webp') && uuid(path.split('/')[2].slice(0,-5));
 function fail(code, message) { const error = new Error(message); error.code = code; throw error; }
@@ -46,7 +48,7 @@ async function processedBytes(response, signal) {
       const { done, value } = await bounded(reader.read(), signal, remaining);
       if (done) break;
       size += value.byteLength;
-      if (size > MAX_OUTPUT) fail('INVALID_IMAGE_OUTPUT', '处理后的缴费记录仍超过 3 MiB，请选择较小图片。');
+      if (size > MAX_OUTPUT) fail('INVALID_IMAGE_OUTPUT', '处理后的缴费记录仍超过 1 MiB，请选择较小图片。');
       chunks.push(value);
     }
   } catch (error) { try { Promise.resolve(reader.cancel()).catch(() => {}); } catch { /* closed */ } throw error; }
@@ -108,6 +110,6 @@ export async function downloadPaymentProof(client, proof, { expectedUserId, sign
   const current = await identity(client, expectedUserId, signal);
   if (!canRead(current)) fail('FORBIDDEN', '登录权限已变化，请重新加载。');
   const blob = result?.data;
-  if (result?.error || !(blob instanceof Blob) || blob.type !== 'image/webp' || !blob.size || blob.size > MAX_OUTPUT) fail('DOWNLOAD_FAILED', '暂时无法读取有效的缴费记录图片，请稍后重试。');
+  if (result?.error || !(blob instanceof Blob) || blob.type !== 'image/webp' || !blob.size || blob.size > MAX_HISTORICAL_DOWNLOAD) fail('DOWNLOAD_FAILED', '暂时无法读取有效的缴费记录图片，请稍后重试。');
   return blob;
 }

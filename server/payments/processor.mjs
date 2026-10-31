@@ -3,7 +3,7 @@ import { readBounded } from '../tracks/http.mjs';
 import { detectImageFormat } from '../covers/processor.mjs';
 
 export const MAX_PAYMENT_PROOF_SOURCE_BYTES = 8 * 1024 * 1024;
-export const MAX_PAYMENT_PROOF_BYTES = 3 * 1024 * 1024;
+export const MAX_PAYMENT_PROOF_BYTES = 1024 * 1024;
 const timeoutError = () => new TrackError('IMAGE_PROCESSING_TIMEOUT', '缴费记录图片处理超时，请稍后重试。', 504);
 
 export async function processPaymentProof(file, images, options = {}) {
@@ -28,9 +28,13 @@ export async function processPaymentProof(file, images, options = {}) {
       const { width, height } = info || {};
       if (info?.format !== format || !Number.isSafeInteger(width) || !Number.isSafeInteger(height) || width <= 0 || height <= 0 || Math.max(width, height) > 12000 || width * height > 40_000_000) throw new TrackError('INVALID_IMAGE', '缴费记录图片尺寸无效；最长边不能超过 12000 像素，总像素不能超过 4000 万。', 415);
       // Retain legible receipt text; each retry uses the same bounded deadline.
-      for (const edge of [4096, 3072, 2560]) {
+      let previousDimensions = '';
+      for (const edge of [4096, 3072, 2560, 2048, 1600, 1280]) {
         const scale = Math.min(1, edge / Math.max(width, height));
         const dimensions = { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)), fit: 'scale-down' };
+        const dimensionKey = `${dimensions.width}:${dimensions.height}`;
+        if (dimensionKey === previousDimensions) continue;
+        previousDimensions = dimensionKey;
         for (const quality of [90, 80, 70]) {
           checkDeadline();
           const result = await images.input(blob.stream()).transform(dimensions).output({ format: 'image/webp', quality, anim: false });
@@ -38,14 +42,14 @@ export async function processPaymentProof(file, images, options = {}) {
           const response = result.response();
           if (!response.ok) { try { Promise.resolve(response.body?.cancel()).catch(() => {}); } catch { /* closed */ } throw new TrackError('IMAGE_PROCESSING_FAILED', '缴费记录图片处理失败，请重新选择图片。', 422); }
           let output;
-          try { output = await readBounded(response.body, MAX_PAYMENT_PROOF_BYTES, 'IMAGE_OUTPUT_TOO_LARGE', '处理后的缴费记录图片仍超过 3 MiB，请选择较小图片。', 413, controller.signal); }
+          try { output = await readBounded(response.body, MAX_PAYMENT_PROOF_BYTES, 'IMAGE_OUTPUT_TOO_LARGE', '处理后的缴费记录图片仍超过 1 MiB，请选择较小图片。', 413, controller.signal); }
           catch (error) { checkDeadline(); if (error instanceof TrackError && error.code === 'IMAGE_OUTPUT_TOO_LARGE') continue; throw error; }
           checkDeadline();
           if (detectImageFormat(output) !== 'image/webp') throw new TrackError('INVALID_IMAGE_OUTPUT', '图片服务返回了无效结果，请稍后重试。', 502);
           return { bytes: output, originalBytes: bytes.byteLength };
         }
       }
-      throw new TrackError('IMAGE_OUTPUT_TOO_LARGE', '处理后的缴费记录图片仍超过 3 MiB，请选择较小图片。', 413);
+      throw new TrackError('IMAGE_OUTPUT_TOO_LARGE', '处理后的缴费记录图片仍超过 1 MiB，请选择较小图片。', 413);
     })()]);
   } catch (error) { if (error instanceof TrackError) throw error; throw new TrackError('IMAGE_PROCESSING_FAILED', '缴费记录图片处理失败，请重新选择图片或稍后重试。', 422); }
   finally { clearTimeout(timer); }

@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, LoaderCircle } from 'lucide-react';
 import { supabase } from '../backend.js';
-import { readActivityRegistration, registrationAvailability, submitActivityApplication, withdrawActivityRegistration } from './registration.js';
+import { readActivityRegistration, registrationAvailability, submitActivityApplication, withdrawActivityRegistration, saveRegistrationDetails, activitySensitiveAccess } from './registration.js';
+import RegistrationDetailsDialog from './RegistrationDetailsDialog.jsx';
 import PaymentDialog from '../payments/PaymentDialog.jsx';
 import PaymentProofImage from '../payments/PaymentProofImage.jsx';
 import { uploadPaymentProof } from '../payments/payment-proof.js';
@@ -23,9 +24,17 @@ export default function ActivityApplication({ activity, localDraft = false, chil
   const [error, setError] = useState('');
   const [refresh, setRefresh] = useState(0);
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [detailsMode,setDetailsMode] = useState('');
   const proofRequest = useRef(null), stagedProof = useRef(null), pollingPaused = useRef(false);
-  pollingPaused.current = Boolean(busy) || paymentOpen;
+  pollingPaused.current = Boolean(busy) || paymentOpen || Boolean(detailsMode);
   const authRevision = useRef(0);
+
+  useEffect(() => {
+    const end = new Date(activity?.dateEnd).getTime();
+    if (!Number.isFinite(end) || end <= Date.now()) return undefined;
+    const timer = window.setTimeout(() => setClock(Date.now()), Math.min(end - Date.now(), 2147483647));
+    return () => window.clearTimeout(timer);
+  }, [activity?.dateEnd, clock]);
 
   useEffect(() => {
     if (!availability.isPublic) return undefined;
@@ -57,7 +66,7 @@ export default function ActivityApplication({ activity, localDraft = false, chil
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
       if (!alive) return;
       revision++; authRevision.current++;
-      proofRequest.current?.abort(); stagedProof.current = null; setPaymentOpen(false);
+      proofRequest.current?.abort(); stagedProof.current = null; setPaymentOpen(false); setDetailsMode('');
       setBusy(''); setChecking(true); setUser(null); setRegistration(null);
       window.clearTimeout(timer); timer = window.setTimeout(check, 0);
     });
@@ -68,29 +77,32 @@ export default function ActivityApplication({ activity, localDraft = false, chil
   const state = registration?.activityId === activity?.id ? registration : null;
   const application = state?.application;
   const withdrawn = application?.status === 'withdrawn';
-  async function mutate(action) {
+  async function mutate(action, input = {}) {
     if (busy || checking || !user || (action === 'register' && application && !withdrawn)) return;
+    if (action !== 'withdraw' && !activitySensitiveAccess(record,state?.retention)) throw new Error('活动已结束或正在清理资料，请刷新后重试。');
     const current = authRevision.current;
     setError(''); setBusy(action);
     try {
       const saved = action === 'withdraw'
         ? await withdrawActivityRegistration(supabase, activity.id, { expectedUserId: user.id })
-        : await submitActivityApplication(supabase, record, { expectedUserId: user.id });
-      if (current === authRevision.current) setRegistration({ ...saved, activityId: activity.id });
+        : action === 'details' ? await saveRegistrationDetails(supabase,activity.id,{expectedUserId:user.id,...input})
+        : await submitActivityApplication(supabase, record, { expectedUserId: user.id, ...input });
+      if (current === authRevision.current) {setRegistration({ ...saved, activityId: activity.id });setDetailsMode('');}
     } catch (caught) {
       if (current !== authRevision.current) return;
       setError(caught.message || '操作未完成，请重新检查后重试。');
       if (caught.code === 'LOGIN_REQUIRED' || caught.code === 'LOGIN_CHANGED') { setUser(null); setRegistration(null); setRefresh(value => value + 1); }
+      if (action !== 'withdraw') throw caught;
     } finally { if (current === authRevision.current) { setBusy(''); setClock(Date.now()); } }
   }
 
-  useEffect(() => { setPaymentOpen(false); stagedProof.current = null; return () => proofRequest.current?.abort(); }, [activity?.id, availability.isPublic]);
+  useEffect(() => { setDetailsMode(''); setPaymentOpen(false); stagedProof.current = null; return () => proofRequest.current?.abort(); }, [activity?.id, availability.isPublic]);
   function closePayment() {
     proofRequest.current?.abort(); setPaymentOpen(false);
     if (busy !== 'proof') setRefresh(value => value + 1);
   }
   async function submitProof(file) {
-    if (busy || checking || !user || application?.status !== 'active' || application.selectionStatus !== 'confirmed' || application.paymentStatus !== 'unpaid' || state?.canSubmitPaymentProof === false) throw new Error('当前报名状态已变化，请刷新后再提交缴费记录。');
+    if (busy || checking || !user || application?.status !== 'active' || application.selectionStatus !== 'confirmed' || application.paymentStatus !== 'unpaid' || (state?.canSubmitPaymentProof === false || !activitySensitiveAccess(record,state?.retention))) throw new Error('当前报名状态已变化，请刷新后再提交缴费记录。');
     const current = authRevision.current, controller = new AbortController(); proofRequest.current = controller; setBusy('proof');
     const previous = stagedProof.current;
     try {
@@ -108,7 +120,9 @@ export default function ActivityApplication({ activity, localDraft = false, chil
   const returnPath = `/activities/${encodeURIComponent(activity?.id || '')}#application`;
   const canWithdraw = state?.canWithdraw && application?.status === 'active' && new Date(activity.dateStart).getTime() > clock;
   const ready = availability.isPublic && Boolean(supabase) && !checking;
-  const canPay = ready && Boolean(user) && !error && application?.status === 'active' && application.selectionStatus === 'confirmed' && application.paymentStatus === 'unpaid' && state?.canSubmitPaymentProof !== false;
+  const sensitiveAllowed = activitySensitiveAccess(record,state?.retention,clock);
+  useEffect(()=>{if(!sensitiveAllowed){setDetailsMode('');setPaymentOpen(false);proofRequest.current?.abort();}},[sensitiveAllowed]);
+  const canPay = sensitiveAllowed && ready && Boolean(user) && !error && application?.status === 'active' && application.selectionStatus === 'confirmed' && application.paymentStatus === 'unpaid' && state?.canSubmitPaymentProof !== false;
   const shortLabel = !availability.isPublic ? '报名未开放' : !supabase ? '报名服务暂不可用' : checking ? '正在确认报名…' : error ? '报名状态待确认' : application
     ? `${labels[application.selectionStatus] || '报名记录'}${!withdrawn && application.position != null && state.capacity != null ? ` · ${application.position}/${state.capacity}` : ''}`
     : '尚未报名';
@@ -130,13 +144,17 @@ export default function ActivityApplication({ activity, localDraft = false, chil
       </div></div>}
       {application?.selectionStatus === 'confirmed' && application.paymentStatus === 'unpaid' && <div className="application-payment-reminder" role="note"><strong>入选待缴费</strong><p>{activity.paymentInstructions || '请按活动通知完成缴费，联系管理员确认。'}</p><small>缴费状态由管理员确认后更新。</small></div>}
       {application?.paymentStatus === 'pending' && <div className="application-payment-pending" role="note"><strong>应已缴费</strong><p>{application.paymentProofs?.length ? '缴费记录已提交，等待管理员核实。请勿重复付款。' : '缴费状态待管理员核实，请联系管理员确认。'}</p></div>}
-      {application?.paymentProofs?.[0] && user && <PaymentProofImage proof={application.paymentProofs[0]} expectedUserId={user.id}/>}
+      {sensitiveAllowed && application?.paymentProofs?.[0] && user && <PaymentProofImage proof={application.paymentProofs[0]} expectedUserId={user.id}/>}
+      {application?.status === 'active' && <p>{application.insuranceStatus === 'insured' ? '保险已购买' : '保险未购买'}{application.detailsComplete !== true && ' · 保险资料待补全'}</p>}
+      {application?.insuranceStatus === 'insured' && sensitiveAllowed && <p>保险已购买，如需更正资料，请先联系管理员退回未购买状态。</p>}
+      {application?.proofsPurgedAt && <p>本次活动的历史缴费图片已清理，缴费结果保留。</p>}
+      {!sensitiveAllowed && <p className="application-closed">活动已结束或资料正在清理，临时资料和缴费图片暂不可操作。</p>}
       {state && <p className="application-totals">有效报名 {state.activeCount} 人 · 入选 {state.confirmedCount} 人 · 候补 {state.waitlistCount} 人</p>}
       {canWithdraw && <p>活动开始前可退出，退出后将由后续报名者递补。</p>}
       {(!application || withdrawn) && <>
         {!availability.open && <p className="application-closed">{availability.reason}</p>}
         {availability.open && !user && !error && <p>登录后可使用当前账号提交申请。</p>}
-        {availability.open && user && !error && <><p>{withdrawn ? '重新报名将按本次提交时间排到当前队尾。' : '按报名时间排序，名额内入选，其余候补。'}</p>{user.email && <span className="application-account">当前账号：{user.email}</span>}</>}
+        {availability.open && user && !error && <><p>{withdrawn ? '重新报名将按本次提交时间排到当前队尾。' : '按报名时间排序，名额内入选，其余候补。'}</p></>}
       </>}
       {state && <button className="application-refresh" type="button" disabled={Boolean(busy)} onClick={() => setRefresh(value => value + 1)}>刷新报名状态</button>}
     </>}
@@ -145,16 +163,18 @@ export default function ActivityApplication({ activity, localDraft = false, chil
   </div>;
   const actions = <div className="application-controls">
     {ready && !error && <>
+      {user && application?.status === 'active' && sensitiveAllowed && application.insuranceStatus !== 'insured' && <button className="application-refresh" type="button" disabled={Boolean(busy)} onClick={()=>setDetailsMode('details')}>{application.detailsComplete === true ? '更正保险资料' : '补充保险资料'}</button>}
       {canPay && <button className="btn application-action application-pay-action" type="button" disabled={Boolean(busy)} onClick={() => setPaymentOpen(true)}>缴费</button>}
       {canWithdraw && <button className="application-secondary-action" type="button" disabled={Boolean(busy)} onClick={() => mutate('withdraw')}>{busy === 'withdraw' ? '正在退出…' : '退出本次报名'}</button>}
-      {(!application || withdrawn) && availability.open && (!user
+      {(!application || withdrawn) && availability.open && sensitiveAllowed && (!user
         ? <Link className="btn application-action" to={`/login?next=${encodeURIComponent(returnPath)}`}>登录后报名<ArrowRight size={15} /></Link>
-        : <form onSubmit={event => { event.preventDefault(); mutate('register'); }}><button className="btn application-action" type="submit" disabled={Boolean(busy)}>{busy === 'register' ? '正在提交…' : withdrawn ? '重新报名' : '确认提交报名申请'}<ArrowRight size={15} aria-hidden="true" /></button></form>)}
+        : <form onSubmit={event => { event.preventDefault(); setDetailsMode('register'); }}><button className="btn application-action" type="submit" disabled={Boolean(busy)}>{busy === 'register' ? '正在提交…' : withdrawn ? '重新报名' : '确认提交报名申请'}<ArrowRight size={15} aria-hidden="true" /></button></form>)}
     </>}
     {error && <button className="application-retry-action" type="button" onClick={() => setRefresh(value => value + 1)} disabled={Boolean(busy) || checking}>重新检查</button>}
   </div>;
   const detailsLabel = canPay ? '' : '查看报名详情';
+  const registrationDialog = <RegistrationDetailsDialog key={`${activity?.id}:${user?.id || ''}`} open={Boolean(detailsMode) && Boolean(user) && sensitiveAllowed} userId={user?.id} activity={activity} supplement={detailsMode==='details'} busy={Boolean(busy)} onClose={()=>setDetailsMode('')} onSubmit={input=>mutate(detailsMode,input)}/>;
   const paymentDialog = <PaymentDialog open={paymentOpen && Boolean(user) && availability.isPublic} qrUrl={state?.paymentQrUrl || ''} busy={busy === 'proof'} onClose={closePayment} onSubmit={submitProof}/>;
-  if (typeof children === 'function') return <>{children({ summary, details, actions, shortLabel, detailsLabel, checking: checking || Boolean(busy) })}{paymentDialog}</>;
-  return <><section className="activity-application" id="application" aria-label="活动报名" aria-busy={checking || Boolean(busy)}><h3>活动报名</h3>{summary}{details}{actions}</section>{paymentDialog}</>;
+  if (typeof children === 'function') return <>{children({ summary, details, actions, shortLabel, detailsLabel, checking: checking || Boolean(busy) })}{paymentDialog}{registrationDialog}</>;
+  return <><section className="activity-application" id="application" aria-label="活动报名" aria-busy={checking || Boolean(busy)}><h3>活动报名</h3>{summary}{details}{actions}</section>{paymentDialog}{registrationDialog}</>;
 }
