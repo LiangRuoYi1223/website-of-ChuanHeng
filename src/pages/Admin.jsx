@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Activity, ArrowLeft, ArrowRight, Bell, Bug, Check, ChevronRight, Compass, Eye, EyeOff, FileText, Image, KeyRound, LayoutDashboard, LogOut, Menu, MountainSnow, Pencil, Plus, Search, ShieldCheck, SlidersHorizontal, Trash2, Users, X } from 'lucide-react';
+import { Activity, ArrowLeft, ArrowRight, Bell, Bug, Check, ChevronRight, Eye, EyeOff, FileText, Image, KeyRound, LayoutDashboard, LogOut, Menu, MountainSnow, Pencil, Plus, Search, ShieldCheck, SlidersHorizontal, Trash2, Users, X } from 'lucide-react';
 import { activities, routes as sampleRoutes, photos, articles } from '../data.js';
 import { ButtonLink, EmptyState } from '../ui.jsx';
 import { supabase, isBackendConfigured, backendConfigurationError } from '../backend.js';
 import TrackUpload from '../tracks/TrackUpload.jsx';
 import { resolvedTrackMetrics, validateManualTrackMetrics } from '../tracks/metrics.js';
 import ActivityCoverUpload from '../media/ActivityCoverUpload.jsx';
+import GalleryPhotoUpload from '../media/GalleryPhotoUpload.jsx';
 import { getLocalTrack, putLocalTrack } from '../tracks/track-store.js';
 import { deleteContentWithLinks, findDuplicateRoutes, resolveDuplicateRoutes } from '../tracks/activity-workflow.js';
 import './admin.css';
@@ -20,7 +21,6 @@ const DRAFT_KEY = 'chuanheng-drafts';
 const NAV = [
   ['overview', '控制台', LayoutDashboard, '/admin'],
   ['activities', '活动管理', Activity, '/admin/activities'],
-  ['projects', '项目管理', Compass, '/admin/projects'],
   ['routes', '路线管理', MountainSnow, '/admin/routes'],
   ['gallery', '影像管理', Image, '/admin/gallery'],
   ['news', '资讯管理', FileText, '/admin/news'],
@@ -286,7 +286,8 @@ export function AdminPage() {
       const form = new FormData(event.currentTarget);
       let payload = { ...editor.payload, title: String(form.get('title')).trim(), type: String(form.get('type') || '').trim(), description: String(form.get('description')).trim(), image: String(form.get('image')).trim(), isDemo: false };
       if (!payload.title) throw new Error('请填写内容标题。');
-      if (!publicImageUrl(payload.image, { local: local && editor.kind === 'activity' })) throw new Error('图片请使用 HTTPS 地址或以 / 开头的站内路径。');
+      if (editor.kind === 'photo' && !payload.image) throw new Error('请先上传照片，再保存影像内容。');
+      if (!publicImageUrl(payload.image, { local: local && ['activity', 'photo'].includes(editor.kind) })) throw new Error('图片请使用 HTTPS 地址或以 / 开头的站内路径。');
       if (editor.kind === 'route') {
         for (const field of ['location', 'difficulty']) payload[field] = String(form.get(field) || '').trim();
         if (track === undefined && (editor.payload.track || editor.payload.trackLocalId)) throw new Error('原有轨迹尚未读取完成，请重试读取或明确移除后保存。');
@@ -424,7 +425,7 @@ export function AdminPage() {
 
   return <div className="admin-shell">
     {mobileOpen && <button className="admin-nav-backdrop" aria-label="关闭后台菜单" onClick={() => setMobileOpen(false)} />}
-    <aside className={`admin-sidebar ${mobileOpen ? 'open' : ''}`}><Link className="admin-brand" to={adminPath("/admin")}><AdminMark /><span>川衡<span>管理后台</span></span></Link><div className="admin-nav-label">工作空间</div><nav aria-label="后台导航">{NAV.map(([id, label, Icon, path], index) => <div key={id}>{index === 7 && <div className="admin-nav-label admin-system-label">系统设置</div>}<Link className={section === id ? 'active' : ''} to={adminPath(path)}><Icon size={17} /><span>{label}</span>{section === id && <span className="admin-active-dot" />}</Link></div>)}</nav><div className="admin-sidebar-bottom"><Link to="/"><ArrowLeft size={16} />返回网站</Link><button onClick={signOut}><LogOut size={16} />{local ? '离开预览' : '退出登录'}</button></div></aside>
+    <aside className={`admin-sidebar ${mobileOpen ? 'open' : ''}`}><Link className="admin-brand" to={adminPath("/admin")}><AdminMark /><span>川衡<span>管理后台</span></span></Link><div className="admin-nav-label">工作空间</div><nav aria-label="后台导航">{NAV.map(([id, label, Icon, path]) => <div key={id}>{id === 'backgrounds' && <div className="admin-nav-label admin-system-label">系统设置</div>}<Link className={section === id ? 'active' : ''} to={adminPath(path)}><Icon size={17} /><span>{label}</span>{section === id && <span className="admin-active-dot" />}</Link></div>)}</nav><div className="admin-sidebar-bottom"><Link to="/"><ArrowLeft size={16} />返回网站</Link><button onClick={signOut}><LogOut size={16} />{local ? '离开预览' : '退出登录'}</button></div></aside>
     <div className="admin-main"><header className="admin-toolbar"><div className="admin-toolbar-left"><button className="admin-menu-toggle" aria-label="打开后台菜单" onClick={() => setMobileOpen(true)}><Menu size={21} /></button><span>管理后台</span><ChevronRight size={14} /><strong>{title}</strong></div><div className="admin-toolbar-right"><span className="admin-environment"><i />{local ? '本地设计预览' : '云端服务'}</span><span className="admin-toolbar-separator" /><ShieldCheck size={18} /><span className="admin-user">{auth.status === 'admin' ? '管理员' : local ? '设计预览' : '访客'}</span><span className="admin-avatar">川</span></div></header>
     <section className="admin-workspace">
       <div className="admin-heading"><div><div className="admin-eyebrow">CHUANHENG · WORKSPACE</div><h1>{section === 'overview' ? '欢迎回来，探索继续。' : title}</h1><p>{section === 'overview' ? '让每一次热爱，都有迹可循。' : `在这里管理川衡的${title.replace('管理', '')}。`}</p></div><div className="admin-heading-actions">{section === 'routes' && <Link className="admin-btn" to="/routes/import"><MountainSnow size={16} />导入轨迹</Link>}{allowed && (kind || section === 'overview') && !showSamples && editButton}</div></div>
@@ -437,7 +438,7 @@ export function AdminPage() {
       {section === 'debug' && <DebugPanel groups={duplicates} rows={rows} local={local} busy={busy} resolvingGroup={resolvingGroup} loading={loading} onResolve={resolveGroup} onEditActivity={row => { setError(''); setEditor(structuredClone(row)); }} />}
       {section === 'backgrounds' && <section className="admin-panel admin-background-panel"><div><h2>网站主视觉</h2><p>当前主视觉为 AI 生成的山岳示意图。图片上传、背景轮换与云端保存待接入。</p><span className="admin-status">当前使用</span></div><img src="/images/redesign-v2/home-summit.webp" alt="AI 生成的夕阳雪山主视觉" /><div className="admin-background-meta"><span>首页主视觉</span><span>/images/redesign-v2/home-summit.webp</span></div></section>}
       {section === 'password' && <PasswordPanel connected={!local} onNotice={setNotice} />}
-      {['accounts', 'services', 'projects'].includes(section) && <section className="admin-panel admin-pending"><div className="admin-pending-icon">{section === 'accounts' ? <Users size={32} /> : section === 'services' ? <SlidersHorizontal size={32} /> : section === 'projects' ? <Compass size={32} /> : <Compass size={32} />}</div><h2>{section === 'services' ? '服务连接与配置' : `${title}待接入`}</h2><p>{section === 'accounts' ? '真实成员账号需要受保护的服务端管理接口。这里不会展示虚构账号，也不会在浏览器存放管理员密钥。' : section === 'services' ? isBackendConfigured ? '已提供有效格式的前端公钥配置。内容连接状态以实际读取结果为准，存储上传、邮件和其他业务服务仍待配置。' : '当前运行本地设计预览。接入真实服务后，可使用账号登录、云端内容与发布能力。' : section === 'projects' ? '项目资料与报名流程尚未连接。你可以先在活动管理中整理本地内容草稿。' : '项目资料与报名流程尚未连接。你可以先在活动管理中整理本地内容草稿。'}</p>{section === 'services' && <div className="admin-config-summary"><span>内容存储<strong>{local ? '浏览器本地草稿' : 'Supabase · RLS 权限'}</strong></span><span>文件上传<strong>待接入</strong></span><span>报名管理<strong>待接入</strong></span><span>账号管理<strong>待接入</strong></span></div>}<Link className="admin-text-link" to={section === 'services' ? '/' : adminPath('/admin/activities')}>{section === 'services' ? '返回网站' : '前往活动管理'}<ArrowRight size={15} /></Link></section>}
+      {['accounts', 'services'].includes(section) && <section className="admin-panel admin-pending"><div className="admin-pending-icon">{section === 'accounts' ? <Users size={32} /> : <SlidersHorizontal size={32} />}</div><h2>{section === 'services' ? '服务连接与配置' : `${title}待接入`}</h2><p>{section === 'accounts' ? '真实成员账号需要受保护的服务端管理接口。这里不会展示虚构账号，也不会在浏览器存放管理员密钥。' : isBackendConfigured ? '已提供有效格式的前端公钥配置。内容连接状态以实际读取结果为准，存储上传、邮件和其他业务服务仍待配置。' : '当前运行本地设计预览。接入真实服务后，可使用账号登录、云端内容与发布能力。'}</p>{section === 'services' && <div className="admin-config-summary"><span>内容存储<strong>{local ? '浏览器本地草稿' : 'Supabase · RLS 权限'}</strong></span><span>文件上传<strong>待接入</strong></span><span>报名管理<strong>待接入</strong></span><span>账号管理<strong>待接入</strong></span></div>}<Link className="admin-text-link" to={section === 'services' ? '/' : adminPath('/admin/activities')}>{section === 'services' ? '返回网站' : '前往活动管理'}<ArrowRight size={15} /></Link></section>}
       {!nav && <section className="admin-panel"><EmptyState title="没有找到这个后台页面" description="请选择左侧的管理模块继续。" /></section>}
       </>}
       <footer className="admin-footer"><span>川衡登山协会 · 管理工作空间</span><span>以山为伴，一路同行。</span></footer>
@@ -556,10 +557,10 @@ export function ContentEditor({ editor, rows = [], onRefreshRoutes = () => {}, r
         </section>}
         {supportsTrack && <div className="admin-route-track"><div className="admin-route-track-heading"><h3>{editor.kind === 'activity' ? '历史轨迹（只读）' : '路线轨迹'}</h3>{editor.kind === 'route' && <span>GPX / KML</span>}</div>{trackLoading ? <p className="admin-track-loading" role="status">正在读取原有轨迹，完成前暂不可保存……</p> : trackLoadError ? <div className="admin-track-load-error" role="alert"><p>{trackLoadError}</p><div><button type="button" className="admin-btn" disabled={busy} onClick={() => { setTrackLoading(true); setTrackLoadError(''); setTrackRetry(value => value + 1); }}>重试读取</button>{editor.kind === 'route' && <button type="button" className="admin-btn danger" disabled={busy} onClick={() => changeTrack(null)}>移除旧轨迹引用</button>}</div></div> : editor.kind === 'route' ? <TrackUpload value={track ?? null} onChange={changeTrack} onBusyChange={setTrackConverting} disabled={busy} local={local} /> : <p className="admin-legacy-track">{track?.name || '历史活动轨迹'} · 保留原有轨迹，不支持在活动中上传或移除。</p>}</div>}
         <label>内容简介<textarea name="description" defaultValue={editor.payload.description || ''} rows={4} maxLength={3000} placeholder="写下内容介绍与需要知道的信息…" /></label>
-        {editor.kind === 'activity' ? <ActivityCoverUpload initialValue={editor.payload.image || ''} onBusyChange={setImageBusy} disabled={busy} local={local} /> : <label>封面图片地址<input name="image" defaultValue={editor.payload.image || ''} placeholder="https://… 或 /images/redesign-v2/home-summit.webp" /><small>图片上传服务待接入，请使用已有图片地址。</small></label>}
+        {editor.kind === 'activity' ? <ActivityCoverUpload initialValue={editor.payload.image || ''} onBusyChange={setImageBusy} disabled={busy} local={local} /> : editor.kind === 'photo' ? <GalleryPhotoUpload initialValue={editor.payload.image || ''} onBusyChange={setImageBusy} disabled={busy} local={local} /> : <label>封面图片地址<input name="image" defaultValue={editor.payload.image || ''} placeholder="https://… 或 /images/redesign-v2/home-summit.webp" /><small>图片上传服务待接入，请使用已有图片地址。</small></label>}
         {!local && <label className="admin-checkbox"><input type="checkbox" name="published" defaultChecked={editor.published} />发布到云端内容表</label>}
         {error && <div className="admin-message error" role="alert">{error}</div>}
-        <div className="admin-form-actions"><button className="admin-btn" type="button" onClick={onClose} disabled={busy}>取消</button><button className="admin-btn primary" disabled={busy || trackBlocked || imageBusy}><Check size={16} />{imageBusy ? '正在处理封面…' : busy ? '正在保存…' : local ? '保存本地草稿' : '保存内容'}</button></div>
+        <div className="admin-form-actions"><button className="admin-btn" type="button" onClick={onClose} disabled={busy}>取消</button><button className="admin-btn primary" disabled={busy || trackBlocked || imageBusy}><Check size={16} />{imageBusy ? editor.kind === 'photo' ? '正在处理照片…' : '正在处理封面…' : busy ? '正在保存…' : local ? '保存本地草稿' : '保存内容'}</button></div>
       </form>
     </section>
   </div>;

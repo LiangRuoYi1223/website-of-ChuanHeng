@@ -1,7 +1,8 @@
-// Node-only development adapter. Import dynamically from the Vite adapter;
+// Node-only development adapter. Vite loads native dependencies with its config;
 // this file must never be imported by the production Worker or shared pipeline.
+import sharp from 'sharp';
+
 export async function createLocalImageBinding() {
-  const { default: sharp } = await import('sharp');
   const read = async stream => new Uint8Array(await new Response(stream).arrayBuffer());
   return {
     async info(stream) {

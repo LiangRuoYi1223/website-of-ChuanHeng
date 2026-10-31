@@ -111,6 +111,7 @@ test('invalid detail IDs and unknown pages show a readable recovery instead of c
     ['/routes/does-not-exist', /没有找到[^。]*路线/],
     ['/news/does-not-exist', /没有找到[^。]*资讯/],
     ['/does-not-exist', /这条路暂时还未开放/],
+    ['/admin/projects?preview=1', /没有找到这个后台页面/],
   ]) await t.test(location, () => {
     const html = assertUsablePage(location, expected);
     assert.match(html, /href="\/(?:activities|routes|news)?"/, `${location}: offer a working return link`);
@@ -119,7 +120,7 @@ test('invalid detail IDs and unknown pages show a readable recovery instead of c
 
 test('all current admin routes render a local preview without requiring cloud access', async t => {
   const sections = [
-    ['', /欢迎回来/], ['activities', /活动管理/], ['projects', /项目管理/],
+    ['', /欢迎回来/], ['activities', /活动管理/],
     ['routes', /路线管理/], ['gallery', /影像管理/], ['news', /资讯管理/],
     ['debug', /Debug/], ['backgrounds', /背景管理/],
     ['accounts', /账号管理/], ['services', /服务配置/], ['password', /修改密码/],
