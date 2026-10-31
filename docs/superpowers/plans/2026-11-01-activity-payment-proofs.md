@@ -26,7 +26,7 @@
 
 ### Task 1: 数据与受控提交
 
-Files: supabase/migrations/20261031181729_activity_payment_proofs.sql、scripts/validate-payment-proof-sql.mjs、既有SQL测试桩。
+Files: supabase/migrations/20261031185118_activity_payment_proofs.sql、scripts/validate-payment-proof-sql.mjs、既有SQL测试桩。
 
 - [x] 写新状态、提交、私有读取、审核冲突和不可改日志的失败测试。
 - [x] 扩展状态约束、只追加凭证表、Storage政策、本人提交与管理员5参RPC；旧4参入口撤销。
@@ -57,3 +57,5 @@ Files: ActivityApplication.jsx/registration.js、src/payments/PaymentDialog.jsx�
 ## 当前验证记录
 
 全套476/476、PG17/18各40/40、生产构建通过。Worker dry-run 50输入且无external imports；各实现者已停写，独立安全与界面审查通过；已修复手动pending无图时的提示。真实收款码尚未提供，不生成示例码；云端不创建合成报名/缴费数据。
+
+已应用生产迁移 20261031185118_activity_payment_proofs，原2条内容、1条报名、1条日志及0个图片对象的原字段/对象哈希一致；新凭证/设置变更日志0条，收款码尚未配置。网站日志DML、匿名提交、旧4参审核入口均拒绝。
