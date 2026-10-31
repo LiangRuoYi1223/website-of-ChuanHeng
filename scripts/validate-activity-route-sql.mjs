@@ -75,14 +75,14 @@ before(async () => {
       await q("insert into storage.objects(bucket_id,name) values('activity-covers','historical/keep-original.webp')");
       oldObject=await q('select * from storage.objects');
       oldBucket=(await q("select * from storage.buckets where id='activity-covers'"))[0];
-      oldPolicies=await q("select * from pg_policies where schemaname='storage' order by policyname");
+      oldPolicies=await q("select * from pg_policies where schemaname='storage' and policyname like 'activity_covers_%' order by policyname");
     }
   }
   assert.deepEqual(await get(800),before);
   assert.deepEqual(await get(806),historicalSnapshot);
   assert.deepEqual(await q('select * from storage.objects'),oldObject);
   assert.deepEqual((await q("select * from storage.buckets where id='activity-covers'"))[0],{...oldBucket,file_size_limit:3145728});
-  assert.deepEqual(await q("select * from pg_policies where schemaname='storage' order by policyname"),oldPolicies);
+  assert.deepEqual(await q("select * from pg_policies where schemaname='storage' and policyname like 'activity_covers_%' order by policyname"),oldPolicies);
   // Remove this isolated fixture after proving the migration preserved it.
   await q("delete from storage.objects where name='historical/keep-original.webp'");
   await q('insert into auth.users(id) values($1),($2)',[admin.sub,member.sub]);
@@ -294,6 +294,45 @@ test('cover restrictions survive pre-existing broad permissive Storage policies 
     assert.equal((await q("select * from storage.objects where bucket_id='activity-covers'")).length,0);
     await q("insert into storage.objects(bucket_id,name) values('other','allowed-by-old-policy.jpg')");
     assert.equal((await q("delete from storage.objects where bucket_id='other' returning id")).length,1);
+  });
+});
+
+test('gallery photo bucket restricts new files to the admin folder without changing the activity cover bucket',async()=>{
+  const bucket=(await q("select * from storage.buckets where id='gallery-photos'"))[0];
+  assert.equal(bucket.public,true);
+  assert.equal(Number(bucket.file_size_limit),3145728);
+  assert.deepEqual(bucket.allowed_mime_types,['image/webp']);
+  const upload=name=>q("insert into storage.objects(bucket_id,name) values('gallery-photos',$1)",[name]);
+  await identity(admin,async()=>{
+    await upload(`${admin.sub}/photo.webp`);
+    await fails(()=>upload(`${member.sub}/forged.webp`),/row-level security/);
+    await fails(()=>upload('photo.webp'),/row-level security/);
+    assert.equal((await q("select * from storage.objects where bucket_id='gallery-photos'")).length,1);
+    assert.equal((await q("update storage.objects set name='changed' where bucket_id='gallery-photos' returning id")).length,0);
+    assert.equal((await q("delete from storage.objects where bucket_id='gallery-photos' returning id")).length,0);
+  });
+  for(const jwt of [member,{...member,user_metadata:{role:'admin'}}]) await identity(jwt,async()=>{
+    await fails(()=>upload(`${jwt.sub}/photo.webp`),/row-level security/);
+    assert.equal((await q("select * from storage.objects where bucket_id='gallery-photos'")).length,0);
+  });
+  await identity({},async()=>{
+    await fails(()=>upload(`${admin.sub}/photo.webp`),/row-level security/);
+  },'anon');
+});
+
+test('gallery photo restrictions survive broad Storage policies while leaving unrelated buckets unchanged',async()=>{
+  await db.exec(`create policy legacy_gallery_test_policy on storage.objects for all to anon,authenticated using(true) with check(true);
+    insert into storage.buckets(id,name,public) values('gallery-unrelated','gallery-unrelated',false);`);
+  await identity(admin,async()=>{
+    await q("insert into storage.objects(bucket_id,name) values('gallery-photos',$1)",[`${admin.sub}/photo.webp`]);
+    assert.equal((await q("update storage.objects set name='overwritten.webp' where bucket_id='gallery-photos' returning id")).length,0);
+    assert.equal((await q("delete from storage.objects where bucket_id='gallery-photos' returning id")).length,0);
+  });
+  await identity(member,async()=>{
+    await fails(()=>q("insert into storage.objects(bucket_id,name) values('gallery-photos',$1)",[`${member.sub}/photo.webp`]),/row-level security/);
+    assert.equal((await q("select * from storage.objects where bucket_id='gallery-photos'")).length,0);
+    await q("insert into storage.objects(bucket_id,name) values('gallery-unrelated','other.webp')");
+    assert.equal((await q("delete from storage.objects where bucket_id='gallery-unrelated' returning id")).length,1);
   });
 });
 

@@ -1,6 +1,8 @@
 import { handleTrackRequest, isLoopbackAddress, isLoopbackHost, jsonResponse, trackErrorResponse } from './http.mjs';
 import { TrackError } from './parse.mjs';
 import { handleCoverRequest } from '../covers/http.mjs';
+import { handlePhotoRequest } from '../photos/http.mjs';
+import { createLocalImageBinding } from '../covers/local-images.mjs';
 
 export function isLocalPreviewRequest(request, explicitlyEnabled) {
   if (explicitlyEnabled !== true || !isLoopbackAddress(request.socket?.localAddress) || !isLoopbackAddress(request.socket?.remoteAddress)) return false;
@@ -68,12 +70,13 @@ export function tracksVitePlugin(options = {}) {
         }
         const request = new Request(requestUrl(incoming), init);
         const env = options.env || { ...process.env, SUPABASE_URL: process.env.SUPABASE_URL || server.config?.env?.VITE_SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY || server.config?.env?.VITE_SUPABASE_PUBLISHABLE_KEY };
-        let coverResponse;
-        if (pathname === '/api/covers/process') {
-          localImages ||= import('../covers/local-images.mjs').then(module => module.createLocalImageBinding());
-          coverResponse = await handleCoverRequest(request, env, { fetchImpl: options.fetchImpl || fetch, images: await localImages });
+        let imageResponse;
+        if (pathname === '/api/covers/process' || pathname === '/api/photos/process') {
+          localImages ||= createLocalImageBinding();
+          const imageOptions = { fetchImpl: options.fetchImpl || fetch, images: await localImages, localPreview: isLocalPreviewRequest(incoming, options.localPreview), authTimeoutMs: options.authTimeoutMs };
+          imageResponse = pathname === '/api/photos/process' ? await handlePhotoRequest(request, env, imageOptions) : await handleCoverRequest(request, env, imageOptions);
         }
-        const result = coverResponse || await handleTrackRequest(request, env, {
+        const result = imageResponse || await handleTrackRequest(request, env, {
           localPreview: isLocalPreviewRequest(incoming, options.localPreview),
           fetchImpl: options.fetchImpl || fetch,
           authTimeoutMs: options.authTimeoutMs,
