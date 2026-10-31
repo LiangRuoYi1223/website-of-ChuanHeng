@@ -50,12 +50,14 @@ Files: ActivityApplication.jsx/registration.js、src/payments/PaymentDialog.jsx�
 
 ### Task 4: 统一验证和发布
 
-- [ ] 全套测试、生产构建和无Node依赖打包通过，保存原数据基线。
-- [ ] 应用唯一针对迁移，核实权限/数据保留和安全advisors；部署后核对线上资源。
-- [ ] 同步main/GitHub并记录实际迁移版本与Worker版本；如实记录未做真实支付验收。
+- [x] 全套测试、生产构建和无Node依赖打包通过，保存原数据基线。
+- [x] 应用唯一针对迁移，核实权限/数据保留和安全advisors；部署后核对线上资源。
+- [x] 同步main/GitHub并记录实际迁移版本与Worker版本；如实记录未做真实支付验收。
 
 ## 当前验证记录
 
 全套476/476、PG17/18各40/40、生产构建通过。Worker dry-run 50输入且无external imports；各实现者已停写，独立安全与界面审查通过；已修复手动pending无图时的提示。真实收款码尚未提供，不生成示例码；云端不创建合成报名/缴费数据。
 
 已应用生产迁移 20261031185118_activity_payment_proofs，原2条内容、1条报名、1条日志及0个图片对象的原字段/对象哈希一致；新凭证/设置变更日志0条，收款码尚未配置。网站日志DML、匿名提交、旧4参审核入口均拒绝。
+
+正式发布：Worker 594f1aec-5880-49ac-a1c3-7c51c0255024；线上JS/CSS与main构建SHA-256一致，匿名凭证与配置读取401。全局码尚未配置，用户将在服务配置上传真实图片。无新增Supabase安全advisors，未写生产测试图或缴费记录。

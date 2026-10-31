@@ -51,3 +51,5 @@ public.applications沿用原记录，新增registration_status、registered_at�
 `application_payment_proofs`和`payment_settings_events`与报名日志均禁止网站INSERT/UPDATE/DELETE/TRUNCATE（插入仅受控函数/触发器）。`set_activity_registration_payment`升级五参数，旧四参数入口移除；新增`submit_activity_payment_proof`、`get_payment_settings`、`save_payment_settings`受控接口。凭证外键保护历史关联，含凭证的账户不能直接级联删除，需受信平台维护。无自动支付回调或到账识别。
 
 验证范围：完整网站回归、PG17/18隔离完整迁移链、真实本机图片解码/去元数据和Worker无Node外部依赖打包。没有写入生产合成缴费记录；真实扫码、真实云端Storage上传及真实多连接竞争不据此声称验收。
+
+本次已发布：迁移`20261031185118_activity_payment_proofs`，Worker `594f1aec-5880-49ac-a1c3-7c51c0255024`；476项网站测试、PG17/18各40项通过。收款码当前未配置，管理员从服务配置上传并保存后各活动共用。
