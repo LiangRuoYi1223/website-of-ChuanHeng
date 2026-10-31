@@ -53,6 +53,17 @@ test('same-origin authenticated GPX/KML upload returns real converted geometry a
   }
 });
 
+test('KML uploads without altitudeMode retain supplied gx:Track elevations in the shared converter', async () => {
+  const bytes='<kml xmlns:gx="http://www.google.com/kml/ext/2.2"><Placemark><gx:Track><gx:coord>114 22 100</gx:coord><gx:coord>114.01 22.01 150</gx:coord></gx:Track></Placemark></kml>';
+  const response=await handleTrackRequest(upload({filename:'recording.kml',bytes}),env,authorized);
+  assert.equal(response.status,200);
+  const {track}=await response.json();
+  assert.deepEqual(track.profile.map(point=>point.elevationM),[100,150]);
+  assert.equal(track.stats.elevationCoverage,1);
+  assert.equal(track.stats.ascentM,50);
+  assert.ok(track.warnings.some(warning=>/未声明海拔模式/.test(warning)));
+});
+
 test('status is explicit and absent, unsafe or secret backend configuration fails closed', async () => {
   const status = await handleTrackRequest(new Request(`${origin}/api/tracks/status`));
   assert.deepEqual(await status.json(), { localPreview: false, configured: false });

@@ -93,13 +93,61 @@ check('KML preserves MultiGeometry, gx:MultiTrack, and gx empty-coordinate break
   assert.ok(result.warnings.some(warning=>/absolute/.test(warning)));
 });
 
-for (const mode of [null,'clampToGround','relativeToGround','relativeToSeaFloor']) {
+for (const mode of ['clampToGround','clampToSeaFloor','relativeToGround','relativeToSeaFloor','unknown','']) {
   check(`KML ${mode ?? 'missing'} altitudeMode ignores supplied altitude`, () => {
     const result=convertTrack(kml(line('0,0,100 0.01,0,200',mode)));
     assert.deepEqual(result.profile.map(point=>point.elevationM),[null,null]);
     assert.equal(result.stats.ascentM,null);
   });
 }
+
+check('KML without altitudeMode retains supplied LineString elevations with a compatibility notice', () => {
+  const result=convertTrack(kml(line('0,0,100 0.01,0,150 0.02,0,120',null)));
+  assert.deepEqual(result.profile.map(point=>point.elevationM),[100,150,120]);
+  assert.equal(result.stats.elevationCoverage,1);
+  assert.equal(result.stats.ascentM,50); assert.equal(result.stats.descentM,30);
+  assert.ok(result.warnings.some(warning=>/未声明海拔模式/.test(warning)));
+  assert.ok(!result.warnings.some(warning=>/已保留为空|缺失有效/.test(warning)));
+});
+
+check('gx:Track without altitudeMode retains supplied elevations and empty-coordinate breaks', () => {
+  const result=convertTrack(kml('<gx:Track><gx:coord>0 0 100</gx:coord><gx:coord>0.01 0 110</gx:coord><gx:coord/><gx:coord>10 0 500</gx:coord><gx:coord>10.01 0 490</gx:coord></gx:Track>'));
+  assert.deepEqual(result.geojson.geometry.coordinates,[[[0,0,100],[0.01,0,110]],[[10,0,500],[10.01,0,490]]]);
+  assert.equal(result.segmentCount,2); near(result.stats.distanceM,2223.9016);
+  assert.equal(result.stats.elevationCoverage,1);
+  assert.equal(result.stats.ascentM,10); assert.equal(result.stats.descentM,10);
+});
+
+check('missing-mode KML preserves zero and missing elevations without inventing totals', () => {
+  for (const geometry of [line('0,0,0 0.01,0,10 0.02,0',null),'<gx:Track><gx:coord>0 0 0</gx:coord><gx:coord>0.01 0 10</gx:coord><gx:coord>0.02 0</gx:coord></gx:Track>']) {
+    const result=convertTrack(kml(geometry));
+    assert.deepEqual(result.profile.map(point=>point.elevationM),[0,10,null]);
+    assert.equal(result.stats.elevationCoverage,2/3);
+    assert.equal(result.stats.minElevationM,0); assert.equal(result.stats.maxElevationM,10);
+    assert.equal(result.stats.ascentM,null); assert.equal(result.stats.descentM,null);
+  }
+  const result=convertTrack(kml(line('0,0 0.01,0',null)));
+  assert.deepEqual(result.profile.map(point=>point.elevationM),[null,null]);
+  assert.equal(result.stats.elevationCoverage,0);
+  assert.ok(!result.warnings.some(warning=>/兼容读取/.test(warning)));
+});
+
+check('gx:MultiTrack mode inheritance and child overrides take precedence over missing-mode compatibility', () => {
+  const coords='<gx:coord>0 0 100</gx:coord><gx:coord>0.01 0 150</gx:coord>';
+  for (const mode of ['clampToGround','relativeToGround']) {
+    const result=convertTrack(kml(`<gx:MultiTrack><altitudeMode>${mode}</altitudeMode><gx:Track>${coords}</gx:Track><gx:Track><altitudeMode>absolute</altitudeMode>${coords}</gx:Track></gx:MultiTrack>`));
+    assert.deepEqual(result.profile.map(point=>point.elevationM),[null,null,100,150]);
+    assert.ok(!result.warnings.some(warning=>/兼容读取/.test(warning)));
+  }
+  const result=convertTrack(kml(`<gx:MultiTrack><gx:Track>${coords}</gx:Track><gx:Track><altitudeMode>relativeToGround</altitudeMode>${coords}</gx:Track></gx:MultiTrack>`));
+  assert.deepEqual(result.profile.map(point=>point.elevationM),[100,150,null,null]);
+  assert.equal(result.segments[0].stats.ascentM,50); assert.equal(result.segments[1].stats.ascentM,null);
+});
+
+check('missing-mode compatibility still rejects invalid elevation values', () => {
+  rejects(kml(line('0,0,NaN 0.01,0,100',null)),'INVALID_ELEVATION');
+  rejects(kml('<gx:Track><gx:coord>0 0 Infinity</gx:coord><gx:coord>0.01 0 100</gx:coord></gx:Track>'),'INVALID_ELEVATION');
+});
 
 check('absolute KML altitude remains missing when omitted and blank lines split geometry', () => {
   const result=convertTrack(kml(line('0,0 0.01,0\n\n10,0,40 10.01,0,50')));

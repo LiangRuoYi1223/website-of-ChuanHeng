@@ -220,15 +220,20 @@ export function convertTrack(input, options = {}) {
     const modeOf = node => field(node, 'altitudeMode');
     const parseGeometry = (node, context, isTrack) => {
       countGeometry();
-      const absolute = (modeOf(node) ?? context.mode) === 'absolute';
-      if (!absolute) warnings.add('KML 未使用 absolute 海拔模式；高度未当作绝对海拔，已保留为空。');
+      const altitudeMode = modeOf(node) ?? context.mode;
+      // Some GPS exporters omit the display mode but retain recorded heights.
+      // Keep supplied heights in that case; explicit relative/clamped modes win.
+      const readElevation = altitudeMode === undefined || altitudeMode === 'absolute';
+      if (!readElevation) warnings.add('KML 未使用 absolute 海拔模式；高度未当作绝对海拔，已保留为空。');
       let current = [];
       const flush = () => { addSegment(current, context.name); current = []; };
       const tuple = (value, gx) => {
         if (!value.trim() || (!gx && /^,+$/.test(value.trim()))) { flush(); return; }
         const values = gx ? value.trim().split(/\s+/) : value.trim().split(',');
         if (values.length < 2 || values.length > 3) fail('INVALID_COORDINATE', 'KML 坐标必须是经度、纬度与可选海拔。');
-        current.push(addPoint(coordinate(values[0], values[1], values[2], absolute)));
+        const point = coordinate(values[0], values[1], values[2], readElevation);
+        if (altitudeMode === undefined && point[2] !== null) warnings.add('KML 未声明海拔模式；已按文件提供的高度值兼容读取海拔，未进行高程校正。');
+        current.push(addPoint(point));
       };
       if (isTrack) for (const item of named(node, 'coord')) tuple(scalar(item), true);
       else for (const item of named(node, 'coordinates')) {
