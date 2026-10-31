@@ -28,7 +28,9 @@ installGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 dom.window.HTMLElement.prototype.getClientRects = function () { return this.hidden || this.closest('[aria-hidden="true"]') ? [] : [new dom.window.DOMRect(0, 0, 20, 20)]; };
 
 const { createRoot } = await import('react-dom/client');
-const { MemoryRouter } = await import('react-router-dom');
+const { MemoryRouter, useNavigate } = await import('react-router-dom');
+let navigateWithinTest;
+function NavigationHandle(){navigateWithinTest=useNavigate();return null;}
 const projectRoot = await realpath(fileURLToPath(new URL('../', import.meta.url)));
 const artifactsRoot = path.join(projectRoot, 'artifacts');
 await mkdir(artifactsRoot, { recursive: true });
@@ -104,7 +106,7 @@ async function waitFor(predicate, description) {
 async function mount(location) {
   if (root) await act(async () => root.unmount());
   root = createRoot(container);
-  await act(async () => root.render(createElement(MemoryRouter, { initialEntries: [location] }, createElement(AdminPage))));
+  await act(async () => root.render(createElement(MemoryRouter, { initialEntries: [location] }, createElement(AdminPage),createElement(NavigationHandle))));
 }
 async function navigateAdmin(section) {
   await click(container.querySelector(`.admin-sidebar a[href="/admin/${section}?preview=1"]`));
@@ -124,7 +126,7 @@ async function chooseFile(filename) {
   await waitFor(() => pending.some(item => item.filename === filename), 'the conversion request');
 }
 async function releaseFile(filename) {
-  const request = pending.find(item => item.filename === filename);
+  const request = pending.findLast(item => item.filename === filename);
   assert.ok(request);
   await act(async () => request.release());
   await waitFor(() => dialog()?.querySelector('.track-import-result'), 'converted track preview');
@@ -173,7 +175,8 @@ test('route uploads are reused by activity selection, with frozen history and re
     assert.equal(dialog().querySelector('[name="description"]').value, '刷新前未提交的介绍');
     assert.equal(dialog().querySelector('[name="dateStart"]').value, '2026-10-01T08:00');
     assert.equal(dialog().querySelector('[name="routeId"]').value, route.id);
-    assert.equal(dialog().querySelector('[name="distance"]').readOnly, true);
+    assert.equal(dialog().querySelector('[name="distance"]'), null);
+    assert.ok(dialog().querySelector('.admin-track-metrics dd'));
     await saveEditor();
     firstActivity = drafts().find(row => row.kind === 'activity');
     assert.equal(firstActivity.payload.routeSnapshot.sourceRouteId, route.id);
@@ -190,7 +193,7 @@ test('route uploads are reused by activity selection, with frozen history and re
     localStorage.setItem('chuanheng-drafts', JSON.stringify(latest));
     await click(container.querySelector('button[aria-label="编辑路线选择活动甲"]'));
     await click(button('刷新路线列表', dialog()));
-    assert.notEqual(dialog().querySelector('[name="distance"]').value, '999');
+    assert.notEqual(text(dialog().querySelector('.admin-track-metrics dd')), '999');
     await fill('description', '保留历史版本');
     await saveEditor();
     assert.deepEqual(drafts().find(row => row.id === firstActivity.id).payload.routeSnapshot, firstActivity.payload.routeSnapshot);
@@ -328,7 +331,8 @@ test('admin safety regressions preserve concurrent route decisions, links and un
     await waitFor(() => dialog()?.querySelector('.admin-legacy-track'), 'legacy track read');
     assert.ok(![...dialog().querySelectorAll('input[type="file"]')].some(input => /gpx|kml/i.test(input.accept)), 'activity never exposes a track upload');
     assert.equal(button('移除', dialog()), undefined);
-    assert.equal(dialog().querySelector('[name="ascent"]').value, '');
+    assert.equal(dialog().querySelector('[name="ascent"]'), null);
+    assert.match(text(dialog().querySelector('.admin-track-metrics')), /暂不提供数据/);
     const original = drafts().find(row => row.id === 'concurrent-b').payload;
     await saveEditor();
     const activity = drafts().find(row => row.id === 'concurrent-b');
@@ -344,7 +348,7 @@ test('admin safety regressions preserve concurrent route decisions, links and un
     await mount('/admin/activities?preview=1');
     await click(container.querySelector('button[aria-label="编辑跨窗活动甲"]'));
     await waitFor(() => dialog()?.querySelector('.admin-legacy-track'), 'historical activity track');
-    assert.equal(Number(dialog().querySelector('[name="distance"]').value), fixtures.get('activity-a.gpx').track.stats.distanceM / 1000);
+    assert.equal(Number(text(dialog().querySelector('.admin-track-metrics dd'))), fixtures.get('activity-a.gpx').track.stats.distanceM / 1000);
     assert.notEqual(dialog().querySelector('[name="location"]').value, '后来修改的地点');
   });
 
@@ -446,4 +450,65 @@ test('admin safety regressions preserve concurrent route decisions, links and un
     assert.equal(activity.payload.status, '即将开始');
     assert.ok(activity.payload.trackLocalId, 'the activity keeps its real track even when it is no longer a completed footprint');
   });
+});
+
+
+test('missing metric dialog preserves prior track on cancel, supports skip and administrator zero without replacing automatic distance',async()=>{
+ localStorage.clear();await mount('/admin/routes?preview=1');await click(button('新建路线'));await fill('title','参数补充测试');
+ await chooseFile('manual.gpx');await releaseFile('manual.gpx');
+ const oldName=text(dialog().querySelector('.track-import-result strong'));
+ async function uploadMissing(){
+   await chooseFile('activity-b.gpx');const request=pending.findLast(item=>item.filename==='activity-b.gpx');
+   await act(async()=>request.release());await waitFor(()=>dialog()?.querySelector('.track-metrics-dialog'),'missing metrics dialog');
+   assert.equal(button('保存本地草稿',dialog()).disabled,true);
+   assert.equal(dialog().querySelector('.track-metrics-dialog input').readOnly,true);
+   assert.equal(document.activeElement,dialog().querySelector('.track-metrics-dialog input:not([readonly])'));
+ }
+ await uploadMissing();
+ await act(async()=>document.activeElement.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+ assert.ok(dialog(),'Escape closes only the supplement dialog');assert.equal(dialog().querySelector('.track-metrics-dialog'),null);
+ assert.equal(text(dialog().querySelector('.track-import-result strong')),oldName);
+ await uploadMissing();await click(button('暂不提供',dialog()));
+ assert.match(text(dialog().querySelector('.track-import-result strong')),/合成活动乙/);
+ assert.equal(button('保存本地草稿',dialog()).disabled,false);
+ await click(button('补充缺失路线参数',dialog()));
+ const input=dialog().querySelector('.track-metrics-dialog input:not([readonly])');
+ await act(async()=>{Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype,'value').set.call(input,'0');input.dispatchEvent(new dom.window.Event('input',{bubbles:true}));});
+ await click(button('确认补充',dialog()));await saveEditor();
+ const saved=drafts()[0].payload;
+ assert.equal(saved.ascent,0);assert.equal(saved.trackSummary.stats.ascentM,null);assert.equal(saved.trackSummary.manualMetrics.ascentM,0);
+ assert.equal(saved.distance,fixtures.get('activity-b.gpx').track.stats.distanceM/1000);
+});
+
+
+
+test('Debug edit link opens exactly the requested route once; closing and refreshing never reopens it',async()=>{
+ localStorage.clear();localStorage.setItem('chuanheng-drafts',JSON.stringify([{id:'debug-edit-route',kind:'route',published:false,payload:{title:'Debug待补参数路线',distance:2,ascent:null}}]));
+ await mount('/admin/debug?preview=1');
+ const link=container.querySelector('a[href="/admin/routes?preview=1&edit=debug-edit-route"]');assert.ok(link);
+ await click(link);await waitFor(()=>dialog(),'Debug requested route editor');
+ assert.equal(dialog().querySelector('[name="title"]').value,'Debug待补参数路线');
+ await fill('description','应保留的输入');
+ await act(async()=>window.dispatchEvent(new dom.window.StorageEvent('storage',{key:'chuanheng-drafts'})));
+ assert.equal(dialog().querySelector('[name="description"]').value,'应保留的输入');
+ await click(button('取消',dialog()));assert.equal(dialog(),null);
+ await act(async()=>window.dispatchEvent(new dom.window.StorageEvent('storage',{key:'chuanheng-drafts'})));assert.equal(dialog(),null);
+});
+test('route edit requests reject missing, archived and demo routes, and other sections never edit arbitrary routes',async()=>{
+ localStorage.clear();localStorage.setItem('chuanheng-drafts',JSON.stringify([{id:'archived-deep',kind:'route',payload:{title:'归档路线',archived:true}},{id:'demo-deep',kind:'route',payload:{title:'示例路线',isDemo:true}}]));
+ for(const [url,message] of [['/admin/routes?preview=1&edit=missing-deep',/不存在/],['/admin/routes?preview=1&edit=archived-deep',/归档/],['/admin/routes?preview=1&edit=demo-deep',/示例/]]){
+  await mount(url);await waitFor(()=>message.test(text(container)),'invalid route request notice');assert.equal(dialog(),null);
+ }
+ await mount('/admin/activities?preview=1&edit=archived-deep');assert.equal(dialog(),null);
+});
+
+test('a second route edit URL cannot replace an open form or lose unsaved text',async()=>{
+ localStorage.clear();localStorage.setItem('chuanheng-drafts',JSON.stringify(['one','two'].map(id=>({id,kind:'route',payload:{title:`路线${id}`,distance:1,ascent:null}}))));
+ await mount('/admin/routes?preview=1&edit=one');await waitFor(()=>dialog(),'first requested route');await fill('description','尚未保存的说明');
+ await act(async()=>navigateWithinTest('/admin/routes?preview=1&edit=two'));
+ assert.equal(dialog().querySelector('[name="title"]').value,'路线one');assert.equal(dialog().querySelector('[name="description"]').value,'尚未保存的说明');
+ assert.match(text(dialog()),/请先保存或关闭编辑器/);
+ await click(button('取消',dialog()));assert.equal(dialog(),null);
+ await act(async()=>navigateWithinTest('/admin/routes?preview=1&edit=two'));
+ await waitFor(()=>dialog(),'explicit second route request after closing');assert.equal(dialog().querySelector('[name="title"]').value,'路线two');
 });

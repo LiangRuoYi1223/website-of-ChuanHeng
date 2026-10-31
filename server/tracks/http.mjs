@@ -35,7 +35,7 @@ export function isLoopbackHost(hostname) {
   return String(hostname || '').toLowerCase() === 'localhost' || isLoopbackAddress(hostname);
 }
 
-function configuration(env) {
+export function getAuthConfiguration(env) {
   const key = String(env?.SUPABASE_PUBLISHABLE_KEY || '').trim();
   const source = String(env?.SUPABASE_URL || '').trim();
   if (!/^sb_publishable_[A-Za-z0-9_-]+$/.test(key)) return null;
@@ -52,7 +52,7 @@ function cancelReader(reader, reason) {
 
 // The byte budget applies while streaming, before multipart or JSON parsing.
 // Never trust Content-Length as an allocation size or as evidence of body size.
-async function readBounded(stream, limit, code, message, status = 413, signal) {
+export async function readBounded(stream, limit, code, message, status = 413, signal) {
   if (!stream) return new Uint8Array();
   const reader = stream.getReader();
   const onAbort = () => cancelReader(reader, 'read deadline exceeded');
@@ -80,7 +80,7 @@ async function readBounded(stream, limit, code, message, status = 413, signal) {
   }
 }
 
-async function verifyUser(request, config, options) {
+export async function verifyUser(request, config, options = {}) {
   const bearer = /^Bearer\s+([^\s,]+)$/i.exec(request.headers.get('authorization') || '')?.[1];
   if (!bearer || bearer.length > 8192) throw new TrackError('AUTH_REQUIRED', '请先登录领队或管理员账号。', 401);
   const controller = new AbortController();
@@ -96,7 +96,7 @@ async function verifyUser(request, config, options) {
     }, timeoutMs);
   });
   try {
-    await Promise.race([timeout, (async () => {
+    return await Promise.race([timeout, (async () => {
       const response = await (options.fetchImpl || fetch)(config.url, {
         method: 'GET',
         headers: { apikey: config.key, authorization: `Bearer ${bearer}`, accept: 'application/json' },
@@ -134,9 +134,10 @@ async function verifyUser(request, config, options) {
       let user;
       try { user = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); }
       catch { throw new TrackError('AUTH_UNAVAILABLE', '身份服务返回了无效数据，请稍后重试。', 503); }
-      if (typeof user?.id !== 'string' || !user.id || !['leader', 'admin'].includes(user?.app_metadata?.role)) {
-        throw new TrackError('FORBIDDEN', '只有已授权的领队或管理员可以转换轨迹。', 403);
+      if (typeof user?.id !== 'string' || !user.id || !(options.allowedRoles || ['leader', 'admin']).includes(user?.app_metadata?.role)) {
+        throw new TrackError('FORBIDDEN', options.forbiddenMessage || '只有已授权的领队或管理员可以转换轨迹。', 403);
       }
+      return user;
     })()]);
   } catch (error) {
     if (error instanceof TrackError) throw error;
@@ -144,7 +145,7 @@ async function verifyUser(request, config, options) {
   } finally { clearTimeout(timer); }
 }
 
-function requireSameOrigin(request, url) {
+export function requireSameOrigin(request, url) {
   if (request.headers.get('origin') !== url.origin || request.headers.get('sec-fetch-site')?.toLowerCase() === 'cross-site') {
     throw new TrackError('INVALID_ORIGIN', '请从本站页面提交轨迹文件。', 403);
   }
@@ -193,7 +194,7 @@ async function readUpload(request) {
 export async function handleTrackRequest(request, env = {}, options = {}) {
   const url = new URL(request.url);
   if (url.pathname !== '/api' && !url.pathname.startsWith('/api/')) return null;
-  const config = configuration(env);
+  const config = getAuthConfiguration(env);
   const localPreview = options.localPreview === true && isLoopbackHost(url.hostname);
   if (url.pathname === '/api/tracks/status') {
     if (request.method !== 'GET') return jsonResponse({ error: { code: 'METHOD_NOT_ALLOWED', message: '此接口仅支持 GET。' } }, 405, { allow: 'GET' });

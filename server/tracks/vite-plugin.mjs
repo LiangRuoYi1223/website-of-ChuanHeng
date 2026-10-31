@@ -1,5 +1,6 @@
 import { handleTrackRequest, isLoopbackAddress, isLoopbackHost, jsonResponse, trackErrorResponse } from './http.mjs';
 import { TrackError } from './parse.mjs';
+import { handleCoverRequest } from '../covers/http.mjs';
 
 export function isLocalPreviewRequest(request, explicitlyEnabled) {
   if (explicitlyEnabled !== true || !isLoopbackAddress(request.socket?.localAddress) || !isLoopbackAddress(request.socket?.remoteAddress)) return false;
@@ -46,6 +47,7 @@ function incomingBody(incoming) {
 }
 
 export function tracksVitePlugin(options = {}) {
+  let localImages;
   const install = server => {
     server.middlewares.use(async (incoming, outgoing, next) => {
       const pathname = String(incoming.url || '').split('?')[0];
@@ -65,7 +67,13 @@ export function tracksVitePlugin(options = {}) {
           init.duplex = 'half';
         }
         const request = new Request(requestUrl(incoming), init);
-        const result = await handleTrackRequest(request, options.env || process.env, {
+        const env = options.env || { ...process.env, SUPABASE_URL: process.env.SUPABASE_URL || server.config?.env?.VITE_SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY || server.config?.env?.VITE_SUPABASE_PUBLISHABLE_KEY };
+        let coverResponse;
+        if (pathname === '/api/covers/process') {
+          localImages ||= import('../covers/local-images.mjs').then(module => module.createLocalImageBinding());
+          coverResponse = await handleCoverRequest(request, env, { fetchImpl: options.fetchImpl || fetch, images: await localImages });
+        }
+        const result = coverResponse || await handleTrackRequest(request, env, {
           localPreview: isLocalPreviewRequest(incoming, options.localPreview),
           fetchImpl: options.fetchImpl || fetch,
           authTimeoutMs: options.authTimeoutMs,

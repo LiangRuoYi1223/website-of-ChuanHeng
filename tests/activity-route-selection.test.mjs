@@ -177,3 +177,10 @@ test('clearing a selected route restores local-only legacy summary without readi
   assert.equal(payload.distance, 1); assert.equal(payload.ascent, 10); assert.deepEqual(payload.coordinates, [104, 30]);
   assert.equal(payload.province, '四川省'); assert.equal(payload.city, '成都市'); assert.equal(payload.trackLocalId, 'old-local'); assert.deepEqual(payload.trackSummary, summary);
 });
+
+
+test('manual route supplements snapshot with provenance while unknown metrics stay null',()=>{
+ const imported=track(null,null);imported.manualMetrics={source:'administrator',confirmedAt:now,ascentM:0};
+ const result=row(save([route('r',{track:imported})],activity())).payload;
+ assert.equal(result.distance,null);assert.equal(result.ascent,0);assert.equal(result.routeSnapshot.track.stats.ascentM,null);assert.deepEqual(result.routeSnapshot.track.manualMetrics,imported.manualMetrics);
+});

@@ -1,11 +1,14 @@
 # SQL 隔离验证与最小生产迁移
 
-## 新增活动时间与路线快照迁移
+## 当前迁移链：活动时间、路线快照与补充指标
 
-已应用 `20261031131635_activity_route_scheduling`。`node --test scripts/validate-activity-route-sql.mjs` 直接加载实际迁移链，默认 PG18；设置 `SQL_TEST_ENGINE=pg17` 后运行 PG17。两者各 22/22 通过，覆盖旧数据/私有 sentinel、角色、时间窗口、快照冻结、直接 DML 引用保护、过期编辑拒绝、删除事务、旧轨迹回退和 Storage restrictive 策略（含已有 broad policy 组合）。
+已应用 `20261031131635_activity_route_scheduling` 与 `20261031142417_route_manual_metrics_and_cover_limit`。`node --test scripts/validate-activity-route-sql.mjs` 按文件名排序直接加载实际迁移链，默认 PG18；设置 `SQL_TEST_ENGINE=pg17` 后运行 PG17。两者各 **27/27 通过**，覆盖旧数据/私有 sentinel、角色、时间窗口、快照冻结、直接 DML 引用保护、过期编辑拒绝、删除事务、旧轨迹回退和 Storage restrictive 策略（含已有 broad policy 组合）。
 
-生产 migration 前后现有内容/报名哈希一致；对现有活动的受信保存验证以事务回滚。没有保存合成正式内容或图片。PGlite 的 Storage 表为隔离 stub，不能证明真实文件上传服务、网络失败或多连接竞争；封面客户端另有文件类型/大小、管理员、上传失败和忙碌状态的自动测试。下方保留早期初始化迁移的独立验证记录。
+新增验证还覆盖：`resolve_route_track_metrics` 对原始统计与管理员补充的优先级、真实零值、未知值 `null`、来源/确认时间/非法数字校验、直接路线 DML 拒绝无效补充，以及活动快照冻结。新迁移仅将封面 bucket 上限改为 3 MiB，不改写现有内容、历史快照或 Storage 对象，保留原策略与允许的 MIME 类型。
 
+生产迁移前后现有 content_items=2、applications=0，完整行哈希一致；对现有活动的受信保存验证以事务回滚，没有保存合成正式内容或图片。PGlite 的 Storage 表为隔离 stub，不能证明真实文件上传服务、网络失败或多连接竞争。封面客户端、服务端鉴权/限额/失败处理另有自动测试，原生 Images binding 及实际云端转换均已验证；实际用户照片的 Storage 持久化上传仍待验收。下方保留早期初始化迁移的独立验证记录。
+
+## 早期初始化迁移验证记录
 
 验证日期：2026-10-31。验证对象为 `docs/supabase-schema.sql` 与 `docs/route-deduplication.sql`。隔离测试只建立内存 PGlite，不读取生产密钥、不连接 Supabase、不写云端。
 
@@ -55,7 +58,7 @@ PGlite 只有单独占用的数据库连接，不能证明两个生产连接之�
 
 ## 已完成的生产迁移与后续复核
 
-生产迁移 `20261031074956_chuanheng_v1_content_and_tracks` 已成功应用。新表均 0 行，RLS/FORCE RLS、四个 invoker 函数及匿名禁执行已核验；匿名内容 REST 为 200 空列表，报名表为 401；advisors 无新对象告警。旧 `chuanheng` 对象与数据保持原状。细节见 [生产交接](PRODUCTION-HANDOFF.md)。
+初次生产迁移 `20261031074956_chuanheng_v1_content_and_tracks` 成功时，新表均 0 行，RLS/FORCE RLS、四个 invoker 函数及匿名禁执行已核验；当时匿名内容 REST 为 200 空列表、报名表为 401。当前三份迁移均已应用，现有管理员内容保留，最新核验结果见 [生产交接](PRODUCTION-HANDOFF.md)。Advisors 无新增对象告警；旧 `chuanheng` 对象与数据保持原状。
 
 1. 现存生产对象已经创建，不得重跑两份初始化 SQL 的 CREATE 或重复应用同一迁移。后续变化先核对现存定义、版本、编码和 locale，再准备针对性迁移。
 2. 初始表/RLS 和路线 RPC 已作为同一迁移应用。不要为填充空站导入旧示例，不修改旧私有表。后续迁移保持事务完整性，不留下表成功、函数失败的半安装状态。
@@ -63,4 +66,4 @@ PGlite 只有单独占用的数据库连接，不能证明两个生产连接之�
 4. 安装后检查 catalog 中的策略/授权与函数定义；使用真实游客、成员、管理员令牌验证公开读取、报名拒绝和管理 RPC。管理员身份从受信 `app_metadata.role=admin` 取得，不沿用前端或 `user_metadata` 自报角色。
 5. 用两个隔离连接验证 RPC 表锁竞争整体失败、无部分写入；核对生产 Unicode 分组和时区。生产验证可以在事务内使用测试记录后回滚，不能把测试行混入正式内容。最后运行 Supabase advisors 并复核 API 结果。
 
-Cloudflare 已部署版本 `9c159570-c589-4813-9dfb-6f819479d40e`，公网 HTTP 验收通过；邮件回跳、首位管理员赋权及真实账户流程仍待完成。
+当前 Cloudflare Worker 版本为 `bc4bdf05-7663-471e-ba69-a0ab6b06d1a4`，100% 流量运行此版本。首位测试管理员已确认邮件、受信赋权并通过真实登录；邮件回跳管理配置、实机视觉、真实内容持久化及多连接竞争仍按生产交接继续验收。

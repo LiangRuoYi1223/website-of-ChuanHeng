@@ -26,7 +26,7 @@ const mockBackend = {
   },
   from(table) {
     assert.equal(table, 'content_items');
-    return { select: () => ({ order: async () => ({ data: structuredClone(controller.rows), error: null }) }) };
+    return { select: () => ({ order: async () => {if(controller.readGate)await controller.readGate;return { data: structuredClone(controller.rows), error: null };} }) };
   },
   async rpc(name, args) {
     controller.calls.push({ name, args: structuredClone(args) });
@@ -174,4 +174,17 @@ test('changing a legacy public time, first enabling booking or first publishing 
   await click(button('保存内容'));
   assert.equal(controller.calls.length, 0, 'first publication requires the activity interval');
   assert.match(text(container), /活动开始和结束时间/);
+});
+
+test('cloud route deep link waits for verified administrator content read before resolving target',async()=>{
+ controller.rows=[{id:'delayed-route',kind:'route',published:false,payload:{title:'等待读取后打开的路线',distance:1,ascent:null}}];
+ let release;controller.readGate=new Promise(resolve=>{release=resolve});
+ try{
+  await mount('/admin/routes?edit=delayed-route');
+  await waitFor(()=>text(container).includes('正在读取内容'),'pending cloud read');
+  assert.equal(container.querySelector('[role="dialog"]'),null);assert.doesNotMatch(text(container),/请求编辑的路线不存在/);
+  await act(async()=>{release();controller.readGate=null;});
+  await waitFor(()=>container.querySelector('[role="dialog"]'),'deep link after cloud read');
+  assert.equal(container.querySelector('[name="title"]').value,'等待读取后打开的路线');
+ }finally{release();controller.readGate=null;}
 });

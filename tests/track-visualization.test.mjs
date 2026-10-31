@@ -279,3 +279,14 @@ test('a segment without elevation receives its own missing-data state and no inv
   assert.match(html, /本段未提供海拔数据/);
   assert.equal([...html.matchAll(/<svg\b[^>]*aria-label="[^"]*海拔剖面"/g)].length, 1);
 });
+
+test('track summary and segment distance/ascent use unavailable text while real zero stays visible',async()=>{
+ const track=completeTrack();track.stats.distanceM=null;track.stats.ascentM=null;
+ track.segments[0].stats.distanceM=null;track.segments[0].stats.ascentM=null;
+ track.segments[1].stats.distanceM=0;track.segments[1].stats.ascentM=0;
+ const html=await renderTrack(track);
+ const stats=[...html.matchAll(/<dl class="tv-statistics[^\"]*">([\s\S]*?)<\/dl>/g)].map(match=>match[1]);
+ assert.equal(stats.length,3);
+ for(const block of stats.slice(0,2))assert.equal((block.match(/暂不提供数据/g)||[]).length,2);
+ assert.match(stats[2],/0 km/);assert.match(stats[2],/0 m/);assert.doesNotMatch(stats[2],/暂不提供数据/);
+});

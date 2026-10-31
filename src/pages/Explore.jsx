@@ -23,8 +23,8 @@ function ImageNote({ item, className = 'explore-image-label', children = 'AI 示
 
 const choices = (data, key) => [...new Set(data.map(item => item[key]).filter(Boolean))];
 const numberOf = value => Number.parseFloat(String(value ?? '').replace(/,/g, '')) || 0;
-const distanceOf = item => typeof item.distance === 'number' && Number.isFinite(item.distance) ? `${Number(item.distance.toFixed(2))} km` : (item.distance || '待确认');
-const ascentOf = item => typeof item.ascent === 'number' && Number.isFinite(item.ascent) ? `${Number(item.ascent.toFixed(1))} m` : (item.ascent || '海拔未提供');
+const distanceOf = item => typeof item.distance === 'number' && Number.isFinite(item.distance) ? `${Number(item.distance.toFixed(2))} km` : (item.distance || '暂不提供数据');
+const ascentOf = item => typeof item.ascent === 'number' && Number.isFinite(item.ascent) ? `${Number(item.ascent.toFixed(1))} m` : (item.ascent || '暂不提供数据');
 const matches = (item, query) => `${item.title} ${item.location ?? ''} ${item.description ?? ''}`.toLowerCase().includes(query.trim().toLowerCase());
 
 function SearchField({ value, onChange, placeholder = '搜索名称、地区或关键词' }) {

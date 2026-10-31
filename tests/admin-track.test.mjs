@@ -179,12 +179,9 @@ test('activity editor exposes separate route/date fields and track-derived read-
 
   assert.match(html, /历史轨迹/);
   assert.doesNotMatch(html, /name="published"/);
-  const distance = html.match(/<input\b(?=[^>]*name="distance")[^>]*>/)[0];
-  const ascent = html.match(/<input\b(?=[^>]*name="ascent")[^>]*>/)[0];
-  assert.match(distance, /readonly=/i);
-  assert.match(distance, /value="2\.35"/);
-  assert.match(ascent, /readonly=/i);
-  assert.match(ascent, /value=""/);
+  assert.doesNotMatch(html, /name="(?:distance|ascent)"/);
+  assert.match(html, /<dd>2\.35<\/dd>/);
+  assert.match(html, /暂不提供数据/);
   assert.doesNotMatch(html, /name="includeFootprint"/, 'automatic activity footprints must not require another settings toggle');
 });
 
@@ -195,4 +192,16 @@ test('activity editor blocks saving while the original IndexedDB track has not b
   const button = [...html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)].find(match => match[2].includes('保存本地草稿'));
   assert.ok(button);
   assert.match(button[1], /disabled=""/);
+});
+
+
+test('manual missing metrics survive route preparation and local summary without altering parser output',async()=>{
+  const track=imported({manualMetrics:{source:'administrator',confirmedAt:'2026-10-31T00:00:00Z',ascentM:0}});
+  const result=await prepareRouteTrackPayload({},track,{local:true,storeTrack:async()=> 'manual'});
+  assert.equal(result.ascent,0);assert.equal(result.trackSummary.manualMetrics.ascentM,0);assert.equal(result.trackSummary.stats.ascentM,null);
+});
+test('Debug exposes only actual active routes with missing metrics and offers route editing',()=>{
+  const rows=[{id:'r-missing',kind:'route',payload:{title:'实际待补路线',track:imported()}},{id:'r-demo',kind:'route',payload:{title:'示例排除',isDemo:true}},{id:'r-archived',kind:'route',payload:{title:'归档排除',archived:true}}];
+  const html=renderToStaticMarkup(createElement(StaticRouter,{},createElement(DebugPanel,{groups:[],rows,local:true,busy:false})));
+  assert.match(html,/路线参数待补/);assert.match(html,/实际待补路线/);assert.match(html,/edit=r-missing/);assert.doesNotMatch(html,/示例排除|归档排除/);
 });

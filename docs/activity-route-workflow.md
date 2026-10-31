@@ -2,7 +2,7 @@
 
 ## 当前流程（2026-10-31）
 
-已应用针对性迁移 `20261031131635_activity_route_scheduling`。GPX/KML 的唯一上传界面是后台路线管理，旧 `/routes/import` 地址跳转到该界面。先新建路线、上传轨迹并保存，再在活动编辑器选择路线；活动不再上传轨迹或自动新增路线。
+已应用针对性迁移 `20261031131635_activity_route_scheduling` 与 `20261031142417_route_manual_metrics_and_cover_limit`。GPX/KML 的唯一上传界面是后台路线管理，旧 `/routes/import` 地址跳转到该界面。先新建路线、上传轨迹并保存，再在活动编辑器选择路线；活动不再上传轨迹或自动新增路线。
 
 `save_activity_with_route(activity_record jsonb)` 原子保存活动，首次选择或改选路线时由服务端生成 `payload.routeSnapshot`。同一路线的后续普通编辑保留快照；路线之后修改不会回写历史活动。旧活动自带轨迹、原自动路线及去重审计保留，清空关联时从原始旧轨迹恢复参数。前台以快照优先、旧轨迹兼容的顺序展示地图和海拔。
 
@@ -10,9 +10,13 @@
 
 四时间为 `registrationStart`、`registrationDeadline`、`dateStart`、`dateEnd`。输入按本地时区转换为 ISO，前台按北京时间展示；新公开活动起止必填，开启报名要求 `报名开启 < 报名截止 ≤ 活动开始 < 活动结束`。前台及数据库同时判断窗口。截止后可编辑历史内容；旧记录缺失时间不补造，未修改时间的旧记录可保留原字段。
 
-活动封面独立上传 JPEG、PNG、WebP 至 `activity-covers`，最大 5 MiB；使用管理员本人目录和随机新文件名，不覆盖或自动删除历史图片。首页、列表及详情共用封面降级逻辑：缺图或坏图显示带 AI 标识的示意图，示意图也失败则显示中性占位。里程最多两位小数，未知海拔明确显示未提供。
+活动封面支持不超过 3 MiB 的 JPEG、PNG、WebP 原图。`POST /api/covers/process` 在同源请求、真实管理员身份、文件体积/格式/像素与处理时限校验后，通过 Images binding 按比例转成最长边不超过 1920 像素、质量 80 的 WebP，并移除图片元数据。客户端只上传成功处理的结果至 `activity-covers`，服务失败不回退原图。使用管理员本人目录和随机新文件名，不覆盖或自动删除历史图片；存储仍只允许管理员本人目录 INSERT/SELECT，容量上限 3 MiB。首页、列表及详情共用封面降级逻辑：缺图或坏图显示带 AI 标识的示意图，示意图也失败则显示中性占位。
 
-本地纯事务为 `src/tracks/activity-route-selection.js`。隔离 SQL 验证命令 `node --test scripts/validate-activity-route-sql.mjs`，`SQL_TEST_ENGINE=pg17` 选择另一引擎；双引擎各 22/22。云端旧活动保存事务验证后回滚，内容与报名哈希保持不变。真实封面文件上传及实机视觉仍待用户照片验收，不发布合成协会记录。
+里程与累计爬升优先读取 `track.stats`。路线上传后缺失的项目会弹窗提示：管理员可补充缺失值、跳过或取消本次导入；已自动识别的项目不能覆盖。补充仅写入独立的 `track.manualMetrics`，包含 `source:'administrator'` 与 ISO 确认时间；原统计、逐点海拔和剖面保持不变。有效值优先级为自动统计 → 合法管理员补充 → 未提供，真实 0 值有效。数据库同步校验来源、时间和非负有限数字，防止直接 DML 绕过。
+
+跳过补充时，未知里程或爬升显示“暂不提供数据”，不填零。Debug 列出仍有缺失项的路线，并提供路线编辑入口。活动编辑器只读展示所选路线的有效指标，不提供里程/爬升输入；首次选择或改选路线时，把当时指标及来源一起保存到活动快照。之后补充或修改路线不会改变已有活动的历史快照。
+
+本地纯事务为 `src/tracks/activity-route-selection.js`，指标解析为 `src/tracks/metrics.js`。隔离 SQL 验证命令 `node --test scripts/validate-activity-route-sql.mjs`，`SQL_TEST_ENGINE=pg17` 选择另一引擎；双引擎各 27/27。云端旧活动保存事务验证后回滚；最新迁移与检查前后内容及报名哈希保持不变，封面对象数仍为 0。真实云端压缩已 HTTP 200 验证，但未将合成图片写入 Storage。真实用户封面 Storage 上传、实机视觉及多连接竞争仍待验收，不发布合成协会记录。
 
 以下旧流程保留为数据兼容性记录，不是新建活动的上传指引。
 
@@ -87,9 +91,9 @@ published = false
 
 活动的 `routeId` 从失败者重定向胜出者，活动自有轨迹不删除。已去重归档的自动路线后续只沿 `duplicateWinnerId` 链找到当前胜出者，不新增同名替身，也不覆写胜出者。链失效或成环则拒绝保存，要求人工检查。归档失败者不会再次出现在 Debug 重复组中。
 
-## 已应用的云端原子 RPC
+## 早期云端原子 RPC（兼容性记录）
 
-三个 RPC 均使用 `SECURITY INVOKER`、固定 `search_path`、服务器受信 `app_metadata.role=admin` 与非空 `auth.uid()` 检查。普通登录用户有函数 EXECUTE 权限并不意味着有业务操作权限；函数内部与现有 RLS 都会拒绝非管理员。没有使用 `user_metadata`、service key 或 SECURITY DEFINER 绕过。
+下方保留最初的三个 RPC 定义背景；现行活动保存使用上文 `save_activity_with_route`，旧 `save_activity_with_track` 已撤销站点调用权。三个早期 RPC 均使用 `SECURITY INVOKER`、固定 `search_path`、服务器受信 `app_metadata.role=admin` 与非空 `auth.uid()` 检查。普通登录用户有函数 EXECUTE 权限并不意味着有业务操作权限；函数内部与现有 RLS 都会拒绝非管理员。没有使用 `user_metadata`、service key 或 SECURITY DEFINER 绕过。
 
 - `resolve_route_duplicates(route_ids uuid[], keep_id uuid) returns jsonb`：返回 `{winnerId, archivedIds, resolution}`，原子归档失败路线、重定向活动和记录审计。
 - `save_activity_with_track(activity_record jsonb) returns jsonb`：输入完整活动行，返回 `{activity,route}`，无当前关联路线时 `route=null`。验证 `kind='activity'`，确认现存 ID 为活动，再原子保存活动与其 UUID 自动路线。云端必须提供完整 `payload.track`；浏览器 `trackLocalId` 不能代替服务器可读取的轨迹。
@@ -107,4 +111,4 @@ PostgreSQL `normalize` 依赖 UTF8；`lower` 使用数据库 locale。生产应�
 
 本地测试覆盖自动关联和更新、文件命名优先级、不同活动同文件名、IndexedDB 引用摘要、空海拔、移除轨迹、共享路线保留、Unicode 分组、全组过期拒绝、审计与重定向、输入不变、归档不再提示、后续保存不复活失败者、失效/循环去重链与 ID 冲突，以及原 owner 更新/移除/删除时胜出者冻结、活动删除后路线归档、路线引用拒删。
 
-SQL 已在隔离 PGlite 中实际安装并用 `SET ROLE` 验证游客、成员、伪造 `user_metadata`、领队、管理员的权限，以及完整保存/去重/删除和事务失败回滚。生产已核验迁移、RLS/函数授权、匿名 REST 与 advisors；真实用户 JWT、管理员写入和并发锁竞争尚待交接验收。可复现步骤与修复记录见 [SQL 隔离验证](supabase-sql-validation.md)。
+上述旧流程已在隔离 PGlite 中实际安装并用 `SET ROLE` 验证游客、成员、伪造 `user_metadata`、领队、管理员的权限，以及保存/去重/删除和事务失败回滚。现行流程已另外核验真实管理员 JWT、现有活动保存回滚、迁移、RLS/函数授权、匿名 REST 与 advisors；持久化真实内容、Storage 用户照片上传和多连接锁竞争仍待验收。可复现步骤与修复记录见 [SQL 隔离验证](supabase-sql-validation.md)。

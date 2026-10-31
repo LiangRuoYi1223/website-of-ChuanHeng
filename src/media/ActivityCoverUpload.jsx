@@ -34,7 +34,7 @@ export default function ActivityCoverUpload({ initialValue = '', onBusyChange, d
       {imageURL && !broken ? <img src={imageURL} alt="活动封面预览" onError={() => setBroken(true)} /> : <div className="activity-cover-empty"><ImagePlus size={28} aria-hidden="true" /><span>{broken ? '封面暂时无法显示，请重新上传' : '尚未设置活动封面'}</span></div>}
     </div>
     <div className="activity-cover-controls">
-      <div><strong>活动封面</strong><p>JPEG、PNG 或 WebP，最多 {local ? '1' : '5'} MiB。{local ? '图片仅保存在当前浏览器草稿。' : '上传完成后保存活动即可使用。'}</p></div>
+      <div><strong>活动封面</strong><p>JPEG、PNG 或 WebP，最多 {local ? '1' : '3'} MiB。{local ? '图片仅保存在当前浏览器草稿。' : '后端自动压缩并移除图片元数据，上传完成后保存活动即可使用。'}</p></div>
       <button type="button" className="btn" disabled={disabled || busy} onClick={() => input.current?.click()}>{busy ? '正在上传…' : imageURL ? '更换封面' : '上传封面'}</button>
       <input ref={input} id={inputId} className="activity-cover-file" aria-label="活动封面文件" type="file" accept="image/jpeg,image/png,image/webp" disabled={disabled || busy} onChange={event => { upload(event.target.files?.[0]); event.target.value = ''; }} />
       {imageURL && <button type="button" className="activity-cover-remove" disabled={disabled || busy} onClick={() => { setImageURL(''); setBroken(false); setError(''); }}>移除封面</button>}

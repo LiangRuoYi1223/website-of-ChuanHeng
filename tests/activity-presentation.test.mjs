@@ -4,12 +4,12 @@ import { formatActivityDistance, formatActivityAscent, resolveActivityView } fro
 
 test('public distance rounds imported decimals and does not expose missing values as zero', () => {
   for (const [value, expected] of [[12.808831394, '12.81km'], [12, '12km'], [0, '0km'], [1.2, '1.2km']]) assert.equal(formatActivityDistance(value).replace(/\s/g, ''), expected);
-  for (const value of [null, undefined, '', ' ', NaN, Infinity, 'unknown']) assert.equal(formatActivityDistance(value), '里程未提供');
+  for (const value of [null, undefined, '', ' ', NaN, Infinity, 'unknown']) assert.equal(formatActivityDistance(value), '暂不提供数据');
 });
 
 test('public ascent distinguishes measured zero from unknown elevation and rounds to one decimal', () => {
   for (const [value, expected] of [[0, '0m'], [432.186, '432.2m'], [432, '432m']]) assert.equal(formatActivityAscent(value).replace(/\s/g, ''), expected);
-  for (const value of [null, undefined, '', ' ', NaN, Infinity, 'unknown']) assert.equal(formatActivityAscent(value), '海拔未提供');
+  for (const value of [null, undefined, '', ' ', NaN, Infinity, 'unknown']) assert.equal(formatActivityAscent(value), '暂不提供数据');
 });
 
 test('frozen route data overrides conflicting legacy own track without replacing activity identity or schedules', () => {

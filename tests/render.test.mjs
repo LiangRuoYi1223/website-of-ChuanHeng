@@ -202,3 +202,21 @@ test('all rendered static media and CSS image/font paths exist in public', async
   }
   t.diagnostic(`${rendered.size} route renders exercised ${assetPaths.size} nonempty local media/font resources.`);
 });
+
+
+test('home featured route uses unavailable metric text, preserves zero, and rounds known values',()=>{
+ const featured=routes[0];const original={distance:featured.distance,ascent:featured.ascent};
+ const homeStats=()=>{
+  const html=renderToStaticMarkup(createElement(StaticRouter,{location:'/'},createElement(CatalogProvider,null,createElement(App))));
+  return html.match(/<div class="route-feature-stats">([\s\S]*?)<small class="image-credit">/)[1];
+ };
+ try{
+  for(const value of [null,undefined,NaN,-1]){
+   featured.distance=value;featured.ascent=value;const stats=homeStats();
+   assert.equal((stats.match(/暂不提供数据/g)||[]).length,2);assert.doesNotMatch(stats,/—|NaN|暂不提供数据(?:<[^>]+>)* ?(?:km|m)/);
+   assert.equal((stats.match(/class="route-feature-unavailable"/g)||[]).length,2);
+  }
+  featured.distance=0;featured.ascent=0;let stats=homeStats();assert.match(textContent(stats),/0 km/);assert.match(textContent(stats),/0 m/);assert.doesNotMatch(stats,/暂不提供数据/);
+  featured.distance=12.345678;featured.ascent=123.456789;stats=homeStats();assert.match(textContent(stats),/12\.35 km/);assert.match(textContent(stats),/123\.5 m/);
+ }finally{Object.assign(featured,original);}
+});

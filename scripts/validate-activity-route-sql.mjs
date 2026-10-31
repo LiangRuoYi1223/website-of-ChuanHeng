@@ -49,7 +49,7 @@ before(async () => {
     alter table storage.objects enable row level security;
     grant select,insert,update,delete on storage.objects to anon,authenticated;`);
   const files = (await readdir(new URL('supabase/migrations/',root))).filter(f=>f.endsWith('.sql')).sort();
-  assert.ok(files.length >= 2, 'new CLI-generated migration must exist');
+  assert.ok(files.length >= 3, 'new CLI-generated migration must exist');
   await db.exec(await readFile(new URL(`supabase/migrations/${files[0]}`,root),'utf8'));
   // Existing public data must survive installation byte-for-byte, too.
   await insert(activity(800,{ track, dateStart: 'old date', registrationOpen: true, registrationDeadline: 'bad date' },true));
@@ -58,12 +58,33 @@ before(async () => {
     if(n===801) native.location={coordinates:[101,25],province:'来源A省',city:'来源A市',locations:[{province:'来源A省',city:'来源A市'}],locationStatus:'matched'};
     await insert(activity(n,{track:native,distance:1,ascent:null,coordinates:[101,25],province:'来源A省',city:'来源A市',location:'来源A市',dateStart:'2020-01-01T00:00:00Z'}));
   }
+  for(const n of [803,804,805]) {
+    const native={...track,stats:{distanceM:null,ascentM:null}};
+    if(n!==803) native.manualMetrics={source:n===804?'administrator':'untrusted',confirmedAt:'2026-10-31T10:00:00Z',distanceM:1200,ascentM:0};
+    await insert(activity(n,{track:native,distance:999,ascent:999}));
+  }
+  // Opaque historical snapshot must not be normalized by a later migration.
+  await insert(activity(806,{routeSnapshot:{track:{stats:{distanceM:null}},distance:null,ascent:null,selectedAt:'old'}}));
   const before = await get(800);
+  const historicalSnapshot=await get(806);
+  let oldBucket, oldPolicies, oldObject;
   for (const file of files.slice(1)) {
     try { await db.exec(await readFile(new URL(`supabase/migrations/${file}`,root),'utf8')); }
     catch (error) { throw new Error(`${file}: ${error.code}: ${error.message}; position=${error.position}; context=${error.where || ''}`); }
+    if(file.includes('_activity_route_scheduling.sql')) {
+      await q("insert into storage.objects(bucket_id,name) values('activity-covers','historical/keep-original.webp')");
+      oldObject=await q('select * from storage.objects');
+      oldBucket=(await q("select * from storage.buckets where id='activity-covers'"))[0];
+      oldPolicies=await q("select * from pg_policies where schemaname='storage' order by policyname");
+    }
   }
   assert.deepEqual(await get(800),before);
+  assert.deepEqual(await get(806),historicalSnapshot);
+  assert.deepEqual(await q('select * from storage.objects'),oldObject);
+  assert.deepEqual((await q("select * from storage.buckets where id='activity-covers'"))[0],{...oldBucket,file_size_limit:3145728});
+  assert.deepEqual(await q("select * from pg_policies where schemaname='storage' order by policyname"),oldPolicies);
+  // Remove this isolated fixture after proving the migration preserved it.
+  await q("delete from storage.objects where name='historical/keep-original.webp'");
   await q('insert into auth.users values($1),($2)',[admin.sub,member.sub]);
   console.log('Isolated engine:', await val('select version() as value'));
 });
@@ -239,7 +260,7 @@ test('late SQL constraint rolls activity back without route writes',async()=>{
 
 test('activity covers bucket restricts uploads and own metadata to verified admin UUID folder',async()=>{
   const bucket=(await q("select * from storage.buckets where id='activity-covers'"))[0];
-  assert.equal(bucket.public,true);assert.equal(Number(bucket.file_size_limit),5242880);
+  assert.equal(bucket.public,true);assert.equal(Number(bucket.file_size_limit),3145728);
   assert.deepEqual(bucket.allowed_mime_types,['image/jpeg','image/png','image/webp']);
   const upload=name=>q("insert into storage.objects(bucket_id,name) values('activity-covers',$1)",[name]);
   await identity(admin,async()=>{
@@ -334,5 +355,62 @@ test('clearing selected snapshot rederives legacy 1km source A instead of retain
     assert.equal(cleared.payload.cityCode,undefined);
     assert.equal(cleared.payload.provinceCode,undefined);
     assert.ok(!JSON.stringify(cleared.payload).includes('来源B'));
+  }
+}));
+
+
+const manual = (values={}) => ({source:'administrator',confirmedAt:'2026-10-31T12:00:00.000Z',...values});
+test('manual metrics fill missing raw only, preserve raw and source in frozen snapshots',async()=>identity(admin,async()=>{
+  const t={...track,stats:{distanceM:null,ascentM:null},manualMetrics:manual({distanceM:0,ascentM:120})};
+  const r={...route(10),payload:{...route(10).payload,track:t,distance:999,ascent:999}};await insert(r);
+  const a=(await save({...activity(11,{routeId:r.id}),routeExpectedPayload:r.payload})).activity;
+  assert.equal(a.payload.distance,0);assert.equal(a.payload.ascent,120);
+  assert.deepEqual(a.payload.routeSnapshot.track,t);
+  assert.deepEqual(a.payload.routeSnapshot.metricSources,{distance:'administrator',ascent:'administrator'});
+  await q("update public.content_items set payload=jsonb_set(payload,'{track,manualMetrics,ascentM}','200') where id=$1",[r.id]);
+  const unchanged=(await save(edit(a,{description:'history'}))).activity;
+  assert.deepEqual(unchanged.payload.routeSnapshot,a.payload.routeSnapshot);
+  const current=await get(10);const b=(await save({...activity(12,{routeId:r.id}),routeExpectedPayload:current.payload})).activity;
+  assert.equal(b.payload.ascent,200);assert.equal(b.payload.routeSnapshot.track.stats.ascentM,null);
+}));
+
+test('unknown metrics remain null and raw zero has track provenance',async()=>identity(admin,async()=>{
+  for(const [n,stats] of [[10,{distanceM:null,ascentM:null}],[20,{distanceM:0,ascentM:0}]]) {
+    const r={...route(n),payload:{...route(n).payload,track:{...track,stats}}};await insert(r);
+    const a=(await save({...activity(n+1,{routeId:r.id}),routeExpectedPayload:r.payload})).activity;
+    assert.equal(a.payload.distance,n===10?null:0);assert.equal(a.payload.ascent,n===10?null:0);
+    assert.deepEqual(a.payload.routeSnapshot.metricSources,{distance:n===10?'unavailable':'track',ascent:n===10?'unavailable':'track'});
+  }
+}));
+
+test('direct route DML rejects manual overrides and malformed metadata or metrics',async()=>identity(admin,async()=>{
+  const invalid=[manual({distanceM:1}),manual({ascentM:-1}),manual({ascentM:'NaN'}),manual({ascentM:'Infinity'}),manual({ascentM:'1'}),manual({ascentM:true}),manual({ascentM:{}}),manual({ascentM:[]}),manual({source:'user',ascentM:1}),manual({confirmedAt:'invalid',ascentM:1}),manual({confirmedAt:'2026-10-31',ascentM:1}),manual({confirmedAt:'2026-02-31T10:00:00Z',ascentM:1}),manual({confirmedAt:null,ascentM:1}),{ascentM:1},[],false];
+  for(const m of invalid) {
+    const r={...route(10),payload:{...route(10).payload,track:{...track,manualMetrics:m}}};
+    await fails(()=>insert(r),/MANUAL/);
+  }
+  const enormous='{"stats":{},"manualMetrics":{"source":"administrator","confirmedAt":"2026-10-31T10:00:00Z","distanceM":1e400}}';
+  await fails(()=>q("insert into public.content_items(id,kind,payload) values($1,'route',jsonb_build_object('track',$2::jsonb))",[uuid(10),enormous]),/MANUAL/);
+  await insert(route(10));
+  await fails(()=>q("update public.content_items set payload=jsonb_set(payload,'{track,manualMetrics}',$2) where id=$1",[uuid(10),manual({distanceM:0})]),/MANUAL/);
+}));
+
+test('metric helper enforces raw priority and invalid manual validation consistently',async()=>{
+  const resolved=await val('select public.resolve_route_track_metrics($1) as value',[{stats:{distanceM:2300,ascentM:null},manualMetrics:manual({ascentM:0})}]);
+  assert.deepEqual(resolved,{distanceM:2300,ascentM:0,sources:{distance:'track',ascent:'administrator'}});
+  for(const bad of ['1',-1,true,'NaN','Infinity']) await fails(()=>val('select public.resolve_route_track_metrics($1) as value',[{stats:{},manualMetrics:manual({distanceM:bad})}]),/MANUAL/);
+});
+
+
+test('clearing selection restores only legal legacy raw or manual metrics, never snapshot values or fabricated zero',async()=>identity(admin,async()=>{
+  const r=route(10);await insert(r);
+  for(const n of [803,804,805]) {
+    const old=await get(n);
+    const selected=(await save({...edit(old,{routeId:r.id}),routeExpectedPayload:r.payload})).activity;
+    const cleared=(await save(edit(selected,{routeId:''}))).activity;
+    assert.deepEqual(cleared.payload.track,old.payload.track);
+    assert.equal(cleared.payload.distance,n===804?1.2:null);
+    assert.equal(cleared.payload.ascent,n===804?0:null);
+    assert.deepEqual(cleared.payload.metricSources,{distance:n===804?'administrator':'unavailable',ascent:n===804?'administrator':'unavailable'});
   }
 }));

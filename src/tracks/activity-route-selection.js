@@ -1,3 +1,4 @@
+import { resolvedTrackMetrics, validateManualTrackMetrics } from './metrics.js';
 const own = (value, key) => Object.hasOwn(value || {}, key);
 const fail = (code, message) => { const error = new Error(message); error.code = code; throw error; };
 const trackFields = ['track', 'trackLocalId', 'trackSummary'];
@@ -13,8 +14,10 @@ function trackInformation(payload) {
   const inline = object(payload.track) ? payload.track : null;
   const localId = typeof payload.trackLocalId === 'string' && payload.trackLocalId.trim() ? payload.trackLocalId : null;
   const summary = inline || (localId && object(payload.trackSummary) ? payload.trackSummary : null);
-  const stats = summary?.stats || summary;
-  if (!summary || !Number.isFinite(stats?.distanceM) || stats.distanceM < 0 || (stats.ascentM != null && (!Number.isFinite(stats.ascentM) || stats.ascentM < 0))) fail('INVALID_TRACK', '路线轨迹或统计未就绪，请先在路线管理中检查。');
+  validateManualTrackMetrics(summary);
+  const stats = resolvedTrackMetrics(summary);
+  const raw = summary?.stats || summary;
+  if (!summary || ['distanceM','ascentM'].some(key=>raw?.[key]!=null&&(!Number.isFinite(raw[key])||raw[key]<0))) fail('INVALID_TRACK', '路线轨迹或统计未就绪，请先在路线管理中检查。');
   let first;
   if (inline) {
     const geometry = inline.geojson?.geometry;
@@ -23,7 +26,7 @@ function trackInformation(payload) {
     first = segments[0][0];
   }
   const point = [payload.coordinates, summary.coordinates, summary.location?.coordinates, first].find(coordinate);
-  return { inline, localId, distance: stats.distanceM / 1000, ascent: stats.ascentM ?? null, coordinates: point ? point.slice(0, 2) : null };
+  return { inline, localId, distance: stats.distanceM===null?null:stats.distanceM / 1000, ascent: stats.ascentM, coordinates: point ? point.slice(0, 2) : null };
 }
 
 function snapshotOf(route, now) {

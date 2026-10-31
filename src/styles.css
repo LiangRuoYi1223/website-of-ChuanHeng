@@ -11,3 +11,8 @@
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}.hero-image{transform:none}}
 .brand .official-badge{width:44px;height:44px;object-fit:contain;border-radius:50%;background:#fff;flex-shrink:0;filter:none}.brand--footer{align-items:center;gap:15px}.brand--footer .official-badge{width:96px;height:96px}.brand--footer strong{font-size:25px}.hero-image{object-position:center 48%}
 @media(max-width:700px){.brand .official-badge{width:36px;height:36px}.brand--footer .official-badge{width:88px;height:88px}.hero-image{object-position:66% center}}
+
+.route-feature-stats strong.route-feature-unavailable{font-size:14px;line-height:2.4;white-space:nowrap}
+@media(max-width:700px){.route-feature-stats{right:25px;gap:clamp(12px,4vw,28px);justify-content:space-between}.route-feature-stats strong.route-feature-unavailable{font-size:clamp(11px,3.2vw,13px)}}
+
+.home-activity-card .card-metrics{flex-wrap:wrap;row-gap:6px}.home-activity-card .round-arrow{flex-shrink:0;margin-left:8px}

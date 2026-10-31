@@ -5,6 +5,7 @@ import { activities, routes as sampleRoutes, photos, articles } from '../data.js
 import { ButtonLink, EmptyState } from '../ui.jsx';
 import { supabase, isBackendConfigured, backendConfigurationError } from '../backend.js';
 import TrackUpload from '../tracks/TrackUpload.jsx';
+import { resolvedTrackMetrics, validateManualTrackMetrics } from '../tracks/metrics.js';
 import ActivityCoverUpload from '../media/ActivityCoverUpload.jsx';
 import { getLocalTrack, putLocalTrack } from '../tracks/track-store.js';
 import { deleteContentWithLinks, findDuplicateRoutes, resolveDuplicateRoutes } from '../tracks/activity-workflow.js';
@@ -85,10 +86,10 @@ export async function prepareRouteTrackPayload(source, track, { local = false, s
     for (const key of ['trackSummary', 'coordinates', 'province', 'city', 'adcode', 'locations', 'locationStatus']) delete payload[key];
     return payload;
   }
-  const distance = track?.stats?.distanceM;
-  const ascent = track?.stats?.ascentM;
-  if (!Number.isFinite(distance) || distance < 0 || (ascent !== null && (!Number.isFinite(ascent) || ascent < 0))) throw new Error('轨迹统计无效，请重新解析文件后保存。');
-  payload.distance = distance / 1000;
+  validateManualTrackMetrics(track);
+  const {distanceM:distance,ascentM:ascent} = resolvedTrackMetrics(track);
+  if (['distanceM','ascentM'].some(key=>track.stats?.[key]!=null&&(!Number.isFinite(track.stats[key])||track.stats[key]<0))) throw new Error('轨迹统计无效，请重新解析文件后保存。');
+  payload.distance = distance===null?null:distance / 1000;
   payload.ascent = ascent;
   const location = track.location && typeof track.location === 'object' ? track.location : {};
   const first = track.geojson?.geometry?.coordinates?.find(segment => segment?.length)?.[0];
@@ -100,7 +101,7 @@ export async function prepareRouteTrackPayload(source, track, { local = false, s
   payload.locationStatus = location.locationStatus || 'unmatched';
   const label = trackLocationLabel(location);
   if (label) payload.location = label;
-  payload.trackSummary = { name: track.name, stats: track.stats, location, coordinates: payload.coordinates, pointCount: track.pointCount, segmentCount: track.segmentCount };
+  payload.trackSummary = { name: track.name, stats: track.stats, manualMetrics: track.manualMetrics, location, coordinates: payload.coordinates, pointCount: track.pointCount, segmentCount: track.segmentCount };
   if (local) {
     const id = await storeTrack(track);
     if (typeof id !== 'string' || !id) throw new Error('轨迹未能保存到此浏览器，请重试。');
@@ -194,6 +195,8 @@ export function AdminPage() {
   const allowed = local ? auth.status === 'preview' : auth.status === 'admin';
   const [drafts, setDrafts] = useState(readDrafts);
   const [cloudRows, setCloudRows] = useState([]);
+  const [loadedCloudVersion,setLoadedCloudVersion]=useState(null);
+  const handledRouteRequests=useRef(new Set());
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [refresh, setRefresh] = useState(0);
@@ -235,12 +238,25 @@ export function AdminPage() {
       if (!alive) return;
       setLoading(false);
       if (fetchError) { setCloudRows([]); setLoadError('内容读取失败。请检查数据表、RLS 权限与网络连接。'); }
-      else setCloudRows(data || []);
+      else {setCloudRows(data || []);setLoadedCloudVersion(`${auth.user?.id || ''}:${refresh}`);}
     }).catch(() => { if (alive) { setLoading(false); setLoadError('无法连接内容服务，请稍后重试。'); } });
     return () => { alive = false; };
   }, [auth.status, refresh, local]);
 
   const rows = local ? drafts : cloudRows;
+  const requestedRouteId=new URLSearchParams(location.search).get('edit');
+  useEffect(()=>{
+    if(section!=='routes'||!requestedRouteId||!allowed||showSamples||(!local&&(loading||loadError||loadedCloudVersion!==`${auth.user?.id || ''}:${refresh}`)))return;
+    const requestKey=`${location.key}:${requestedRouteId}`;
+    if(handledRouteRequests.current.has(requestKey))return;
+    handledRouteRequests.current.add(requestKey);
+    if(editor){setError('当前编辑内容尚未关闭，已保留填写内容。请先保存或关闭编辑器，再重新打开所需路线。');return;}
+    const row=rows.find(item=>item.id===requestedRouteId&&item.kind==='route');
+    if(!row){setError('请求编辑的路线不存在或已删除，请核对路线列表。');return;}
+    if(row.payload?.archived){setError('请求编辑的路线已归档，不能编辑。');return;}
+    if(row.isDemo||row.payload?.isDemo){setError('示例路线不可作为真实路线编辑，请选择已有真实路线。');return;}
+    setError('');setEditor(structuredClone(row));
+  },[section,requestedRouteId,allowed,showSamples,local,loading,loadError,loadedCloudVersion,auth.user?.id,refresh,location.key,editor,rows]);
   const duplicates = findDuplicateRoutes(rows);
   const locationIssueCount = rows.filter(row => activityLocationIssue(row)).length;
   const samples = Object.entries(SAMPLE_GROUPS).flatMap(([sampleKind, records]) => records.filter(row => row.isDemo === true).map(row => ({ id: `example-${sampleKind}-${row.id}`, kind: sampleKind, payload: { ...row, type: row.type || row.category || KIND_NAMES[sampleKind] }, published: false, created_at: null, isDemo: true })));
@@ -436,6 +452,11 @@ export function DebugPanel({ groups, rows, local, busy, resolvingGroup, loading 
   const history = rows.filter(row => row.kind === 'route').flatMap(row => (Array.isArray(row.payload?.duplicateResolutions) ? row.payload.duplicateResolutions : []).map((entry, index) => ({ ...entry, routeTitle: row.payload.title, id: `${row.id}-${index}` })));
   const locationIssues = rows.map(activityLocationIssue).filter(Boolean);
   const metric = (value, unit) => Number.isFinite(value) ? `${Number(value.toFixed(2)).toLocaleString('zh-CN')} ${unit}` : '未提供';
+  const metricIssues=rows.filter(row=>row.kind==='route'&&!row.isDemo&&!row.payload?.isDemo&&!row.payload?.archived).map(row=>{
+    const track=row.payload.track||row.payload.trackSummary;
+    const metrics=track?resolvedTrackMetrics(track):{distanceM:Number.isFinite(row.payload.distance)?row.payload.distance*1000:null,ascentM:Number.isFinite(row.payload.ascent)?row.payload.ascent:null};
+    return {row,missing:[metrics.distanceM===null?'里程':null,metrics.ascentM===null?'累计爬升':null].filter(Boolean)};
+  }).filter(item=>item.missing.length);
   return <section className="admin-debug" aria-labelledby="admin-debug-title"><header className="admin-debug-intro"><div><span className="admin-small-label">内容检查</span><h2 id="admin-debug-title" ref={heading} tabIndex={-1}>重名路线 Debug</h2><p>核对每条路线的来源、轨迹统计与关联活动，再选择要保留的版本。其他版本会归档，活动会转向保留路线。</p></div><span className="admin-debug-count">{groups.length}<small>组待检查</small></span></header>{groups.length ? <div className="admin-debug-groups">{groups.map((group, groupIndex) => {
     const selected = selections[group.key] || '';
     const validSelection = group.routes.some(row => row.id === selected);
@@ -445,7 +466,7 @@ export function DebugPanel({ groups, rows, local, busy, resolvingGroup, loading 
       const linked = rows.filter(activity => activity.kind === 'activity' && activity.payload?.routeId === row.id && !activity.payload?.archived);
       return <label className={`admin-debug-option ${selected === row.id ? 'is-selected' : ''}`} key={row.id}><input type="radio" name={`keep-route-${groupIndex}`} value={row.id} checked={selected === row.id} onChange={() => setSelections(current => ({ ...current, [group.key]: row.id }))} /><div className="admin-debug-option-body"><div className="admin-debug-option-title"><strong>{payload.title}</strong><span>{row.published ? '已发布' : '草稿'}</span></div><div className="admin-debug-metadata"><span>来源：{payload.source || payload.track?.sourceFile || '未注明'}</span><span>创建：{dateLabel(row.created_at)}</span><span>里程：{metric(Number.isFinite(payload.distance) ? payload.distance : Number.isFinite(stats.distanceM) ? stats.distanceM / 1000 : null, 'km')}</span><span>爬升：{metric(Number.isFinite(payload.ascent) ? payload.ascent : stats.ascentM, 'm')}</span></div><p className="admin-debug-linked">关联活动 {linked.length} 场{linked.length > 0 && <span>：{linked.map(activity => activity.payload.title).join('、')}</span>}</p><small className="admin-debug-record-id">记录 {row.id}</small></div><span className="admin-debug-keep-label">{selected === row.id ? '将保留' : '选择保留'}</span></label>;
     })}</fieldset><div className="admin-debug-group-footer"><span>归档保留原记录及处理日志，不会删除轨迹。</span><button type="button" className="admin-btn primary" disabled={busy || !validSelection} onClick={async () => { const saved = await onResolve(group, selected); if (saved) heading.current?.focus(); }}><Check size={15} />{resolvingGroup === group.key ? '正在整理…' : '保留所选并归档其他版本'}</button></div></section>;
-  })}</div> : <section className="admin-panel"><EmptyState title={loading ? '正在检查路线内容' : '暂未发现重名路线'} description={loading ? '正在读取已有路线与活动关联。' : '活动关联路线保存后，重名版本会在这里供你检查。'} /></section>}<section className="admin-debug-locations" aria-labelledby="debug-locations-title"><header><div><h3 id="debug-locations-title">活动地点待核实</h3><p>显示轨迹识别结果。未识别的省市保持空缺，请核对源轨迹和地点资料。</p></div><span>{locationIssues.length} 场</span></header>{locationIssues.length ? <div>{locationIssues.map(({ row, location }) => <article key={row.id}><div><div className="admin-debug-location-title"><h4>{row.payload.title}</h4><span>{location.locationStatus === 'partial' ? '部分地点待核实' : '地点尚未识别'}</span></div><dl><div><dt>识别省份</dt><dd>{location.province || '未识别'}</dd></div><div><dt>识别城市</dt><dd>{location.city || '未识别'}</dd></div></dl>{Array.isArray(location.locations) && location.locations.length > 0 && <p className="admin-debug-segment-places">{location.locations.map((place, index) => `第 ${(place.segmentIndex ?? index) + 1} 段：${[place.province, place.city].filter(Boolean).join(' · ') || '地点未识别'}`).join('；')}</p>}<small>活动日期：{row.payload.dateStart || row.payload.date || '未填写'}{location.source ? ` · 来源：${location.source}` : ''}</small></div>{onEditActivity && <button type="button" className="admin-btn" disabled={busy} onClick={() => onEditActivity(row)} aria-label={`编辑活动${row.payload.title}`}><Pencil size={14} />编辑活动</button>}</article>)}</div> : <p className="admin-debug-location-empty">{loading ? '正在读取轨迹地点信息…' : '目前没有待核实的轨迹地点记录。'}</p>}</section><aside className="admin-debug-footprint-note"><ShieldCheck size={19} aria-hidden="true" /><div><h3>足迹由活动轨迹生成</h3><p>{local ? '在路线管理中上传轨迹，再由活动选择路线、填写活动时间，自动显示在本地足迹预览。草稿仍只保留在此浏览器。' : '公开足迹只收录已发布、已结束且有有效轨迹的川衡活动。请在活动管理中维护记录。'}</p><Link to={local ? '/admin/activities?preview=1' : '/admin/activities'}>前往活动管理<ArrowRight size={14} /></Link></div></aside>{history.length > 0 && <details className="admin-debug-history"><summary>路线整理记录 <span>{history.length}</span></summary><div>{history.slice().reverse().map(entry => <article key={entry.id}><strong>{entry.routeTitle}</strong><p>保留 {entry.winnerId} · 原组 {Array.isArray(entry.originalIds) ? entry.originalIds.length : '—'} 条</p><small>{dateLabel(entry.at)} · {entry.actorId || '未记录操作者'}</small></article>)}</div></details>}</section>;
+  })}</div> : <section className="admin-panel"><EmptyState title={loading ? '正在检查路线内容' : '暂未发现重名路线'} description={loading ? '正在读取已有路线与活动关联。' : '活动关联路线保存后，重名版本会在这里供你检查。'} /></section>}<section className="admin-debug-locations" aria-labelledby="debug-locations-title"><header><div><h3 id="debug-locations-title">活动地点待核实</h3><p>显示轨迹识别结果。未识别的省市保持空缺，请核对源轨迹和地点资料。</p></div><span>{locationIssues.length} 场</span></header>{locationIssues.length ? <div>{locationIssues.map(({ row, location }) => <article key={row.id}><div><div className="admin-debug-location-title"><h4>{row.payload.title}</h4><span>{location.locationStatus === 'partial' ? '部分地点待核实' : '地点尚未识别'}</span></div><dl><div><dt>识别省份</dt><dd>{location.province || '未识别'}</dd></div><div><dt>识别城市</dt><dd>{location.city || '未识别'}</dd></div></dl>{Array.isArray(location.locations) && location.locations.length > 0 && <p className="admin-debug-segment-places">{location.locations.map((place, index) => `第 ${(place.segmentIndex ?? index) + 1} 段：${[place.province, place.city].filter(Boolean).join(' · ') || '地点未识别'}`).join('；')}</p>}<small>活动日期：{row.payload.dateStart || row.payload.date || '未填写'}{location.source ? ` · 来源：${location.source}` : ''}</small></div>{onEditActivity && <button type="button" className="admin-btn" disabled={busy} onClick={() => onEditActivity(row)} aria-label={`编辑活动${row.payload.title}`}><Pencil size={14} />编辑活动</button>}</article>)}</div> : <p className="admin-debug-location-empty">{loading ? '正在读取轨迹地点信息…' : '目前没有待核实的轨迹地点记录。'}</p>}</section><section className="admin-debug-locations" aria-labelledby="debug-metrics-title"><header><div><h3 id="debug-metrics-title">路线参数待补</h3><p>请管理员前往路线管理补充缺失指标；补充前公开显示“暂不提供数据”。</p></div><span>{metricIssues.length} 条</span></header>{metricIssues.length?metricIssues.map(({row,missing})=><article key={row.id}><div><h4>{row.payload.title}</h4><p>待补：{missing.join('、')}</p></div><Link className="admin-btn" to={`/admin/routes?${local?'preview=1&':''}edit=${encodeURIComponent(row.id)}`}>编辑路线</Link></article>):<p className="admin-debug-location-empty">目前没有待补路线参数。</p>}</section><aside className="admin-debug-footprint-note"><ShieldCheck size={19} aria-hidden="true" /><div><h3>足迹由活动轨迹生成</h3><p>{local ? '在路线管理中上传轨迹，再由活动选择路线、填写活动时间，自动显示在本地足迹预览。草稿仍只保留在此浏览器。' : '公开足迹只收录已发布、已结束且有有效轨迹的川衡活动。请在活动管理中维护记录。'}</p><Link to={local ? '/admin/activities?preview=1' : '/admin/activities'}>前往活动管理<ArrowRight size={14} /></Link></div></aside>{history.length > 0 && <details className="admin-debug-history"><summary>路线整理记录 <span>{history.length}</span></summary><div>{history.slice().reverse().map(entry => <article key={entry.id}><strong>{entry.routeTitle}</strong><p>保留 {entry.winnerId} · 原组 {Array.isArray(entry.originalIds) ? entry.originalIds.length : '—'} 条</p><small>{dateLabel(entry.at)} · {entry.actorId || '未记录操作者'}</small></article>)}</div></details>}</section>;
 }
 
 export function ContentEditor({ editor, rows = [], onRefreshRoutes = () => {}, routesLoading = false, routesError = '', local, busy, error, onSave, onClose }) {
@@ -507,6 +528,7 @@ export function ContentEditor({ editor, rows = [], onRefreshRoutes = () => {}, r
     document.body.style.overflow = 'hidden';
     dialog.current?.querySelector('input')?.focus();
     const keydown = event => {
+      if (event.defaultPrevented) return;
       if (event.key === 'Escape') closeRef.current();
       if (event.key !== 'Tab') return;
       const elements = [...dialog.current.querySelectorAll('a[href], input, textarea, select, button, [tabindex]')].filter(element => !element.disabled && element.tabIndex >= 0 && element.getClientRects().length > 0 && !element.closest('[aria-hidden="true"]'));
@@ -546,11 +568,14 @@ export function ContentEditor({ editor, rows = [], onRefreshRoutes = () => {}, r
 function ContentFields({ editor, track, routeData, trackBlocked = false, activityStatus, onStatusChange }) {
   const { kind, payload } = editor;
   const activityMetrics = routeData || (payload.routeSnapshot ? {} : payload);
+  const effective=resolvedTrackMetrics(track);
+  const activityDistance=Object.hasOwn(activityMetrics,'distance')?activityMetrics.distance:effective.distanceM===null?null:effective.distanceM/1000;
+  const activityAscent=Object.hasOwn(activityMetrics,'ascent')?activityMetrics.ascent:effective.ascentM;
   const detectedLocation = kind === 'activity' ? activityMetrics.location || trackLocationLabel(track?.location) || '' : '';
   return <>
     {['activity', 'route'].includes(kind) && <>
       <div className="admin-field-grid"><label>目的地<input key={detectedLocation || 'manual-location'} name="location" defaultValue={kind === 'activity' ? detectedLocation : payload.location || ''} readOnly={kind === 'activity' || Boolean(detectedLocation)} maxLength={100} placeholder="例如：广东 · 深圳" />{detectedLocation && <small>来自轨迹地点识别</small>}</label><label>难度<select name="difficulty" defaultValue={payload.difficulty || '入门'}><option>入门</option><option>进阶</option><option>挑战</option></select></label></div>
-      {kind === 'activity' ? <div className="admin-field-grid admin-track-metrics"><label>里程（km）<input name="distance" type="number" value={activityMetrics.distance ?? (track?.stats?.distanceM != null ? track.stats.distanceM / 1000 : '')} readOnly /><small>来自所选路线或历史轨迹</small></label><label>累计爬升（m）<input name="ascent" type="number" value={activityMetrics.ascent ?? track?.stats?.ascentM ?? ''} readOnly placeholder="海拔未知" /></label></div> : track ? <div className="admin-field-grid admin-track-metrics" key="track-metrics"><label>里程（km）<input name="distance" type="number" step="any" value={Number.isFinite(track.stats?.distanceM) ? track.stats.distanceM / 1000 : ''} readOnly /><small>使用轨迹解析结果</small></label><label>累计爬升（m）<input name="ascent" type="number" step="any" value={Number.isFinite(track.stats?.ascentM) ? track.stats.ascentM : ''} placeholder="源文件未提供" readOnly /><small>{track.stats?.ascentM === null ? '海拔信息不足，保留未知' : '使用轨迹解析结果'}</small></label></div> : <div className="admin-field-grid" key="manual-metrics"><label>里程（km）<input name="distance" type="number" min="0" max="100000" step="any" defaultValue={payload.distance ?? 0} disabled={trackBlocked} /></label><label>累计爬升（m）<input name="ascent" type="number" min="0" max="100000" step="any" defaultValue={payload.ascent ?? ''} disabled={trackBlocked} /></label></div>}
+      {kind === 'activity' ? <dl className="admin-field-grid admin-track-metrics"><div><dt>里程（km）</dt><dd>{Number.isFinite(activityDistance)?activityDistance:'暂不提供数据'}</dd></div><div><dt>累计爬升（m）</dt><dd>{Number.isFinite(activityAscent)?activityAscent:'暂不提供数据'}</dd></div><small>来自所选路线或历史轨迹；参数请在路线管理维护。</small></dl> : track ? <div className="admin-field-grid admin-track-metrics" key="track-metrics"><label>里程（km）<input name="distance" type="number" step="any" value={Number.isFinite(effective.distanceM) ? effective.distanceM / 1000 : ''} readOnly /><small>{effective.sources.distance==='administrator'?'管理员补充':effective.sources.distance==='track'?'轨迹自动计算':'暂不提供数据'}</small></label><label>累计爬升（m）<input name="ascent" type="number" step="any" value={Number.isFinite(effective.ascentM) ? effective.ascentM : ''} placeholder="源文件未提供" readOnly /><small>{effective.sources.ascent==='administrator'?'管理员补充；原海拔数据保留':effective.sources.ascent==='track'?'轨迹自动计算':'暂不提供数据'}</small></label></div> : <div className="admin-field-grid" key="manual-metrics"><label>里程（km）<input name="distance" type="number" min="0" max="100000" step="any" defaultValue={payload.distance ?? 0} disabled={trackBlocked} /></label><label>累计爬升（m）<input name="ascent" type="number" min="0" max="100000" step="any" defaultValue={payload.ascent ?? ''} disabled={trackBlocked} /></label></div>}
     </>}
     {kind === 'activity' && <>
       <div className="admin-field-grid"><label>活动开始时间<input name="dateStart" type="datetime-local" defaultValue={toLocalDateTime(payload.dateStart)} />{/^\d{4}-\d{2}-\d{2}$/.test(payload.dateStart || '') && <small>原记录日期：{payload.dateStart}，具体时刻未知，留空保留原日期。</small>}</label><label>活动结束时间<input name="dateEnd" type="datetime-local" defaultValue={toLocalDateTime(payload.dateEnd)} /></label></div>
