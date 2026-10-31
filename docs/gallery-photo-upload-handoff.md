@@ -54,3 +54,7 @@ docs/superpowers/plans/2026-10-31-gallery-photo-upload.md
 在原目录仅提交上述清单，再将该提交合入活动报名独立分支。重点核对 `src/pages/Admin.jsx` 的 import、图片组件、保存校验、imageBusy 文案及既有项目入口删除，保留另一分支报名容量、双击名单和日志功能；SQL 验证脚本若双方都修改，保留两组新增测试及影像策略过滤。
 
 统一测试、双 PostgreSQL、构建与 Worker 打包通过后，再应用报名迁移与 `20261031155945_gallery_photo_upload.sql`，核验 Storage bucket 上限 3145728/仅 WebP 和管理员本人目录策略；最后统一发布。本聊天已完成独立实现，源码写入停止后会在 commentary 明确说明。
+
+## 统一发布补记（2026-11-01）
+
+原清单已独立提交为0801739，与报名功能合并为ee4b978；不丢弃原KML计划文件。Storage迁移按真实远端版本更名为 `20261031163336_gallery_photo_upload.sql`，报名迁移为 `20261031163237_activity_registration_management.sql`，两者均已应用。统一421/421网站测试、双PG各30/30、正式构建和Worker打包通过，生产版本dd8eaa85-3f13-4b4f-858d-8d138e69cfb2。线上入口资源哈希一致；未把合成图片写入Storage，真实照片持久化仍未宣称验收。

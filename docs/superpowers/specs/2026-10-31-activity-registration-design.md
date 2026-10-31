@@ -29,7 +29,7 @@ Event={id,action:'registered'|'withdrawn'|'rejoined'|'payment_changed'|'capacity
 沿用public.applications，不重建、不删除历史报名；新增状态和排序列、独立追加事件表。普通用户不能伪造时间、队列、付款或日志。优先SECURITY INVOKER；如为本人匿名汇总跨越RLS确有必要，可用非暴露private schema中的最小SECURITY DEFINER助手，限定执行授权、固定search_path、验证身份、只返回本人及汇总，禁止通用提权。日志写入同样必须由受控触发器完成。完整角色及直接DML攻击用隔离数据库测试。
 
 ## 文件分工
-数据库代理仅写新迁移supabase/migrations/20261031153410_activity_registration_management.sql及新隔离SQL验证脚本；不应用生产迁移。
+数据库代理仅写新迁移supabase/migrations/20261031163237_activity_registration_management.sql及新隔离SQL验证脚本；不应用生产迁移。
 会员页面代理写src/applications/registration.js、ActivityApplication.jsx、application.css、tests/applications.test.mjs及独立新会员DOM测试；不改生产综合DOM测试。
 管理员页面代理写src/applications/ActivityRegistrationAdmin.jsx、admin-registration.js、admin-registration.css及独立新DOM/服务测试；不改Admin.jsx。
 主代理写Admin.jsx接入、名额字段、综合测试兼容、文档及最终集成。

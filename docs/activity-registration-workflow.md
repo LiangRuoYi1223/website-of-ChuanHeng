@@ -24,3 +24,11 @@ public.applications沿用原记录，新增registration_status、registered_at�
 - scripts/validate-registration-sql.mjs与原validate-activity-route-sql.mjs在隔离PG17/PG18运行完整迁移链，覆盖队列、重报、日志、旧值冲突、匿名Auth、直接DML、伪造权限、名额清空和旧记录保留。
 - 本地浏览器合成数据视觉验收不会写入生产。
 - 尚未以两个真实数据库连接实测锁等待竞争，也未连接真实支付或自动调整。
+
+## 正式发布记录（北京时间2026-11-01）
+
+已应用迁移 `20261031163237_activity_registration_management`，与影像迁移 `20261031163336_gallery_photo_upload` 统一上线。Cloudflare版本 `dd8eaa85-3f13-4b4f-858d-8d138e69cfb2`。
+
+统一网站421/421测试通过，PG17和PG18各30/30通过；真实Edge桌面/390px合成数据交互及生产构建、Worker无Node外部依赖打包通过。现有2条内容、1条报名的原字段哈希与迁移前一致，原报名时间保留；生产照片对象数未因验证增加。线上主JS/CSS与本地构建SHA-256一致；匿名照片处理和后台名单RPC均HTTP401。
+
+线上权限已核验authenticated无registration_events的INSERT/UPDATE/DELETE/TRUNCATE，日志只由受控业务触发器追加。没有新安全advisors告警，原项目提醒保持原样。真实支付、自动缴费、真实多连接竞争和真实照片Storage上传未据此宣称验收。旧活动的未知名额仍须管理员填写；旧日志不补造。

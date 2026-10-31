@@ -21,7 +21,7 @@
 
 ## 发布与验收边界
 
-迁移：`supabase/migrations/20261031155945_gallery_photo_upload.sql`，由 Supabase CLI 创建。仅增加专用 bucket 和策略，不修改旧私有数据、活动、报名或原有对象。与活动报名功能统一整合后再应用生产迁移和发布。
+迁移：`supabase/migrations/20261031163336_gallery_photo_upload.sql`，由 Supabase CLI 创建。仅增加专用 bucket 和策略，不修改旧私有数据、活动、报名或原有对象。已于北京时间2026-11-01与活动报名功能统一迁移并发布。
 
 本次不上传合成协会记录，不使用真实照片做云端存储测试。自动测试、真实本地图像解码/压缩、隔离 PostgreSQL 权限验证、Worker 打包和浏览器检查应分别记录，不能据此宣称云端真实上传已验收。
 
