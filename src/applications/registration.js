@@ -41,11 +41,14 @@ async function verifyIdentity(client, expectedUserId) {
   return user;
 }
 
-function validState(state, userId) {
+export function validRegistrationState(state, userId) {
   const count = value => Number.isInteger(value) && value >= 0;
   if (!state || !(state.capacity === null || (Number.isInteger(state.capacity) && state.capacity > 0 && state.capacity <= 100000)) || !['activeCount','confirmedCount','waitlistCount'].every(key => count(state[key])) || typeof state.canWithdraw !== 'boolean') return false;
+  if (state.canSubmitPaymentProof !== undefined && typeof state.canSubmitPaymentProof !== 'boolean') return false;
   const app = state.application;
-  return app === null || Boolean(app && typeof app.id === 'string' && app.id && app.userId === userId && ['active','withdrawn'].includes(app.status) && ['paid','unpaid'].includes(app.paymentStatus) && ['confirmed','waitlisted','withdrawn','unconfirmed'].includes(app.selectionStatus) && (app.position === null || (Number.isInteger(app.position) && app.position > 0)));
+  const proofPath = /^[0-9a-f-]{36}\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.webp$/i;
+  if (app?.paymentProofs !== undefined && (!Array.isArray(app.paymentProofs) || !app.paymentProofs.every(proof => proof && typeof proof.id === 'string' && proof.id && typeof proof.objectPath === 'string' && proofPath.test(proof.objectPath) && typeof proof.submittedAt === 'string' && Number.isFinite(Date.parse(proof.submittedAt))))) return false;
+  return app === null || Boolean(app && typeof app.id === 'string' && app.id && app.userId === userId && ['active','withdrawn'].includes(app.status) && ['paid','pending','unpaid'].includes(app.paymentStatus) && ['confirmed','waitlisted','withdrawn','unconfirmed'].includes(app.selectionStatus) && (app.position === null || (Number.isInteger(app.position) && app.position > 0)));
 }
 
 async function requestState(client, rpc, activityId, userId, message) {
@@ -55,7 +58,7 @@ async function requestState(client, rpc, activityId, userId, message) {
   if (rpc === 'register_activity' || rpc === 'withdraw_activity_registration') args.p_expected_user_id = userId;
   try { result = await client.rpc(rpc, args); }
   catch { fail('REGISTRATION_FAILED', message); }
-  if (result?.error || !validState(result?.data, userId)) fail('REGISTRATION_FAILED', message);
+  if (result?.error || !validRegistrationState(result?.data, userId)) fail('REGISTRATION_FAILED', message);
   const expectedStatus = rpc === 'register_activity' ? 'active' : rpc === 'withdraw_activity_registration' ? 'withdrawn' : null;
   if (expectedStatus && result.data.application?.status !== expectedStatus) fail('REGISTRATION_FAILED', message);
   return result.data;

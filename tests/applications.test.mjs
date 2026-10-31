@@ -64,3 +64,13 @@ test('withdraw binds the verified identity even if transport session switches be
  await assert.rejects(()=>service.withdrawActivityRegistration(backend,'activity',{expectedUserId:user.id}),error=>error.code==='REGISTRATION_FAILED');
  assert.equal(captured.p_expected_user_id,user.id,'server must receive original verified account to reject switched session');
 });
+
+
+test('pending proof state is retained and malformed proof metadata is rejected',async()=>{
+ const proof={id:'00000000-0000-4000-8000-000000000001',objectPath:'00000000-0000-4000-8000-000000000002/00000000-0000-4000-8000-000000000003/00000000-0000-4000-8000-000000000004.webp',submittedAt:'2026-11-01T00:00:00Z'};
+ const pending={...state,canSubmitPaymentProof:false,application:{...application,paymentStatus:'pending',paymentProofs:[proof],currentPaymentProofId:proof.id}};
+ assert.deepEqual(await service.readActivityRegistration(client({data:pending}),'activity',user.id),pending);
+ for(const paymentProofs of [[{...proof,objectPath:'https://outside.invalid/image'}],[{...proof,submittedAt:'bad'}],'bad']){
+  await assert.rejects(()=>service.readActivityRegistration(client({data:{...pending,application:{...pending.application,paymentProofs}}}),'activity',user.id));
+ }
+});

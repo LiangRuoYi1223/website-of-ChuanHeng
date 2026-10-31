@@ -9,6 +9,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const dom=new JSDOM('<div id="app"></div>',{url:'https://frontend.invalid/activities/test',pretendToBeVisual:true});
 for(const key of ['window','document','navigator','HTMLElement','Event','MouseEvent']) Object.defineProperty(globalThis,key,{value:key==='window'?dom.window:key==='document'?dom.window.document:key==='navigator'?dom.window.navigator:dom.window[key],configurable:true});
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+dom.window.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};
+dom.window.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
+globalThis.__MEMBER_PROOF_UPLOAD=async()=>{throw new Error('not configured')};
 const {createRoot}=await import('react-dom/client');
 const {MemoryRouter}=await import('react-router-dom');
 const member={id:'member',email:'member@example.invalid'};
@@ -17,7 +20,7 @@ const initial={capacity:5,activeCount:10,confirmedCount:5,waitlistCount:5,canWit
 const controller={state:initial,user:member,subscribers:new Set(),calls:[],error:null,barrier:null};
 globalThis.__MEMBER_BACKEND={auth:{getSession:async()=>({data:{session:controller.user?{user:controller.user}:null}}),getUser:async()=>({data:{user:controller.user}}),onAuthStateChange(callback){controller.subscribers.add(callback);return{data:{subscription:{unsubscribe:()=>controller.subscribers.delete(callback)}}};}},async rpc(name){controller.calls.push(name); const result=controller.state; if(controller.barrier)await controller.barrier; return{data:result,error:controller.error};}};
 const project=await realpath(fileURLToPath(new URL('../',import.meta.url)));await mkdir(path.join(project,'artifacts'),{recursive:true});const scratch=await mkdtemp(path.join(project,'artifacts','member-dom-'));const bundle=path.join(scratch,'component.mjs');
-await build({stdin:{contents:"export {default} from './src/applications/ActivityApplication.jsx';export {default as Sidebar} from './src/activities/ActivitySidebar.jsx'",resolveDir:project,loader:'jsx'},bundle:true,platform:'node',format:'esm',packages:'external',jsx:'automatic',loader:{'.css':'empty'},outfile:bundle,plugins:[{name:'backend',setup(b){b.onResolve({filter:/backend\.js$/},()=>({path:'backend',namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},()=>({contents:'export const supabase=globalThis.__MEMBER_BACKEND;',loader:'js'}));}}]});
+await build({stdin:{contents:"export {default} from './src/applications/ActivityApplication.jsx';export {default as Sidebar} from './src/activities/ActivitySidebar.jsx'",resolveDir:project,loader:'jsx'},bundle:true,platform:'node',format:'esm',packages:'external',jsx:'automatic',loader:{'.css':'empty'},outfile:bundle,plugins:[{name:'backend',setup(b){b.onResolve({filter:/backend\.js$/},()=>({path:'backend',namespace:'mock'}));b.onResolve({filter:/payment-proof\.js$/},()=>({path:'proof',namespace:'proof-mock'}));b.onLoad({filter:/.*/,namespace:'proof-mock'},()=>({contents:'export async function uploadPaymentProof(...args){return globalThis.__MEMBER_PROOF_UPLOAD(...args)};export async function downloadPaymentProof(){return new Blob(["private"],{type:"image/webp"})}',loader:'js'}));b.onLoad({filter:/.*/,namespace:'mock'},()=>({contents:'export const supabase=globalThis.__MEMBER_BACKEND;',loader:'js'}));}}]});
 const {default:Component,Sidebar}=await import(pathToFileURL(bundle));let root;const container=document.getElementById('app');
 const activity={id:'test',published:true,registrationCapacity:5,registrationOpen:true,registrationStart:new Date(Date.now()-86400000).toISOString(),registrationDeadline:new Date(Date.now()+86400000).toISOString(),dateStart:new Date(Date.now()+172800000).toISOString(),dateEnd:new Date(Date.now()+259200000).toISOString(),paymentInstructions:'请使用活动通知中的渠道缴费'};
 const text=()=>container.textContent;const button=label=>[...container.querySelectorAll('button')].find(n=>n.textContent===label);
@@ -66,7 +69,7 @@ test('sidebar keeps long payment instructions in details, with correct candidate
  controller.state={...initial,application:{...app,position:2,selectionStatus:'confirmed'}};
  const longText='这是正式活动的缴费通知。'.repeat(70);await mount({paymentInstructions:longText},splitView);
  assert.match(slot('summary').textContent,/2\/5/);assert.ok(slot('details').textContent.includes(longText));
- assert.equal(slot('details-label').textContent,'查看缴费提醒');assert.ok(!slot('summary').textContent.includes(longText));assert.ok(!slot('actions').textContent.includes(longText));
+ assert.equal(slot('details-label').textContent,'');assert.ok(button('缴费'));assert.ok(!slot('summary').textContent.includes(longText));assert.ok(!slot('actions').textContent.includes(longText));
  controller.state=initial;await mount({paymentInstructions:longText},splitView);assert.ok(!slot('details').textContent.includes(longText));
  controller.state={...initial,application:{...app,selectionStatus:'confirmed',paymentStatus:'paid'}};
  await mount({paymentInstructions:longText},splitView);assert.ok(!slot('details').textContent.includes(longText));assert.match(slot('summary').textContent,/已缴费/);
@@ -105,4 +108,52 @@ test('real activity sidebar changes tabs without remounting registration or rese
  await click('退出本次报名');await wait(()=>container.querySelector('.activity-sidebar-footer').textContent.includes('已退出'));
  await click('查看报名详情');assert.equal(tabs()[1].getAttribute('aria-selected'),'true');assert.match(container.querySelector('[role="tabpanel"]:not([hidden])').textContent,/退出记录/);
  assert.equal(container.querySelectorAll('#application').length,1);assert.ok(button('重新报名'));
+});
+
+
+test('confirmed members use the global QR and only become pending after proof submission succeeds',async()=>{
+ const proof={id:'00000000-0000-4000-8000-000000000001',objectPath:'00000000-0000-4000-8000-000000000002/00000000-0000-4000-8000-000000000003/00000000-0000-4000-8000-000000000004.webp',submittedAt:'2026-11-01T00:00:00Z'};
+ const confirmed={...initial,canSubmitPaymentProof:true,paymentQrUrl:'https://project.supabase.co/global-qr.webp',application:{...app,position:2,selectionStatus:'confirmed',paymentProofs:[],currentPaymentProofId:null}};
+ controller.state=confirmed;await mount({paymentQrUrl:'https://wrong.invalid/per-activity.webp'},splitView);
+ assert.ok(button('缴费'));await click('缴费');
+ const modalButton=label=>[...document.querySelectorAll('.payment-dialog button')].find(b=>b.textContent.trim()===label);
+ assert.equal(document.querySelector('img[alt="微信收款二维码"]').getAttribute('src'),confirmed.paymentQrUrl);
+ await act(async()=>modalButton('我已缴费').click());
+ const file=new File(['receipt'],'receipt.png',{type:'image/png'});const input=document.querySelector('.payment-dialog input[type="file"]');Object.defineProperty(input,'files',{configurable:true,value:[file]});await act(async()=>input.dispatchEvent(new Event('change',{bubbles:true})));
+ let release;const pending=new Promise(r=>release=r);let captured;
+ globalThis.__MEMBER_PROOF_UPLOAD=async(client,selected,options)=>{captured={selected,options};await pending;return{...confirmed,canSubmitPaymentProof:false,application:{...confirmed.application,paymentStatus:'pending',currentPaymentProofId:proof.id,paymentProofs:[proof]}};};
+ await act(async()=>modalButton('提交缴费记录').click());assert.match(slot('summary').textContent,/未缴费/);
+ await act(async()=>release());await wait(()=>slot('summary').textContent.includes('应已缴费'));
+ assert.ok(slot('summary').querySelector('.payment-status-pending'));assert.equal(document.querySelector('.payment-dialog'),null);assert.equal(button('缴费'),undefined);assert.match(slot('details').textContent,/等待管理员核实/);
+ assert.equal(captured.selected,file);assert.equal(captured.options.expectedUserId,member.id);assert.equal(captured.options.expectedProofId,null);
+});
+test('candidate and already paid members have no pay/upload entry',async()=>{
+ controller.state={...initial,canSubmitPaymentProof:false};await mount({},splitView);assert.equal(button('缴费'),undefined);
+ controller.state={...initial,canSubmitPaymentProof:false,application:{...app,selectionStatus:'confirmed',paymentStatus:'paid'}};await mount({},splitView);assert.equal(button('缴费'),undefined);assert.ok(slot('summary').querySelector('.payment-status-paid'));
+});
+
+
+test('failed proof submission stays unpaid and reuses the staged private object on retry',async()=>{
+ const proof={id:'00000000-0000-4000-8000-000000000001',objectPath:'00000000-0000-4000-8000-000000000002/00000000-0000-4000-8000-000000000003/00000000-0000-4000-8000-000000000004.webp',submittedAt:'2026-11-01T00:00:00Z'};
+ const confirmed={...initial,canSubmitPaymentProof:true,application:{...app,selectionStatus:'confirmed',paymentProofs:[],currentPaymentProofId:null}};controller.state=confirmed;await mount({},splitView);await click('缴费');
+ const modalButton=label=>[...document.querySelectorAll('.payment-dialog button')].find(b=>b.textContent.trim()===label);
+ await act(async()=>modalButton('我已缴费').click());const input=document.querySelector('.payment-dialog input[type="file"]');Object.defineProperty(input,'files',{configurable:true,value:[new File(['receipt'],'receipt.png',{type:'image/png'})]});await act(async()=>input.dispatchEvent(new Event('change',{bubbles:true})));
+ globalThis.__MEMBER_PROOF_UPLOAD=async()=>{const error=new Error('暂时无法确认提交');error.stagedPath=proof.objectPath;throw error;};
+ await act(async()=>modalButton('提交缴费记录').click());assert.match(slot('summary').textContent,/未缴费/);assert.ok(document.querySelector('.payment-dialog [role="alert"]'));
+ let path;globalThis.__MEMBER_PROOF_UPLOAD=async(_client,_file,options)=>{path=options.stagedPath;return{...confirmed,canSubmitPaymentProof:false,application:{...confirmed.application,paymentStatus:'pending',paymentProofs:[proof],currentPaymentProofId:proof.id}};};
+ await act(async()=>modalButton('提交缴费记录').click());await wait(()=>slot('summary').textContent.includes('应已缴费'));assert.equal(path,proof.objectPath);
+});
+test('signing out during proof submission clears the popup and ignores a late payment state',async()=>{
+ const confirmed={...initial,canSubmitPaymentProof:true,application:{...app,selectionStatus:'confirmed',paymentProofs:[]}};controller.state=confirmed;await mount({},splitView);await click('缴费');
+ const modalButton=label=>[...document.querySelectorAll('.payment-dialog button')].find(b=>b.textContent.trim()===label);
+ await act(async()=>modalButton('我已缴费').click());const input=document.querySelector('.payment-dialog input[type="file"]');Object.defineProperty(input,'files',{configurable:true,value:[new File(['receipt'],'receipt.png',{type:'image/png'})]});await act(async()=>input.dispatchEvent(new Event('change',{bubbles:true})));
+ let release;globalThis.__MEMBER_PROOF_UPLOAD=()=>new Promise(resolve=>release=resolve);await act(async()=>modalButton('提交缴费记录').click());
+ await act(async()=>{controller.user=null;for(const callback of [...controller.subscribers])callback('SIGNED_OUT');release({...confirmed,application:{...confirmed.application,paymentStatus:'pending'}});});
+ await wait(()=>slot('actions').textContent.includes('登录后报名'));assert.equal(document.querySelector('.payment-dialog'),null);assert.doesNotMatch(slot('summary').textContent,/应已缴费/);
+});
+
+
+test('an administrator-set pending status without a receipt never claims that an image was submitted',async()=>{
+ controller.state={...initial,canSubmitPaymentProof:false,application:{...app,selectionStatus:'confirmed',paymentStatus:'pending',paymentProofs:[]}};await mount({},splitView);
+ assert.match(slot('summary').textContent,/应已缴费/);assert.doesNotMatch(slot('details').textContent,/缴费记录已提交/);assert.match(slot('details').textContent,/缴费状态待管理员核实/);assert.equal(button('缴费'),undefined);
 });

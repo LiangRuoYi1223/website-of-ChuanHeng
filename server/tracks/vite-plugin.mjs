@@ -2,6 +2,7 @@ import { handleTrackRequest, isLoopbackAddress, isLoopbackHost, jsonResponse, tr
 import { TrackError } from './parse.mjs';
 import { handleCoverRequest } from '../covers/http.mjs';
 import { handlePhotoRequest } from '../photos/http.mjs';
+import { handlePaymentProofRequest } from '../payments/http.mjs';
 import { createLocalImageBinding } from '../covers/local-images.mjs';
 
 export function isLocalPreviewRequest(request, explicitlyEnabled) {
@@ -25,7 +26,7 @@ function requestUrl(request) {
 async function sendResponse(response, outgoing) {
   outgoing.statusCode = response.status;
   response.headers.forEach((value, key) => outgoing.setHeader(key, value));
-  // Responses are bounded JSON produced locally, not a proxy for arbitrary data.
+  // Responses are bounded local JSON or processed images, not an arbitrary proxy.
   outgoing.end(new Uint8Array(await response.arrayBuffer()));
 }
 
@@ -71,10 +72,10 @@ export function tracksVitePlugin(options = {}) {
         const request = new Request(requestUrl(incoming), init);
         const env = options.env || { ...process.env, SUPABASE_URL: process.env.SUPABASE_URL || server.config?.env?.VITE_SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY || server.config?.env?.VITE_SUPABASE_PUBLISHABLE_KEY };
         let imageResponse;
-        if (pathname === '/api/covers/process' || pathname === '/api/photos/process') {
+        if (pathname === '/api/covers/process' || pathname === '/api/photos/process' || pathname === '/api/payments/proofs/process') {
           localImages ||= createLocalImageBinding();
           const imageOptions = { fetchImpl: options.fetchImpl || fetch, images: await localImages, localPreview: isLocalPreviewRequest(incoming, options.localPreview), authTimeoutMs: options.authTimeoutMs };
-          imageResponse = pathname === '/api/photos/process' ? await handlePhotoRequest(request, env, imageOptions) : await handleCoverRequest(request, env, imageOptions);
+          imageResponse = pathname === '/api/payments/proofs/process' ? await handlePaymentProofRequest(request, env, imageOptions) : pathname === '/api/photos/process' ? await handlePhotoRequest(request, env, imageOptions) : await handleCoverRequest(request, env, imageOptions);
         }
         const result = imageResponse || await handleTrackRequest(request, env, {
           localPreview: isLocalPreviewRequest(incoming, options.localPreview),

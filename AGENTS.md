@@ -9,7 +9,8 @@ React + Vite 川衡官网，使用 Cloudflare Workers 和 Supabase。发布基�
 - 里程与爬升优先读取轨迹自动统计；缺失时仅在路线管理弹窗补充，保留原统计，并记录 `manualMetrics` 的管理员来源与确认时间。可跳过，未知值显示“暂不提供数据”并在 Debug 提醒。活动编辑器只读展示路线快照指标，不另设输入。
 - 自动路线去重须明确选择，归档保留原数据和审计；更新、删除与跨标签页编辑须保护活动关联。
 - Supabase 项目 `gftecgpbhiubrkmazlcu` 已应用 `20261031074956_chuanheng_v1_content_and_tracks`、`20261031131635_activity_route_scheduling`、`20261031142417_route_manual_metrics_and_cover_limit`、`20261031163237_activity_registration_management` 与 `20261031163336_gallery_photo_upload`；`public.content_items/applications` 为新模型，初始化为空，现有管理员内容保留。旧 `chuanheng` 全部表与数据原样保留。不得重复执行两份 docs SQL 的 CREATE 或把示例迁为正式内容；后续变更使用针对性迁移。
-- 报名预设人数为正整数；有效报名按服务器时间排队，名额内入选、其余候补，退出后递补，重报排队尾。会员仅可读本人和匿名汇总，管理员在活动名单中手动变更已缴费/未缴费；所有变化追加不可伪造日志，网站管理员也无权修改、删除或清空日志，历史维护仅限Supabase受信数据库管理；自动缴费调整暂未实现。见 `docs/activity-registration-workflow.md`。
+- 报名预设人数为正整数；有效报名按服务器时间排队，名额内入选、其余候补，退出后递补，重报排队尾。会员仅可读本人和匿名汇总，管理员在活动名单中手动变更三种缴费状态；所有变化追加不可伪造日志，网站管理员也无权修改、删除或清空日志，历史维护仅限Supabase受信数据库管理；自动缴费调整暂未实现。见 `docs/activity-registration-workflow.md`。
+- 微信收款码由后台「服务配置」全站统一上传修改，所有活动共用；缴费状态为 unpaid「未缴费」白色、pending「应已缴费」蓝色、paid「已缴费」绿色。当前有效入选者提交私有缴费记录后才pending，管理员核实后手动paid；不是自动到账。记录原图JPEG/PNG/WebP最多8MiB，同源真实身份验证及Images处理后WebP最多3MiB，私有payment-proofs仅本人/管理员可读，网站不覆盖删除；审核必须同时校验旧状态和最新proof ID，日志仍只追加。
 - 活动具有报名开启/截止、活动开始/结束四时间；数据库按服务器时间校验报名窗口。旧记录时间缺失不自动补造。正式封面原图 JPEG/PNG/WebP 最大 3 MiB，经 `server/covers` 同源管理员验证及 Images binding 后端压缩为 WebP，再以新文件名上传至 `activity-covers` 本人目录；存储上限 3 MiB。压缩失败不得回退原图，换图不覆盖或删除历史文件。
 - Cloudflare 目标为 `chuanheng-website`，部署与验收记录见 `docs/PRODUCTION-HANDOFF.md`。SPA 回退由 Worker assets 配置处理，禁止恢复 `_redirects` 通配 `/index.html` rewrite，以免触发 Cloudflare 100324 循环。
 - Supabase/Cloudflare 平台账户、站点 Auth 用户及旧会员表记录是不同身份。站点用户注册并确认邮件后，由受信后台为对应 Auth UUID 赋 `app_metadata.role=admin`；注册和 `user_metadata` 不授予管理权。

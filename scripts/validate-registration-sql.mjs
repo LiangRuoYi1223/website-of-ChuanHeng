@@ -9,7 +9,7 @@ test('registration migration: ordered queue, retained data, role isolation and i
  const q=async(s,a=[])=>(await db.query(s,a)).rows;
  const v=async(s,a=[])=>(await q(s,a))[0]?.v;
  const writes=new Set(['register_activity','withdraw_activity_registration','set_activity_registration_payment']);
- const rpc=(name,args=[])=>v(`select public.${name}(${args.map((_,i)=>'$'+(i+1)).join(',')}${writes.has(name)?',auth.uid()':''}) v`,args);
+ const rpc=(name,args=[])=>v(`select public.${name}(${args.map((_,i)=>'$'+(i+1)).join(',')}${writes.has(name)?(name==='set_activity_registration_payment'?',auth.uid(),null':',auth.uid()'):''}) v`,args);
  const as=async(n,fn,extra={},role='authenticated')=>{await db.exec(`set role ${role}`);await q("select set_config('request.jwt.claims',$1,false)",[JSON.stringify({sub:n?id(n):undefined,email:`u${n}@example.test`,user_metadata:{displayName:`会员${n}`},...extra})]);try{return await fn();}finally{await db.exec('reset role');}};
  const fail=async(fn,re=/./)=>{await assert.rejects(fn,re)};
  try{
@@ -20,7 +20,7 @@ test('registration migration: ordered queue, retained data, role isolation and i
  create schema chuanheng;create table chuanheng.sentinel(v text);insert into chuanheng.sentinel values('untouched');
  create schema storage;grant usage on schema storage to anon,authenticated;
  create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
- create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text references storage.buckets(id),name text);
+ create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text references storage.buckets(id),name text,owner uuid,owner_id text,metadata jsonb);
  create function storage.foldername(name text) returns text[] language sql immutable as $$select (string_to_array(name,'/'))[1:array_length(string_to_array(name,'/'),1)-1]$$;
  alter table storage.objects enable row level security;grant select,insert,update,delete on storage.objects to anon,authenticated;`);
  const files=(await readdir(new URL('supabase/migrations/',root))).filter(f=>f.endsWith('.sql')).sort();
@@ -85,8 +85,8 @@ test('registration migration: ordered queue, retained data, role isolation and i
  });
  await as(900,async()=>{
  for(const expected of [id(1),null]) {
- await fail(()=>v('select public.set_activity_registration_payment($1,$2,$3,$4) v',[a.application.id,'paid','unpaid',expected]),/AUTH_CHANGED/);
- await fail(()=>v('select private.set_activity_registration_payment($1,$2,$3,$4) v',[a.application.id,'paid','unpaid',expected]),/AUTH_CHANGED/);
+ await fail(()=>v('select public.set_activity_registration_payment($1,$2,$3,$4,null) v',[a.application.id,'paid','unpaid',expected]),/AUTH_CHANGED/);
+ await fail(()=>v('select private.set_activity_registration_payment($1,$2,$3,$4,null) v',[a.application.id,'paid','unpaid',expected]),/AUTH_CHANGED/);
  }
  const state=await rpc('get_activity_registrations',[id(100)]);assert.equal(state.viewerId,id(900));
  },{app_metadata:{role:'admin'}});
@@ -109,7 +109,7 @@ test('registration migration: ordered queue, retained data, role isolation and i
  },n===900?{app_metadata:{role:'admin'}}:{});
  await as(1,async()=>{
  await fail(()=>v('select private.registration_state($1,true) v',[id(100)]),/ADMIN/);
- await fail(()=>v('select private.set_activity_registration_payment($1,$2,$3,auth.uid()) v',[a.application.id,'paid','paid']),/ADMIN/);
+ await fail(()=>v('select private.set_activity_registration_payment($1,$2,$3,auth.uid(),null) v',[a.application.id,'paid','paid']),/ADMIN/);
  await fail(()=>q('select private.audit_registration()'),/permission/);
  await fail(()=>q('select private.guard_registration_capacity()'),/permission/);
  await fail(()=>rpc('register_activity',[id(777)]),/CAPACITY/);

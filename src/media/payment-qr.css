@@ -1,0 +1,10 @@
+.payment-qr-upload{border:1px solid #444;border-radius:4px;padding:18px;background:#171717;min-width:0}
+.payment-qr-preview{display:flex;align-items:center;justify-content:center;min-height:180px;width:100%;border:1px solid #333;background:#111;padding:16px;border-radius:3px}
+.payment-qr-preview img{display:block;object-fit:contain;width:auto;max-width:100%;height:auto;max-height:300px;background:#fff}
+.payment-qr-empty{display:flex;align-items:center;justify-content:center;gap:10px;min-height:150px;color:#aaa;font-size:13px}
+.payment-qr-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px}
+.payment-qr-controls>div{flex:1;min-width:200px}.payment-qr-controls strong{font-size:14px;color:#eee}.payment-qr-controls p{font-size:12px;color:#aaa;line-height:1.8;margin:6px 0 0}
+.payment-qr-file{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip-path:inset(50%)}
+.payment-qr-controls .payment-qr-remove{border:1px solid #555;border-radius:3px;padding:10px 12px;min-height:44px;color:#ccc;background:transparent;font-size:12px}
+.payment-qr-status{font-size:12px;margin-top:12px;color:#ddd}.payment-qr-error{font-size:12px;line-height:1.8;margin-top:12px;color:#f4c0a2}
+.payment-qr-upload :focus-visible{outline:2px solid #f07827;outline-offset:3px}

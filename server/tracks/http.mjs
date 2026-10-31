@@ -80,9 +80,9 @@ export async function readBounded(stream, limit, code, message, status = 413, si
   }
 }
 
-export async function verifyUser(request, config, options = {}) {
+export async function verifyAuthenticatedUser(request, config, options = {}) {
   const bearer = /^Bearer\s+([^\s,]+)$/i.exec(request.headers.get('authorization') || '')?.[1];
-  if (!bearer || bearer.length > 8192) throw new TrackError('AUTH_REQUIRED', '请先登录领队或管理员账号。', 401);
+  if (!bearer || bearer.length > 8192) throw new TrackError('AUTH_REQUIRED', '请先登录邮箱账号。', 401);
   const controller = new AbortController();
   const suppliedTimeout = Number(options.authTimeoutMs);
   const timeoutMs = Number.isFinite(suppliedTimeout) && suppliedTimeout > 0 ? Math.min(suppliedTimeout, AUTH_TIMEOUT_MS) : AUTH_TIMEOUT_MS;
@@ -134,8 +134,8 @@ export async function verifyUser(request, config, options = {}) {
       let user;
       try { user = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); }
       catch { throw new TrackError('AUTH_UNAVAILABLE', '身份服务返回了无效数据，请稍后重试。', 503); }
-      if (typeof user?.id !== 'string' || !user.id || !(options.allowedRoles || ['leader', 'admin']).includes(user?.app_metadata?.role)) {
-        throw new TrackError('FORBIDDEN', options.forbiddenMessage || '只有已授权的领队或管理员可以转换轨迹。', 403);
+      if (typeof user?.id !== 'string' || !user.id || user.is_anonymous === true) {
+        throw new TrackError('FORBIDDEN', '请使用已确认身份的邮箱账号。', 403);
       }
       return user;
     })()]);
@@ -143,6 +143,12 @@ export async function verifyUser(request, config, options = {}) {
     if (error instanceof TrackError) throw error;
     throw new TrackError('AUTH_UNAVAILABLE', '无法验证登录身份，请稍后重试。', 503);
   } finally { clearTimeout(timer); }
+}
+
+export async function verifyUser(request, config, options = {}) {
+  const user = await verifyAuthenticatedUser(request, config, options);
+  if (!(options.allowedRoles || ['leader', 'admin']).includes(user?.app_metadata?.role)) throw new TrackError('FORBIDDEN', options.forbiddenMessage || '只有已授权的领队或管理员可以转换轨迹。', 403);
+  return user;
 }
 
 export function requireSameOrigin(request, url) {

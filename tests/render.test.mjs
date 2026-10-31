@@ -136,10 +136,10 @@ test('all current admin routes render a local preview without requiring cloud ac
 });
 
 test('retired admin URLs retain their intended destination and no longer appear in navigation', async t => {
-  for (const [location, expected] of [['/admin/footprints?preview=1', /活动管理/], ['/admin/settings?preview=1', /欢迎回来/]]) {
+  for (const [location, expected] of [['/admin/footprints?preview=1', /活动管理/], ['/admin/settings?preview=1', /服务配置/]]) {
     await t.test(location, () => {
       const html = assertUsablePage(location, expected);
-      assert.match(html, location.includes('/footprints') ? /<h1>活动管理<\/h1>/ : /<h1>欢迎回来[^<]*<\/h1>/, 'the retired URL must render its actual destination heading');
+      assert.match(html, location.includes('/footprints') ? /<h1>活动管理<\/h1>/ : /<h1>服务配置<\/h1>/, 'the retired URL must render its actual destination heading');
       assert.doesNotMatch(html, /href="\/admin\/(?:footprints|settings)(?:\?|"|\/)/, 'retired management screens must not remain in the sidebar');
       assert.match(html, /href="\/admin\/debug\?preview=1"/, 'Debug must be available from the current navigation');
     });

@@ -7,6 +7,7 @@ import { supabase, isBackendConfigured, backendConfigurationError } from '../bac
 import TrackUpload from '../tracks/TrackUpload.jsx';
 import { resolvedTrackMetrics, validateManualTrackMetrics } from '../tracks/metrics.js';
 import ActivityCoverUpload from '../media/ActivityCoverUpload.jsx';
+import PaymentSettingsAdmin from '../payments/PaymentSettingsAdmin.jsx';
 import GalleryPhotoUpload from '../media/GalleryPhotoUpload.jsx';
 import { getLocalTrack, putLocalTrack } from '../tracks/track-store.js';
 import { deleteContentWithLinks, findDuplicateRoutes, resolveDuplicateRoutes } from '../tracks/activity-workflow.js';
@@ -190,7 +191,7 @@ export function AdminPage() {
   const auth = useVerifiedAuth(local);
   const adminPath = path => previewRequested ? `${path}?preview=1` : path;
   const requestedSection = location.pathname.replace(/\/$/, '').split('/')[2] || 'overview';
-  const section = requestedSection === 'footprints' ? 'activities' : requestedSection === 'settings' ? 'overview' : requestedSection;
+  const section = requestedSection === 'footprints' ? 'activities' : requestedSection === 'settings' ? 'services' : requestedSection;
   const nav = NAV.find(item => item[0] === section);
   const title = nav?.[1] || '页面未找到';
   const kind = KINDS[section];
@@ -213,7 +214,7 @@ export function AdminPage() {
   const [resolvingGroup, setResolvingGroup] = useState('');
 
   useEffect(() => {
-    if (requestedSection === 'footprints' || requestedSection === 'settings') {
+    if (requestedSection === 'footprints') {
       const target = requestedSection === 'footprints' ? '/admin/activities' : '/admin';
       navigate(previewRequested ? `${target}?preview=1` : target, { replace: true });
     }
@@ -450,7 +451,8 @@ export function AdminPage() {
       {section === 'debug' && <DebugPanel groups={duplicates} rows={rows} local={local} busy={busy} resolvingGroup={resolvingGroup} loading={loading} onResolve={resolveGroup} onEditActivity={row => { setError(''); setEditor(structuredClone(row)); }} />}
       {section === 'backgrounds' && <section className="admin-panel admin-background-panel"><div><h2>网站主视觉</h2><p>当前主视觉为 AI 生成的山岳示意图。图片上传、背景轮换与云端保存待接入。</p><span className="admin-status">当前使用</span></div><img src="/images/redesign-v2/home-summit.webp" alt="AI 生成的夕阳雪山主视觉" /><div className="admin-background-meta"><span>首页主视觉</span><span>/images/redesign-v2/home-summit.webp</span></div></section>}
       {section === 'password' && <PasswordPanel connected={!local} onNotice={setNotice} />}
-      {['accounts', 'services'].includes(section) && <section className="admin-panel admin-pending"><div className="admin-pending-icon">{section === 'accounts' ? <Users size={32} /> : <SlidersHorizontal size={32} />}</div><h2>{section === 'services' ? '服务连接与配置' : `${title}待接入`}</h2><p>{section === 'accounts' ? '真实成员账号需要受保护的服务端管理接口。这里不会展示虚构账号，也不会在浏览器存放管理员密钥。' : isBackendConfigured ? '已提供有效格式的前端公钥配置。内容连接状态以实际读取结果为准，存储上传、邮件和其他业务服务仍待配置。' : '当前运行本地设计预览。接入真实服务后，可使用账号登录、云端内容与发布能力。'}</p>{section === 'services' && <div className="admin-config-summary"><span>内容存储<strong>{local ? '浏览器本地草稿' : 'Supabase · RLS 权限'}</strong></span><span>文件上传<strong>影像照片 · 活动封面</strong></span><span>报名管理<strong>活动名单 · 手动缴费 · 操作日志</strong></span><span>账号管理<strong>待接入</strong></span></div>}<Link className="admin-text-link" to={section === 'services' ? '/' : adminPath('/admin/activities')}>{section === 'services' ? '返回网站' : '前往活动管理'}<ArrowRight size={15} /></Link></section>}
+      {section === 'services' && <PaymentSettingsAdmin local={local}/> }
+      {['accounts', 'services'].includes(section) && <section className="admin-panel admin-pending"><div className="admin-pending-icon">{section === 'accounts' ? <Users size={32} /> : <SlidersHorizontal size={32} />}</div><h2>{section === 'services' ? '服务连接与配置' : `${title}待接入`}</h2><p>{section === 'accounts' ? '真实成员账号需要受保护的服务端管理接口。这里不会展示虚构账号，也不会在浏览器存放管理员密钥。' : isBackendConfigured ? '内容、图片上传及报名管理使用已连接服务；微信收款码通过上方设置统一维护，到账由管理员人工核实。' : '当前运行本地设计预览。接入真实服务后，可使用账号登录、云端内容与发布能力。'}</p>{section === 'services' && <div className="admin-config-summary"><span>内容存储<strong>{local ? '浏览器本地草稿' : 'Supabase · RLS 权限'}</strong></span><span>文件上传<strong>影像照片 · 活动封面</strong></span><span>报名管理<strong>活动名单 · 凭证核验 · 操作日志</strong></span><span>账号管理<strong>待接入</strong></span></div>}<Link className="admin-text-link" to={section === 'services' ? '/' : adminPath('/admin/activities')}>{section === 'services' ? '返回网站' : '前往活动管理'}<ArrowRight size={15} /></Link></section>}
       {!nav && <section className="admin-panel"><EmptyState title="没有找到这个后台页面" description="请选择左侧的管理模块继续。" /></section>}
       </>}
       <footer className="admin-footer"><span>川衡登山协会 · 管理工作空间</span><span>以山为伴，一路同行。</span></footer>
@@ -596,7 +598,7 @@ function ContentFields({ editor, track, routeData, trackBlocked = false, activit
       <label>活动状态<select name="status" value={activityStatus} onChange={event => onStatusChange(event.target.value)}><option>即将开始</option><option>报名中</option><option>进行中</option><option>已结束</option></select></label>
       <label>日期说明<input name="date" defaultValue={payload.date || ''} maxLength={100} placeholder="补充集合时间等说明" /></label>
       <label>预设报名人数<input name="registrationCapacity" type="number" min="1" max="100000" step="1" defaultValue={payload.registrationCapacity ?? ''} placeholder="例如：5" /><small>按有效报名时间排序，名额内入选，其余候补；退出后顺次递补。旧活动未设置时保持未知。</small></label>
-      <label>缴费说明<textarea name="paymentInstructions" defaultValue={payload.paymentInstructions || ''} maxLength={1000} rows={3} placeholder="请填写缴费方式、联系人员等正式说明" /><small>入选且未缴费的会员会在报名页面看到此说明；缴费状态由管理员核实后手动调整。</small></label>
+      <label>缴费说明<textarea name="paymentInstructions" defaultValue={payload.paymentInstructions || ''} maxLength={1000} rows={3} placeholder="请填写缴费方式、联系人员等正式说明" /><small>入选且未缴费的会员会看到此说明。会员上传记录后显示“应已缴费”，管理员核实后再改为“已缴费”。</small></label>
       <label className="admin-checkbox"><input name="registrationOpen" type="checkbox" defaultChecked={payload.registrationOpen === true} />开启活动报名</label>
       <div className="admin-field-grid"><label>报名开启时间<input name="registrationStart" type="datetime-local" defaultValue={toLocalDateTime(payload.registrationStart)} /></label><label>报名截止时间<input name="registrationDeadline" type="datetime-local" defaultValue={toLocalDateTime(payload.registrationDeadline)} /></label></div>
       <p className="admin-schedule-note">按本地时区填写。报名开启须早于截止，截止不晚于活动开始，活动结束须晚于开始。草稿可暂留空；已截止的活动仍可编辑保存。</p>

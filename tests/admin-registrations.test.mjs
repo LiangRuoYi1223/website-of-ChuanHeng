@@ -9,7 +9,7 @@ test('admin roster reads protected RPC and retains the administrator identity', 
   assert.deepEqual(await readActivityRegistrations(client, 'activity'), state);
 });
 test('payment verifies the trusted administrator and sends both previous value and expected identity', async () => {
-  const client = { auth: { getUser: async () => ({ data: { user: admin } }) }, async rpc(name, args) { assert.equal(name, 'set_activity_registration_payment'); assert.deepEqual(args, { p_application_id: 'application', p_payment_status: 'paid', p_expected_payment_status: 'unpaid', p_expected_user_id: 'admin-a' }); return { data: state, error: null }; } };
+  const client = { auth: { getUser: async () => ({ data: { user: admin } }) }, async rpc(name, args) { assert.equal(name, 'set_activity_registration_payment'); assert.deepEqual(args, { p_application_id: 'application', p_payment_status: 'paid', p_expected_payment_status: 'unpaid', p_expected_user_id: 'admin-a', p_expected_proof_id: null }); return { data: state, error: null }; } };
   assert.deepEqual(await setApplicationPayment(client, change), state);
 });
 test('changed, anonymous, untrusted or unavailable identities never issue a payment write', async () => {
@@ -33,4 +33,22 @@ test('service errors, missing viewer identity and malformed successes never inve
   for (const result of [{ error: { code: '40001' } }, { data: null }, { data: {} }, { data: { ...state, viewerId: undefined } }]) await assert.rejects(() => readActivityRegistrations({ rpc: async () => result }, 'activity'));
   await assert.rejects(() => readActivityRegistrations(null, 'activity'));
   await assert.rejects(() => setApplicationPayment({ rpc: async () => assert.fail('must not write') }, { ...change, paymentStatus: 'automatic' }));
+});
+
+
+test('pending reports remain readable and review binds the exact displayed proof identity', async () => {
+  const proof = { id: 'proof-1', objectPath: 'user/application/proof.webp', submittedAt: '2026-11-01T00:00:00Z' };
+  const pending = { ...state, applications: [{ id: 'application', status: 'active', paymentStatus: 'pending', currentPaymentProofId: proof.id, paymentProofs: [proof] }] };
+  const client = { auth: { getUser: async () => ({ data: { user: admin } }) }, async rpc(name,args) {
+    if(name === 'set_activity_registration_payment') assert.deepEqual(args,{p_application_id:'application',p_payment_status:'paid',p_expected_payment_status:'pending',p_expected_user_id:'admin-a',p_expected_proof_id:'proof-1'});
+    return {data:pending};
+  } };
+  assert.deepEqual(await readActivityRegistrations(client,'activity'),pending);
+  assert.deepEqual(await setApplicationPayment(client,{...change,expectedPaymentStatus:'pending',expectedProofId:proof.id}),pending);
+});
+test('malformed proof metadata is rejected instead of exposing a guessed or public image link', async () => {
+  for(const paymentProofs of [null,{},[{id:'proof'}],[{id:'proof',objectPath:'path',submittedAt:'invalid'}]]) {
+    const bad={...state,applications:[{id:'application',status:'active',paymentStatus:'unpaid',paymentProofs}]};
+    await assert.rejects(()=>readActivityRegistrations({rpc:async()=>({data:bad})},'activity'));
+  }
 });
