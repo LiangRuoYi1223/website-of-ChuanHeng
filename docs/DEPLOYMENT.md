@@ -66,7 +66,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_YOUR_PUBLIC_KEY
 
 已检查到 Supabase Auth 允许注册，且 email confirmation 为 true。Site URL 与邮件回跳允许列表仍需在管理面核对，尚未宣称已配置。目标 Site URL 为 `https://chuanheng-website.vulhusky.workers.dev`，注册代码传入的回跳为同源 `/login`；生产允许列表应包含完整 `https://chuanheng-website.vulhusky.workers.dev/login`，不以开发通配地址代替正式路径。注册调用 `signUp` 后应完成邮件确认，登录调用 `signInWithPassword`。[Supabase 回跳配置](https://supabase.com/docs/guides/auth/redirect-urls)
 
-Supabase/Cloudflare 平台账户不是网站会员账户；旧 `chuanheng.users` 记录也不是新站 Auth 身份。用户选择先上线自行注册，再由受信后台给确认后的 Auth UUID 赋管理员角色；不复制旧密码，不因旧表存在“admin”就自动授权。
+Supabase/Cloudflare 平台账户不是网站会员账户；旧 `chuanheng.users` 记录也不是新站 Auth 身份。管理员由受信后台给确认后的 Auth UUID 赋角色；不复制旧密码，不因旧表存在“admin”就自动授权。2026-10-31 已按用户授权创建独立测试账号，用户完成邮件确认后赋权；真实登录、Auth `getUser` 的 admin 角色及内容读取均已核实，凭据不进入仓库。
 
 后台先读取会话，再向 Auth 服务器调用 `getUser` 核实用户。只有服务器返回的 `user.app_metadata.role === 'admin'` 才能进入云端管理。注册表单不会也不能授予管理员角色。管理员应由受信任的后台管理流程赋予 `app_metadata.role`；不能使用用户可编辑的 `user_metadata` 作为权限依据。
 

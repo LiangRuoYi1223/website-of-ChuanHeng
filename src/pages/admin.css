@@ -174,8 +174,8 @@
 .admin-modal input[type="datetime-local"]{color-scheme:dark}
 
 .login-page{position:relative;min-height:100svh;color:#f4f5f5;background:#10171e;isolation:isolate;font-family:Inter,"Microsoft YaHei","PingFang SC",sans-serif;display:flex;flex-direction:column}
-.login-background{position:absolute;inset:0;z-index:-3;width:100%;height:100%;object-fit:cover;object-position:center}
-.login-shade{position:absolute;inset:0;z-index:-2;background:linear-gradient(90deg,#07101c94,#0b141c50 45%,#07111cc7),linear-gradient(0deg,#07101cbd,#07101c05 65%)}
+.login-background{position:fixed;inset:0;z-index:-3;width:100%;height:100%;object-fit:cover;object-position:center}
+.login-shade{position:fixed;inset:0;z-index:-2;background:linear-gradient(90deg,#07101c94,#0b141c50 45%,#07111cc7),linear-gradient(0deg,#07101cbd,#07101c05 65%)}
 .login-header{display:flex;align-items:center;justify-content:space-between;padding:32px 5.5vw;gap:20px}
 .login-brand{display:flex;align-items:center;gap:10px;color:#fff}
 .login-brand>svg{color:#f58b4a}
@@ -183,7 +183,8 @@
 .login-brand>span>span{font-size:7px;letter-spacing:2px;font-weight:400;color:#d7dce1}
 .login-header>a:last-child{display:flex;align-items:center;gap:9px;color:#dde3e7;font-size:11px}
 .login-layout{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 425px;align-items:center;gap:7vw;width:min(1180px,89%);margin:20px auto 45px}
-.login-story{padding:30px 0 30px 0;align-self:center}
+/* Keep the story at the viewport's visual center as the form grows; the 115px offset preserves the existing header/footer spacing. */
+.login-story{padding:30px 0 30px 0;align-self:start;transform:translateY(max(0px,calc(50svh - 50% - 115px)))}
 .login-story>span{font-size:10px;letter-spacing:3px;color:#f0c2a0}
 .login-story h1{font-size:clamp(42px,4.6vw,66px);letter-spacing:4px;font-weight:600;line-height:1.45;margin:23px 0 20px;text-shadow:0 2px 35px #0005}
 .login-story>p{color:#d7dee5;font-size:13px;line-height:2;letter-spacing:1px;margin:0}

@@ -2,7 +2,7 @@
 
 React + Vite 官网，依据用户提供的六张深色网站设计示意图从零创建，包含前台、后台及 GPX/KML 转换服务。
 
-2026-10-31：Supabase 生产迁移与 Cloudflare 新版部署均已成功，公网 HTTP 验收通过。Worker 版本为 `9c159570-c589-4813-9dfb-6f819479d40e`，100% 流量运行此版本；代码以 main 分支提交记录为准。访问 [川衡网站](https://chuanheng-website.vulhusky.workers.dev)，交接及回滚见 [生产交接](docs/PRODUCTION-HANDOFF.md)。
+2026-10-31：Supabase 生产迁移与 Cloudflare 新版部署均已成功；登录/注册背景定位修复已发布，公网 HTTP 验收通过。Worker 版本为 `6fee123c-8347-42d0-b558-6884f96448ff`，100% 流量运行此版本；代码以 main 分支提交记录为准。访问 [川衡网站](https://chuanheng-website.vulhusky.workers.dev)，交接及回滚见 [生产交接](docs/PRODUCTION-HANDOFF.md)。
 
 ## 本地查看
 
@@ -56,4 +56,4 @@ React + Vite 官网，依据用户提供的六张深色网站设计示意图从�
 
 最近一次全套自动测试 **278/278 通过**，正式生产构建成功；`npm audit` 总计与生产依赖均为 0 漏洞。Worker 无 Node 外部依赖打包及 localhost GPX/KML HTTP 上传已通过。PostgreSQL 17.5、18.6 的隔离 SQL 测试分别 13/13 通过，验证实际 RLS、管理 RPC 与回滚。详情见 [SQL 验证](docs/supabase-sql-validation.md)。
 
-生产迁移 `20261031074956_chuanheng_v1_content_and_tracks` 已应用：新表 RLS 与 FORCE RLS 已开启；匿名内容 REST 返回 200 空列表，匿名报名表返回 401；新对象没有 advisors 告警。公网页面、构建资源、徽章、API 配置及匿名拒绝检查通过。待办为邮件回跳核对、用户注册和确认、首位 Auth 管理员赋权、真实账户写入及授权上传。HTTP/JSDOM 检查不代替实机视觉验收。
+生产迁移 `20261031074956_chuanheng_v1_content_and_tracks` 已应用：新表 RLS 与 FORCE RLS 已开启；匿名内容 REST 返回 200 空列表，匿名报名表返回 401；新对象没有 advisors 告警。公网页面、构建资源、徽章、API 配置及匿名拒绝检查通过。首位测试管理员已完成邮件确认、受信后台赋权、真实密码登录及内容读取；未写入示例，凭据不进入仓库。待办为邮件回跳管理配置核对、真实账户写入及授权上传。HTTP/JSDOM 检查不代替实机视觉验收。
