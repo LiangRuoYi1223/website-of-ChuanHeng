@@ -388,6 +388,7 @@ test('admin safety regressions preserve concurrent route decisions, links and un
     await mount('/admin/activities?preview=1');
     await click(button('新建活动'));
     await fill('title', '历史报名窗口');
+    await fill('registrationCapacity', '5');
     await fill('dateStart', '2026-01-02T08:00');
     await fill('dateEnd', '2026-01-02T18:00');
     await fill('registrationStart', '2026-01-01T08:00');
@@ -511,4 +512,24 @@ test('a second route edit URL cannot replace an open form or lose unsaved text',
  await click(button('取消',dialog()));assert.equal(dialog(),null);
  await act(async()=>navigateWithinTest('/admin/routes?preview=1&edit=two'));
  await waitFor(()=>dialog(),'explicit second route request after closing');assert.equal(dialog().querySelector('[name="title"]').value,'路线two');
+});
+
+
+test('activity editor persists an explicit capacity and payment instructions',async()=>{
+ localStorage.clear();localStorage.setItem('chuanheng-drafts',JSON.stringify([{id:'registration-settings-activity',kind:'activity',published:false,payload:{title:'合成名额活动',registrationCapacity:5}}]));
+ await mount('/admin/activities?preview=1');await click(container.querySelector('button[aria-label="编辑合成名额活动"]'));
+ assert.equal(dialog().querySelector('[name="registrationCapacity"]')?.value,'5');
+ await fill('registrationCapacity','8');await fill('paymentInstructions','请按领队通知缴费');await saveEditor();
+ assert.equal(drafts()[0].payload.registrationCapacity,8);assert.equal(drafts()[0].payload.paymentInstructions,'请按领队通知缴费');
+});
+
+test('activity row double click and explicit button open registration management',async()=>{
+ localStorage.clear();localStorage.setItem('chuanheng-drafts',JSON.stringify([{id:'registration-entry-activity',kind:'activity',published:false,payload:{title:'合成报名活动',registrationCapacity:5}}]));
+ await mount('/admin/activities?preview=1');
+ const entry=container.querySelector('button[aria-label="管理合成报名活动的报名"]');assert.ok(entry);
+ await click(entry);assert.ok(container.querySelector('[role="dialog"]'));assert.match(text(container),/报名管理/);
+ await mount('/admin/activities?preview=1');
+ const row=[...container.querySelectorAll('tbody tr')].find(node=>text(node).includes('合成报名活动'));
+ await act(async()=>row.dispatchEvent(new dom.window.MouseEvent('dblclick',{bubbles:true})));
+ assert.ok(container.querySelector('[role="dialog"]'));assert.match(text(container),/报名管理/);
 });

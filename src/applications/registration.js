@@ -25,33 +25,60 @@ export function registrationAvailability(activity, now = Date.now()) {
   if (![opening, deadline, start, end].every(Number.isFinite) || opening >= deadline || deadline > start || start >= end) return { isPublic, open: false, reason: '报名时间尚未确认，请关注正式活动通知。' };
   if (now < opening) return { isPublic, open: false, reason: '尚未到报名开启时间。' };
   if (deadline <= now) return { isPublic, open: false, reason: '报名已截止。' };
+  if (!Number.isInteger(activity.registrationCapacity) || activity.registrationCapacity < 1 || activity.registrationCapacity > 100000) return { isPublic, open: false, reason: '活动名额尚未确认，请关注正式活动通知。' };
   return { isPublic, open: true, reason: '' };
 }
 
+async function verifyIdentity(client, expectedUserId) {
+  if (!client?.auth?.getUser || !client?.rpc) fail('SERVICE_UNAVAILABLE', '报名服务暂时不可用，请稍后重试。');
+  let identity, error;
+  try { const result = await client.auth.getUser(); identity = result.data; error = result.error; }
+  catch { fail('AUTH_UNAVAILABLE', '暂时无法核实登录状态，请稍后重试。'); }
+  if (error && error.name !== 'AuthSessionMissingError' && error.code !== 'session_not_found') fail('AUTH_UNAVAILABLE', '暂时无法核实登录状态，请稍后重试。');
+  const user = identity?.user;
+  if (!user?.id || user.is_anonymous === true) fail('LOGIN_REQUIRED', '请先登录邮箱账号，再提交活动报名。');
+  if (expectedUserId && user.id !== expectedUserId) fail('LOGIN_CHANGED', '登录账号已变化，请重新确认当前账号后再报名。');
+  return user;
+}
+
+function validState(state, userId) {
+  const count = value => Number.isInteger(value) && value >= 0;
+  if (!state || !(state.capacity === null || (Number.isInteger(state.capacity) && state.capacity > 0 && state.capacity <= 100000)) || !['activeCount','confirmedCount','waitlistCount'].every(key => count(state[key])) || typeof state.canWithdraw !== 'boolean') return false;
+  const app = state.application;
+  return app === null || Boolean(app && typeof app.id === 'string' && app.id && app.userId === userId && ['active','withdrawn'].includes(app.status) && ['paid','unpaid'].includes(app.paymentStatus) && ['confirmed','waitlisted','withdrawn','unconfirmed'].includes(app.selectionStatus) && (app.position === null || (Number.isInteger(app.position) && app.position > 0)));
+}
+
+async function requestState(client, rpc, activityId, userId, message) {
+  if (!activityId) fail('SERVICE_UNAVAILABLE', '报名服务暂时不可用，请稍后重试。');
+  let result;
+  const args = { p_activity_id: activityId };
+  if (rpc === 'register_activity' || rpc === 'withdraw_activity_registration') args.p_expected_user_id = userId;
+  try { result = await client.rpc(rpc, args); }
+  catch { fail('REGISTRATION_FAILED', message); }
+  if (result?.error || !validState(result?.data, userId)) fail('REGISTRATION_FAILED', message);
+  const expectedStatus = rpc === 'register_activity' ? 'active' : rpc === 'withdraw_activity_registration' ? 'withdrawn' : null;
+  if (expectedStatus && result.data.application?.status !== expectedStatus) fail('REGISTRATION_FAILED', message);
+  return result.data;
+}
+
+export async function readActivityRegistration(client, activityId, expectedUserId) {
+  const user = await verifyIdentity(client, expectedUserId);
+  return requestState(client, 'get_activity_registration', activityId, user.id, '暂时无法确认报名记录，请重试后再提交。');
+}
+
+// Kept for callers that only need the member's own application.
 export async function readOwnApplication(client, activityId, userId) {
-  if (!client || !activityId || !userId) fail('SERVICE_UNAVAILABLE', '报名服务暂时不可用，请稍后重试。');
-  const { data, error } = await client.from('applications').select('id,created_at').eq('activity_id', activityId).eq('user_id', userId).maybeSingle();
-  if (error) fail('READ_FAILED', '暂时无法确认报名记录，请重试后再提交。');
-  if (data && (typeof data.id !== 'string' || !data.id)) fail('READ_FAILED', '报名服务返回了不完整的记录，请稍后重试。');
-  return data || null;
+  return (await readActivityRegistration(client, activityId, userId)).application;
 }
 
 export async function submitActivityApplication(client, activity, { expectedUserId } = {}) {
+  const user = await verifyIdentity(client, expectedUserId);
   const availability = registrationAvailability(activity);
   if (!availability.open) fail('REGISTRATION_CLOSED', availability.reason);
-  if (!client) fail('SERVICE_UNAVAILABLE', '报名服务暂时不可用，请稍后重试。');
-  const { data: identity, error: identityError } = await client.auth.getUser();
-  if (identityError && identityError.name !== 'AuthSessionMissingError' && identityError.code !== 'session_not_found') fail('AUTH_UNAVAILABLE', '暂时无法核实登录状态，请稍后重试。');
-  const user = identity?.user;
-  if (!user?.id || user.is_anonymous === true) fail('LOGIN_REQUIRED', '请先登录邮箱账号，再提交活动报名。');
-  if (expectedUserId && expectedUserId !== user.id) fail('LOGIN_CHANGED', '登录账号已变化，请重新确认当前账号后再报名。');
-  // Ownership is verified again by applications_owner_insert. The browser never
-  // selects another account or writes any application approval/status fields.
-  const { data, error } = await client.from('applications').insert({ activity_id: activity.id, user_id: user.id, payload: {} }).select('id,created_at').single();
-  if (error?.code === '23505') {
-    const existing = await readOwnApplication(client, activity.id, user.id);
-    if (existing) return { ...existing, alreadySubmitted: true };
-  }
-  if (error || typeof data?.id !== 'string' || !data.id) fail('SUBMIT_FAILED', '报名未完成。活动可能已截止或尚未开放，请刷新活动后重试。');
-  return { ...data, alreadySubmitted: false };
+  return requestState(client, 'register_activity', activity.id, user.id, '报名未完成。活动可能已截止或尚未开放，请重新检查后重试。');
+}
+
+export async function withdrawActivityRegistration(client, activityId, { expectedUserId } = {}) {
+  const user = await verifyIdentity(client, expectedUserId);
+  return requestState(client, 'withdraw_activity_registration', activityId, user.id, '退出未完成。活动可能已开始，请重新检查后重试。');
 }

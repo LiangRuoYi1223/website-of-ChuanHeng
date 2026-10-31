@@ -15,6 +15,8 @@ import { toLocalDateTime, readActivitySchedule } from '../activities/schedule.js
 import { OFFICIAL_BADGE } from '../Brand.jsx';
 import { runtimeMode } from '../runtime-mode.js';
 import { safeInternalReturn } from '../applications/registration.js';
+import { parseRegistrationCapacity } from '../applications/settings.js';
+import ActivityRegistrationAdmin from '../applications/ActivityRegistrationAdmin.jsx';
 
 const DRAFT_KEY = 'chuanheng-drafts';
 const NAV = [
@@ -203,6 +205,7 @@ export function AdminPage() {
   const [query, setQuery] = useState('');
   const [showSamples, setShowSamples] = useState(false);
   const [editor, setEditor] = useState(null);
+  const [registrationActivity, setRegistrationActivity] = useState(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
@@ -216,7 +219,8 @@ export function AdminPage() {
     }
   }, [requestedSection, previewRequested, navigate]);
 
-  useEffect(() => { setQuery(''); setShowSamples(false); setEditor(null); setMobileOpen(false); setNotice(''); setError(''); }, [section]);
+  useEffect(() => { setQuery(''); setShowSamples(false); setEditor(null); setRegistrationActivity(null); setMobileOpen(false); setNotice(''); setError(''); }, [section]);
+  useEffect(() => { if (!allowed) setRegistrationActivity(null); }, [allowed, auth.user?.id]);
 
   useEffect(() => {
     if (!local) return undefined;
@@ -315,6 +319,14 @@ export function AdminPage() {
         } else {
           Object.assign(payload, readActivitySchedule(form, { published, legacy: false }));
         }
+        const capacityText = String(form.get('registrationCapacity') || '').trim();
+        const unchangedLegacyCapacity = Boolean(editor.id) && editor.payload.registrationCapacity == null && !capacityText && registrationOpen === (editor.payload.registrationOpen === true);
+        const capacity = parseRegistrationCapacity(capacityText, { required: registrationOpen && !unchangedLegacyCapacity || published && !editor.id });
+        if (capacity !== null) payload.registrationCapacity = capacity;
+        else if (!Object.hasOwn(editor.payload, 'registrationCapacity')) delete payload.registrationCapacity;
+        else payload.registrationCapacity = null;
+        payload.paymentInstructions = String(form.get('paymentInstructions') || '').trim();
+        if (payload.paymentInstructions.length > 1000) throw new Error('缴费说明不能超过1000字。');
         payload.routeId = String(form.get('routeId') || '');
         const legacyTrack = !editor.payload.routeSnapshot && (editor.payload.track || editor.payload.trackLocalId);
         if (legacyTrack && track === undefined) throw new Error('原有轨迹尚未读取完成，请重试读取后保存。');
@@ -416,7 +428,7 @@ export function AdminPage() {
     const shown = overview ? filtered.slice(0, 6) : filtered;
     return <section className="admin-panel">
       <div className="admin-panel-heading"><div><h2>{overview ? '近期内容' : `${KIND_NAMES[kind]}列表`} <span>{filtered.length}</span></h2><p>{showSamples ? '界面示例只读，不计入统计，不支持报名或发布。' : local ? '管理此浏览器保存的内容草稿' : '管理云端内容与发布状态'}</p></div><div className="admin-panel-actions">{runtimeMode.allowLocalPreview && <button className={`admin-btn subtle ${showSamples ? 'selected' : ''}`} onClick={() => setShowSamples(value => !value)}><Eye size={15} />{showSamples ? '返回我的内容' : '查看示例'}</button>}{overview && <Link className="admin-text-link" to={adminPath("/admin/activities")}>全部活动<ArrowRight size={15} /></Link>}</div></div>
-      <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>内容名称</th><th>类别</th><th>状态</th><th>创建日期</th><th>操作</th></tr></thead><tbody>{shown.map(row => <tr key={row.id}><td><div className="admin-row-title">{row.payload.image ? <img src={row.payload.image} alt="" loading="lazy" onError={event => { event.currentTarget.style.visibility = 'hidden'; }} /> : <span className="admin-row-image"><MountainSnow size={19} /></span>}<div><strong>{row.payload.title}</strong><small>{String(row.payload.description || '').slice(0, 42) || '暂无简介'}</small></div></div></td><td>{row.payload.type || KIND_NAMES[row.kind]}</td><td><span className={`admin-status ${row.isDemo ? 'sample' : row.payload.archived ? 'archived' : row.published ? 'published' : ''}`}>{row.isDemo ? '设计示例' : row.payload.archived ? '已归档' : row.published ? '已发布' : '草稿'}</span></td><td>{dateLabel(row.created_at)}</td><td>{row.isDemo || row.kind === 'route' && row.payload.archived ? <span className="admin-muted">{row.payload.archived ? '归档只读' : '只读'}</span> : <div className="admin-row-actions">{local && ['route', 'activity'].includes(row.kind) && <Link to={`/${row.kind === 'activity' ? 'activities' : 'routes'}/${row.id}?draft=1`} aria-label={`预览${row.payload.title}`} title={row.kind === 'activity' ? '预览本地活动' : '预览本地路线'}><Eye size={16} /></Link>}<button aria-label={`编辑${row.payload.title}`} title="编辑" onClick={() => { setError(''); setEditor(structuredClone(row)); }} disabled={busy}><Pencil size={16} /></button><button className="danger" aria-label={`删除${row.payload.title}`} title="删除" onClick={() => deleteContent(row)} disabled={busy}><Trash2 size={16} /></button></div>}</td></tr>)}</tbody></table></div>
+      <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>内容名称</th><th>类别</th><th>状态</th><th>创建日期</th><th>操作</th></tr></thead><tbody>{shown.map(row => <tr key={row.id} onDoubleClick={event => { if (row.kind === 'activity' && !row.isDemo && allowed && !busy && !event.target.closest('button,a,input,select,textarea')) setRegistrationActivity(structuredClone(row)); }}><td><div className="admin-row-title">{row.payload.image ? <img src={row.payload.image} alt="" loading="lazy" onError={event => { event.currentTarget.style.visibility = 'hidden'; }} /> : <span className="admin-row-image"><MountainSnow size={19} /></span>}<div><strong>{row.payload.title}</strong><small>{String(row.payload.description || '').slice(0, 42) || '暂无简介'}</small></div></div></td><td>{row.payload.type || KIND_NAMES[row.kind]}</td><td><span className={`admin-status ${row.isDemo ? 'sample' : row.payload.archived ? 'archived' : row.published ? 'published' : ''}`}>{row.isDemo ? '设计示例' : row.payload.archived ? '已归档' : row.published ? '已发布' : '草稿'}</span></td><td>{dateLabel(row.created_at)}</td><td>{row.isDemo || row.kind === 'route' && row.payload.archived ? <span className="admin-muted">{row.payload.archived ? '归档只读' : '只读'}</span> : <div className="admin-row-actions">{row.kind === 'activity' && <button aria-label={`管理${row.payload.title}的报名`} title="报名管理" onClick={() => setRegistrationActivity(structuredClone(row))} disabled={busy}><Users size={16} /></button>}{local && ['route', 'activity'].includes(row.kind) && <Link to={`/${row.kind === 'activity' ? 'activities' : 'routes'}/${row.id}?draft=1`} aria-label={`预览${row.payload.title}`} title={row.kind === 'activity' ? '预览本地活动' : '预览本地路线'}><Eye size={16} /></Link>}<button aria-label={`编辑${row.payload.title}`} title="编辑" onClick={() => { setError(''); setEditor(structuredClone(row)); }} disabled={busy}><Pencil size={16} /></button><button className="danger" aria-label={`删除${row.payload.title}`} title="删除" onClick={() => deleteContent(row)} disabled={busy}><Trash2 size={16} /></button></div>}</td></tr>)}</tbody></table></div>
       {!shown.length && <EmptyState title={loading ? '正在读取内容' : query ? '没有找到匹配内容' : `还没有${KIND_NAMES[kind] || '内容'}${local ? '草稿' : ''}`} description={loading ? '请稍候，正在连接内容服务。' : query ? '试试其他关键词。' : '从一次新的创建开始，记录每一次出发。'} />}
       <div className="admin-table-footer"><span>共 {filtered.length} 条内容{showSamples ? ' · 设计示例' : local ? ' · 本地保存' : ''}</span><span>{overview && filtered.length > 6 ? '显示最近 6 条' : '全部内容'}<ChevronRight size={14} /></span></div>
     </section>;
@@ -437,11 +449,12 @@ export function AdminPage() {
       {section === 'debug' && <DebugPanel groups={duplicates} rows={rows} local={local} busy={busy} resolvingGroup={resolvingGroup} loading={loading} onResolve={resolveGroup} onEditActivity={row => { setError(''); setEditor(structuredClone(row)); }} />}
       {section === 'backgrounds' && <section className="admin-panel admin-background-panel"><div><h2>网站主视觉</h2><p>当前主视觉为 AI 生成的山岳示意图。图片上传、背景轮换与云端保存待接入。</p><span className="admin-status">当前使用</span></div><img src="/images/redesign-v2/home-summit.webp" alt="AI 生成的夕阳雪山主视觉" /><div className="admin-background-meta"><span>首页主视觉</span><span>/images/redesign-v2/home-summit.webp</span></div></section>}
       {section === 'password' && <PasswordPanel connected={!local} onNotice={setNotice} />}
-      {['accounts', 'services', 'projects'].includes(section) && <section className="admin-panel admin-pending"><div className="admin-pending-icon">{section === 'accounts' ? <Users size={32} /> : section === 'services' ? <SlidersHorizontal size={32} /> : section === 'projects' ? <Compass size={32} /> : <Compass size={32} />}</div><h2>{section === 'services' ? '服务连接与配置' : `${title}待接入`}</h2><p>{section === 'accounts' ? '真实成员账号需要受保护的服务端管理接口。这里不会展示虚构账号，也不会在浏览器存放管理员密钥。' : section === 'services' ? isBackendConfigured ? '已提供有效格式的前端公钥配置。内容连接状态以实际读取结果为准，存储上传、邮件和其他业务服务仍待配置。' : '当前运行本地设计预览。接入真实服务后，可使用账号登录、云端内容与发布能力。' : section === 'projects' ? '项目资料与报名流程尚未连接。你可以先在活动管理中整理本地内容草稿。' : '项目资料与报名流程尚未连接。你可以先在活动管理中整理本地内容草稿。'}</p>{section === 'services' && <div className="admin-config-summary"><span>内容存储<strong>{local ? '浏览器本地草稿' : 'Supabase · RLS 权限'}</strong></span><span>文件上传<strong>待接入</strong></span><span>报名管理<strong>待接入</strong></span><span>账号管理<strong>待接入</strong></span></div>}<Link className="admin-text-link" to={section === 'services' ? '/' : adminPath('/admin/activities')}>{section === 'services' ? '返回网站' : '前往活动管理'}<ArrowRight size={15} /></Link></section>}
+      {['accounts', 'services', 'projects'].includes(section) && <section className="admin-panel admin-pending"><div className="admin-pending-icon">{section === 'accounts' ? <Users size={32} /> : section === 'services' ? <SlidersHorizontal size={32} /> : section === 'projects' ? <Compass size={32} /> : <Compass size={32} />}</div><h2>{section === 'services' ? '服务连接与配置' : `${title}待接入`}</h2><p>{section === 'accounts' ? '真实成员账号需要受保护的服务端管理接口。这里不会展示虚构账号，也不会在浏览器存放管理员密钥。' : section === 'services' ? isBackendConfigured ? '已提供有效格式的前端公钥配置。内容连接状态以实际读取结果为准，存储上传、邮件和其他业务服务仍待配置。' : '当前运行本地设计预览。接入真实服务后，可使用账号登录、云端内容与发布能力。' : section === 'projects' ? '项目资料与报名流程尚未连接。你可以先在活动管理中整理本地内容草稿。' : '项目资料与报名流程尚未连接。你可以先在活动管理中整理本地内容草稿。'}</p>{section === 'services' && <div className="admin-config-summary"><span>内容存储<strong>{local ? '浏览器本地草稿' : 'Supabase · RLS 权限'}</strong></span><span>文件上传<strong>待接入</strong></span><span>报名管理<strong>活动名单 · 手动缴费 · 操作日志</strong></span><span>账号管理<strong>待接入</strong></span></div>}<Link className="admin-text-link" to={section === 'services' ? '/' : adminPath('/admin/activities')}>{section === 'services' ? '返回网站' : '前往活动管理'}<ArrowRight size={15} /></Link></section>}
       {!nav && <section className="admin-panel"><EmptyState title="没有找到这个后台页面" description="请选择左侧的管理模块继续。" /></section>}
       </>}
       <footer className="admin-footer"><span>川衡登山协会 · 管理工作空间</span><span>以山为伴，一路同行。</span></footer>
     </section></div>
+    {registrationActivity && allowed && <ActivityRegistrationAdmin key={`${registrationActivity.id}:${auth.user?.id || 'preview'}`} activity={registrationActivity} local={local} onClose={() => setRegistrationActivity(null)} />}
     {editor && allowed && <ContentEditor editor={editor} rows={rows} onRefreshRoutes={() => { if (local) setDrafts(readDrafts()); else setRefresh(value => value + 1); }} routesLoading={loading} routesError={loadError} local={local} busy={busy} error={error} onSave={saveContent} onClose={() => { if (!busy) { setEditor(null); setError(''); } }} />}
   </div>;
 }
@@ -581,6 +594,8 @@ function ContentFields({ editor, track, routeData, trackBlocked = false, activit
       <div className="admin-field-grid"><label>活动开始时间<input name="dateStart" type="datetime-local" defaultValue={toLocalDateTime(payload.dateStart)} />{/^\d{4}-\d{2}-\d{2}$/.test(payload.dateStart || '') && <small>原记录日期：{payload.dateStart}，具体时刻未知，留空保留原日期。</small>}</label><label>活动结束时间<input name="dateEnd" type="datetime-local" defaultValue={toLocalDateTime(payload.dateEnd)} /></label></div>
       <label>活动状态<select name="status" value={activityStatus} onChange={event => onStatusChange(event.target.value)}><option>即将开始</option><option>报名中</option><option>进行中</option><option>已结束</option></select></label>
       <label>日期说明<input name="date" defaultValue={payload.date || ''} maxLength={100} placeholder="补充集合时间等说明" /></label>
+      <label>预设报名人数<input name="registrationCapacity" type="number" min="1" max="100000" step="1" defaultValue={payload.registrationCapacity ?? ''} placeholder="例如：5" /><small>按有效报名时间排序，名额内入选，其余候补；退出后顺次递补。旧活动未设置时保持未知。</small></label>
+      <label>缴费说明<textarea name="paymentInstructions" defaultValue={payload.paymentInstructions || ''} maxLength={1000} rows={3} placeholder="请填写缴费方式、联系人员等正式说明" /><small>入选且未缴费的会员会在报名页面看到此说明；缴费状态由管理员核实后手动调整。</small></label>
       <label className="admin-checkbox"><input name="registrationOpen" type="checkbox" defaultChecked={payload.registrationOpen === true} />开启活动报名</label>
       <div className="admin-field-grid"><label>报名开启时间<input name="registrationStart" type="datetime-local" defaultValue={toLocalDateTime(payload.registrationStart)} /></label><label>报名截止时间<input name="registrationDeadline" type="datetime-local" defaultValue={toLocalDateTime(payload.registrationDeadline)} /></label></div>
       <p className="admin-schedule-note">按本地时区填写。报名开启须早于截止，截止不晚于活动开始，活动结束须晚于开始。草稿可暂留空；已截止的活动仍可编辑保存。</p>

@@ -18,7 +18,7 @@ const { createRoot } = await import('react-dom/client');
 const { MemoryRouter, Routes, Route } = await import('react-router-dom');
 const member = { id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', email: 'member@example.invalid', app_metadata: {}, user_metadata: { role: 'admin' } };
 const admin = { id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', email: 'admin@example.invalid', app_metadata: { role: 'admin' }, user_metadata: {} };
-const activity = { id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', title: '合成公开活动', published: true, isDemo: false, status: '报名中', registrationOpen: true, registrationStart: new Date(Date.now() - 86400000).toISOString(), registrationDeadline: new Date(Date.now() + 86400000).toISOString(), dateStart: new Date(Date.now() + 2 * 86400000).toISOString(), dateEnd: new Date(Date.now() + 3 * 86400000).toISOString() };
+const activity = { id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', title: '合成公开活动', registrationCapacity: 5, published: true, isDemo: false, status: '报名中', registrationOpen: true, registrationStart: new Date(Date.now() - 86400000).toISOString(), registrationDeadline: new Date(Date.now() + 86400000).toISOString(), dateStart: new Date(Date.now() + 2 * 86400000).toISOString(), dateEnd: new Date(Date.now() + 3 * 86400000).toISOString() };
 const controller = { session: null, verified: null, calls: [], applications: new Map(), subscribers: new Set(), signupConfirmation: true, writeError: null, insertBarrier: null };
 const mockBackend = {
   auth: {
@@ -27,6 +27,22 @@ const mockBackend = {
     onAuthStateChange(callback) { controller.subscribers.add(callback); return { data: { subscription: { unsubscribe: () => controller.subscribers.delete(callback) } } }; },
     async signInWithPassword(credentials) { controller.calls.push({ operation: 'signIn', credentials }); controller.session = member; controller.verified = member; for (const callback of controller.subscribers) callback('SIGNED_IN', { user: member }); return { data: { user: member }, error: null }; },
     async signUp(credentials) { controller.calls.push({ operation: 'signUp', credentials }); if (controller.signupConfirmation) return { data: { user: member, session: null }, error: null }; controller.session = member; controller.verified = member; return { data: { user: member, session: { user: member } }, error: null }; },
+  },
+  async rpc(name,args) {
+    const verified=controller.verified;
+    const key=`${args.p_activity_id}:${verified?.id}`;
+    const state=()=>{
+      const application=controller.applications.get(key)||null;
+      const active=[...controller.applications.values()].filter(row=>row.status==='active');
+      return {capacity:5,activeCount:active.length,confirmedCount:Math.min(active.length,5),waitlistCount:Math.max(active.length-5,0),canWithdraw:application?.status==='active',application};
+    };
+    if(name==='get_activity_registration') {controller.calls.push({operation:'application-read',rpc:name,args});return {data:state(),error:null};}
+    assert.equal(name,'register_activity');
+    controller.calls.push({operation:'application-insert',rpc:name,args});
+    if(controller.insertBarrier)await controller.insertBarrier;
+    if(controller.writeError)return {data:null,error:controller.writeError};
+    if(!controller.applications.has(key))controller.applications.set(key,{id:crypto.randomUUID(),userId:verified.id,email:verified.email,displayName:'合成会员',createdAt:new Date().toISOString(),registeredAt:new Date().toISOString(),status:'active',paymentStatus:'unpaid',position:1,selectionStatus:'confirmed'});
+    return {data:state(),error:null};
   },
   from(table) {
     if (table === 'content_items') return { select(columns) { controller.calls.push({ operation: 'content-read', columns }); return { order: async () => ({ data: [], error: null }) }; } };
@@ -144,7 +160,8 @@ test('production auth and activity application use verified identities and real 
     await act(async () => release());
     await waitFor(() => text(container).includes('报名申请已提交'), 'confirmed application row');
     const insertion = controller.calls.find(call => call.operation === 'application-insert');
-    assert.deepEqual(insertion.payload, { activity_id: activity.id, user_id: member.id, payload: {} });
+    assert.equal(insertion.rpc,'register_activity');
+    assert.deepEqual(insertion.args,{p_activity_id:activity.id,p_expected_user_id:member.id});
     assert.equal(controller.calls.filter(call => call.operation === 'application-insert').length, 1);
   });
 

@@ -38,7 +38,7 @@ before(async () => {
   db = new PGlite();
   await db.exec(`create role anon; create role authenticated; create schema auth;
     grant usage on schema auth,public to anon,authenticated;
-    create table auth.users(id uuid primary key);
+    create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb default '{}'::jsonb);
     create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims',true),'')::jsonb,'{}'::jsonb) $$;
     create function auth.uid() returns uuid language sql stable as $$ select (auth.jwt()->>'sub')::uuid $$;
     create schema chuanheng; create table chuanheng.sentinel(value text); insert into chuanheng.sentinel values ('private untouched');
@@ -85,7 +85,7 @@ before(async () => {
   assert.deepEqual(await q("select * from pg_policies where schemaname='storage' order by policyname"),oldPolicies);
   // Remove this isolated fixture after proving the migration preserved it.
   await q("delete from storage.objects where name='historical/keep-original.webp'");
-  await q('insert into auth.users values($1),($2)',[admin.sub,member.sub]);
+  await q('insert into auth.users(id) values($1),($2)',[admin.sub,member.sub]);
   console.log('Isolated engine:', await val('select version() as value'));
 });
 after(async () => db?.close());
@@ -155,22 +155,22 @@ test('audited dedup keeps snapshots and old geometry; delete RPC no longer uses 
 test('schedule validation permits closed history and drafts, rejects partial publication and bad ISO',async()=>identity(admin,async()=>{
   await save(activity(1));
   await fails(()=>save(activity(2,{},true)),/SCHEDULE/);
-  const dates={dateStart:'2020-01-02T10:00:00Z',dateEnd:'2020-01-02T11:00:00Z',registrationStart:'2020-01-01T09:00:00Z',registrationDeadline:'2020-01-02T10:00:00Z',registrationOpen:true};
+  const dates={registrationCapacity:5,dateStart:'2020-01-02T10:00:00Z',dateEnd:'2020-01-02T11:00:00Z',registrationStart:'2020-01-01T09:00:00Z',registrationDeadline:'2020-01-02T10:00:00Z',registrationOpen:true};
   const a=(await save(activity(3,dates,true))).activity;
   await save(edit(a,{registrationOpen:false}));
   for(const patch of [{dateEnd:dates.dateStart},{registrationStart:dates.registrationDeadline},{dateStart:'2020-01-02'},{dateEnd:'infinity'},{dateEnd:'2020-02-31T12:00:00Z'},{registrationStart:null}]) await fails(()=>save(activity(4,{...dates,...patch},true)),/SCHEDULE/);
 }));
-test('registration server clock enforces exact open inclusive deadline/start/end exclusive; malformed legacy fails closed',async()=>{
+test('registration RPC enforces server window boundaries; malformed legacy fails closed',async()=>{
   const now=await val('select now() as value'); const t=new Date(now).getTime(); const iso=delta=>new Date(t+delta).toISOString();
-  const dates={registrationOpen:true,registrationStart:iso(-1000),registrationDeadline:iso(1000),dateStart:iso(2000),dateEnd:iso(3000)};
-  const patches=[{}, {registrationStart:iso(0)}, {registrationStart:iso(1)}, {registrationDeadline:iso(0)}, {dateStart:iso(0)}, {dateEnd:iso(0)}];
+  const dates={registrationCapacity:5,registrationOpen:true,registrationStart:iso(-60000),registrationDeadline:iso(60000),dateStart:iso(120000),dateEnd:iso(180000)};
+  const patches=[{}, {registrationStart:iso(-1)}, {registrationStart:iso(60000)}, {registrationDeadline:iso(0)}, {dateStart:iso(0)}, {dateEnd:iso(0)}];
   // Fixtures intentionally bypass only our trigger to exercise RLS against historical bad rows.
   await db.exec('alter table public.content_items disable trigger user');
   for(let n=0;n<patches.length;n++) await insert(activity(n+1,{...dates,...patches[n]},true));
   await db.exec('alter table public.content_items enable trigger user');
   await identity(member,async()=>{
-    for(const n of [1,2]) await q('insert into public.applications(activity_id) values($1)',[uuid(n)]);
-    for(const n of [3,4,5,6,800]) await fails(()=>q('insert into public.applications(activity_id) values($1)',[uuid(n)]),/row-level security/);
+    for(const n of [1,2]) await val('select public.register_activity($1,auth.uid()) as value',[uuid(n)]);
+    for(const n of [3,4,5,6,800]) await fails(()=>val('select public.register_activity($1,auth.uid()) as value',[uuid(n)]),/REGISTRATION_CLOSED|REGISTRATION_CAPACITY_REQUIRED/);
   });
 });
 test('members and user_metadata cannot save; anon no RPC access',async()=>{
@@ -234,9 +234,9 @@ test('activity deletion with application FK rejects atomically and retains autom
   let a;
   await identity(admin,async()=>{
     const r={...route(1),payload:{...route(1).payload,generatedFromActivityId:uuid(2)}};await insert(r);
-    a=(await save({...activity(2,{routeId:r.id,registrationOpen:true,registrationStart:iso(-60000),registrationDeadline:iso(60000),dateStart:iso(120000),dateEnd:iso(180000)},true),routeExpectedPayload:r.payload})).activity;
+    a=(await save({...activity(2,{routeId:r.id,registrationCapacity:5,registrationOpen:true,registrationStart:iso(-60000),registrationDeadline:iso(60000),dateStart:iso(120000),dateEnd:iso(180000)},true),routeExpectedPayload:r.payload})).activity;
   });
-  await identity(member,async()=>q('insert into public.applications(activity_id) values($1)',[a.id]));
+  await identity(member,async()=>val('select public.register_activity($1,auth.uid()) as value',[a.id]));
   const before=await q('select * from public.content_items order by id');
   await identity(admin,async()=>fails(()=>val('select public.delete_content_with_links($1) as value',[a.id]),/foreign key/));
   assert.deepEqual(await q('select * from public.content_items order by id'),before);
