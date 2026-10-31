@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import * as samples from './data.js';
 import { supabase } from './backend.js';
+import { runtimeMode } from './runtime-mode.js';
 
-export const isPreview = import.meta.env.VITE_CONTENT_MODE !== 'live';
+export const isPreview = runtimeMode.sampleContent;
 const empty = { activities: [], routes: [], photos: [], articles: [] };
 const Catalog = createContext({ ...empty, loading: false, error: '', refresh: async () => {} });
 export function CatalogProvider({ children }) {

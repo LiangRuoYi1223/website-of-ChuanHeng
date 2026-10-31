@@ -1,1 +1,2 @@
-/* /index.html 200
+# SPA routes are handled by assets.not_found_handling in wrangler.jsonc.
+# Do not add a wildcard /index.html rewrite: Workers rejects its redirect loop.

@@ -1,6 +1,6 @@
 # 活动轨迹关联与同名路线处理
 
-当前先在 localhost 验证本地草稿。`route-deduplication.sql` 只是一份审核草案，没有执行，没有创建函数、修改数据表或更改旧 `chuanheng` schema。
+本地草稿和隔离 SQL 已验证。生产迁移 `20261031074956_chuanheng_v1_content_and_tracks` 已应用，包含本文原子 RPC；旧 `chuanheng` schema 与数据保持原状。新版 Worker 已部署，公网 HTTP 验收通过；真实账号交接见 [生产交接](PRODUCTION-HANDOFF.md)。
 
 ## 本地原子更新
 
@@ -29,7 +29,7 @@
 | activity `payload.routeLinkSource` | 自动关联时为 `activity-track` |
 | activity `payload.footprintEligible` | 有可用轨迹且未归档为 true；这不是协会/地点真实性证明 |
 
-本地新自动路线 ID 为确定性的 `activity-route:<activityId>`，重复保存不会新增。这个 ID **只用于本地草稿**，不能直接插入云端 UUID 列。云端草案由服务器生成 UUID 并通过 `generatedFromActivityId` 保持稳定关联。
+本地新自动路线 ID 为确定性的 `activity-route:<activityId>`，重复保存不会新增。这个 ID **只用于本地草稿**，不能直接插入云端 UUID 列。云端由服务器生成 UUID 并通过 `generatedFromActivityId` 保持稳定关联。
 
 同名不同活动各自生成路线，不自动覆盖或合并。不同活动导入相同文件路线名，也会在 Debug 中产生同名组。已关联到去重胜出路线的活动继续保有自己的轨迹。胜出路线一旦有非空 `duplicateResolutions` 审计数组，其原归属活动和后续重定向活动的更新都不会改动它的标题、轨迹、元数据与发布状态；活动自己的轨迹仍可更新。
 
@@ -71,7 +71,7 @@ published = false
 
 活动的 `routeId` 从失败者重定向胜出者，活动自有轨迹不删除。已去重归档的自动路线后续只沿 `duplicateWinnerId` 链找到当前胜出者，不新增同名替身，也不覆写胜出者。链失效或成环则拒绝保存，要求人工检查。归档失败者不会再次出现在 Debug 重复组中。
 
-## 未来云端草案
+## 已应用的云端原子 RPC
 
 三个 RPC 均使用 `SECURITY INVOKER`、固定 `search_path`、服务器受信 `app_metadata.role=admin` 与非空 `auth.uid()` 检查。普通登录用户有函数 EXECUTE 权限并不意味着有业务操作权限；函数内部与现有 RLS 都会拒绝非管理员。没有使用 `user_metadata`、service key 或 SECURITY DEFINER 绕过。
 
@@ -81,9 +81,9 @@ published = false
 
 三个函数在读取内容前取得 `SHARE ROW EXCLUSIVE` 表锁，再锁定/重验涉及记录；同时阻止普通内容写入及另一 RPC 在检查后插入新同名路线，避免只锁旧组留下幻读窗口。采用 `NOWAIT`，竞争时整体失败，界面应刷新并提示稍后重试。适合目前小规模管理操作；数据规模扩大后应另行设计基于规范键的唯一约束/专用锁模型。函数异常使整个调用回滚，不会出现只保存活动或只归档部分路线。
 
-草案不改变现有表、索引或 RLS。`CREATE FUNCTION` 刻意不用 OR REPLACE；同签名已存在时先失败供人工审核。执行权限显式撤销后只给 authenticated；纯规范化辅助函数也限定权限。客户端不能上传自定 `archivedBy` 冒充另一管理员，云端审计身份来自 `auth.uid()`。
+路线 RPC 部分不改变现有新模型的表、索引或 RLS；初始迁移中的表和策略由另一来源脚本创建。`CREATE FUNCTION` 刻意不用 OR REPLACE，同签名已存在时先失败，不得在已迁移生产库重复初始化。执行权限显式撤销后只给 authenticated；纯规范化辅助函数也限定权限。客户端不能上传自定 `archivedBy` 冒充另一管理员，云端审计身份来自 `auth.uid()`。
 
-PostgreSQL `normalize` 依赖 UTF8；`lower` 使用数据库 locale。上线前应核对生产 locale 与浏览器 Unicode 小写行为，尤其非中文/Latin 名称；服务端分组为最终依据。[PostgreSQL 字符串函数](https://www.postgresql.org/docs/current/functions-string.html)
+PostgreSQL `normalize` 依赖 UTF8；`lower` 使用数据库 locale。生产应继续核对 locale 与浏览器 Unicode 小写行为，尤其非中文/Latin 名称；服务端分组为最终依据。[PostgreSQL 字符串函数](https://www.postgresql.org/docs/current/functions-string.html)
 
 现有 `public.content_items` 的 authenticated 表级 UPDATE/DELETE 授权满足此表锁权限要求，管理员资格仍由 RPC 检查与现有 RLS 双重限制。表锁持续到事务结束，并发更新需要一致锁顺序；建议各 RPC 单独调用，不和前序直接写内容混在外层长事务中。[PostgreSQL LOCK](https://www.postgresql.org/docs/current/sql-lock.html)
 
@@ -91,4 +91,4 @@ PostgreSQL `normalize` 依赖 UTF8；`lower` 使用数据库 locale。上线前�
 
 本地测试覆盖自动关联和更新、文件命名优先级、不同活动同文件名、IndexedDB 引用摘要、空海拔、移除轨迹、共享路线保留、Unicode 分组、全组过期拒绝、审计与重定向、输入不变、归档不再提示、后续保存不复活失败者、失效/循环去重链与 ID 冲突，以及原 owner 更新/移除/删除时胜出者冻结、活动删除后路线归档、路线引用拒删。
 
-SQL 尚未在数据库安装或执行，不能称其已通过集成验证。未来在隔离项目先验证：游客/普通成员被拒、管理员允许；事务失败回滚；并发插入同名路线时组变更被拒或锁竞争整体失败；保留原始几何和活动自有轨迹；缺失/删除/改名/新增/已归档的过期选择被拒；UUID 关联稳定；去重后更新/移除/删除活动不复活失败路线、不覆盖胜出者；所有引用拒删分支；报名外键失败时连同路线归档全部回滚。通过后才考虑真实迁移与界面云端接入。
+SQL 已在隔离 PGlite 中实际安装并用 `SET ROLE` 验证游客、成员、伪造 `user_metadata`、领队、管理员的权限，以及完整保存/去重/删除和事务失败回滚。生产已核验迁移、RLS/函数授权、匿名 REST 与 advisors；真实用户 JWT、管理员写入和并发锁竞争尚待交接验收。可复现步骤与修复记录见 [SQL 隔离验证](supabase-sql-validation.md)。

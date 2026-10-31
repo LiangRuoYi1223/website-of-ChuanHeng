@@ -1,5 +1,5 @@
--- REVIEW DRAFT FOR A NEW PROJECT. Not executed against any cloud database.
--- Review the deployment guide and project grants before running this transaction.
+-- Readable source for applied production migration 20261031074956.
+-- Do not rerun CREATE on the migrated project. See docs/PRODUCTION-HANDOFF.md.
 -- Intentionally fails if these tables already exist; never overwrite a live schema.
 begin;
 
@@ -23,7 +23,9 @@ grant insert, update, delete on public.content_items to authenticated;
 
 create policy content_public_read on public.content_items
   for select to anon, authenticated
-  using (published and coalesce(payload ->> 'isDemo', 'false') <> 'true');
+  using (published
+    and coalesce(payload ->> 'isDemo', 'false') <> 'true'
+    and coalesce(payload ->> 'archived', 'false') <> 'true');
 
 -- app_metadata is set only by a trusted server/admin, never by public signUp data.
 create policy content_admin_read on public.content_items
@@ -71,6 +73,7 @@ create policy applications_owner_insert on public.applications
       select 1 from public.content_items c
       where c.id = activity_id and c.kind = 'activity' and c.published
         and coalesce(c.payload ->> 'isDemo', 'false') <> 'true'
+        and coalesce(c.payload ->> 'archived', 'false') <> 'true'
         and c.payload ->> 'registrationOpen' = 'true'
         and coalesce(c.payload ->> 'status', '') <> '已结束'
         and (c.payload ->> 'registrationDeadline')::timestamptz > now()
@@ -85,6 +88,6 @@ create policy applications_admin_read on public.applications
   using ((select auth.uid()) is not null
     and (select auth.jwt()) -> 'app_metadata' ->> 'role' = 'admin');
 
-comment on table public.content_items is 'Association content. Only published non-demo records are public.';
+comment on table public.content_items is 'Association content. Only published non-demo non-archived records are public.';
 comment on table public.applications is 'Private applications. No anonymous access or frontend update/delete grants.';
 commit;

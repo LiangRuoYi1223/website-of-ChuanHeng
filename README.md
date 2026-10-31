@@ -1,6 +1,8 @@
 # 川衡 CHUANHENG
 
-React + Vite 前端，依据用户提供的六张深色网站设计示意图从零创建。当前阶段仅本地设计预览，未改动 Supabase 和 Cloudflare。
+React + Vite 官网，依据用户提供的六张深色网站设计示意图从零创建，包含前台、后台及 GPX/KML 转换服务。
+
+2026-10-31：Supabase 生产迁移与 Cloudflare 新版部署均已成功，公网 HTTP 验收通过。Worker 版本为 `9c159570-c589-4813-9dfb-6f819479d40e`，100% 流量运行此版本；代码以 main 分支提交记录为准。访问 [川衡网站](https://chuanheng-website.vulhusky.workers.dev)，交接及回滚见 [生产交接](docs/PRODUCTION-HANDOFF.md)。
 
 ## 本地查看
 
@@ -16,15 +18,15 @@ React + Vite 前端，依据用户提供的六张深色网站设计示意图从�
 
 也可双击根目录的「启动网站.cmd」。
 
-`npm run build` 生成 dist。`npm test` 执行本地配置与页面渲染测试。
+`npm run build` 用于本地构建。正式构建运行 `npm run build:production`：从 `wrangler.jsonc` 读取项目地址和 publishable 公钥，固定使用 live 内容模式。`npm run deploy` 会重新正式构建并发布同一 Worker；只有在授权发布时执行。`npm test` 运行自动测试。
 
 ## 本地验收
 
 依次检查首页、活动与详情、路线库与详情、影像、资讯与详情、关于、足迹、加入、后台、登录注册。
 
-重点试用活动/路线/资讯筛选，影像灯箱与键盘切换，FAQ折叠，以及后台的本地草稿新建、编辑、删除。后台草稿仅保存在当前浏览器，清除浏览器存储会丢失；当前不会发布到公网。
+重点试用活动/路线/资讯筛选，影像灯箱与键盘切换，FAQ折叠，以及后台的本地草稿新建、编辑、删除。显式 `preview=1` 模式只保存当前浏览器草稿，不提交云端；清除浏览器存储会丢失这些草稿。正式管理员模式的内容管理使用 Supabase，保存成功以数据库响应为准。
 
-当前无真实活动、路线、人员、历史和GPS记录。样例均须保持示例标识，AI图像不作实拍使用。足迹地图使用本地中国省级边界矢量底图，可缩放、拖动和复位；真实活动地点尚未导入，所以没有活动标记。GPX/KML 已支持本地后端转换、同图分段线路、各段海拔及省市自动识别；有轨迹的已结束活动保存后自动生成本地足迹。详情见 [轨迹导入与活动足迹](docs/轨迹导入与活动足迹.md)。地图数据来源和上线前授权核对事项见 src/map/SOURCE.md。登录、真实报名、公开发布和云端权限仍需下一阶段联调。
+新站正式 `public.content_items` 与 `public.applications` 当前均为 0 行；未迁入旧站示例活动。样例保持示例标识，AI 图像不作实拍使用。足迹地图可缩放、拖动和复位；没有真实活动地点时不显示活动标记。GPX/KML 支持同图分段线路、独立海拔图及省市识别；符合条件的已结束活动派生足迹。详情见 [轨迹导入与活动足迹](docs/轨迹导入与活动足迹.md)。素材与地理数据来源记录保留在对应 SOURCE 文件。
 
 ## 文件与页面
 
@@ -38,12 +40,13 @@ React + Vite 前端，依据用户提供的六张深色网站设计示意图从�
 | src/pages/Explore.jsx、explore.css | 活动、路线、影像、资讯列表与详情 |
 | src/pages/Community.jsx、community.css | 关于、足迹、加入 |
 | src/pages/Admin.jsx、admin.css | 后台、登录注册、本地草稿管理 |
-| src/backend.js | 待启用的 Supabase Auth 公钥连接 |
+| src/backend.js | Supabase Auth 公钥连接与配置检查 |
 | public/images、public/fonts | 摄影示意、本地品牌字体与来源许可 |
 | tests | 页面渲染、资源、配置检查 |
-| docs/DEPLOYMENT.md、docs/supabase-schema.sql | 下一阶段发布说明及未执行的表结构草案 |
+| docs/DEPLOYMENT.md、docs/PRODUCTION-HANDOFF.md | 部署配置、生产状态、管理员交接与回滚 |
+| docs/supabase-schema.sql、docs/route-deduplication.sql | 已迁移 SQL 的可读来源；不得对现有表重复执行 CREATE |
 
-原工作目录为空，依据用户后续指示从零创建，因此没有迁移或保留旧系统业务。字体沿用已注明来源的本地资源。原摄影示意已停用，现按用户提供的“徒步新设计”样板重新生成整套摄影；未复制旧代码、账号或数据库。
+新版从零实现，未复制旧代码或账号。旧 `chuanheng` 私有 schema 及数据完整保留，新站使用独立 `public` 内容模型，旧示例没有迁入新站。字体保留来源说明；摄影按“徒步新设计”样板重新生成，官方圆形徽章使用用户提供的原图。
 
 ## 素材待补充
 
@@ -51,6 +54,6 @@ React + Vite 前端，依据用户提供的六张深色网站设计示意图从�
 
 ## 验证边界
 
-本地生产构建和89项自动测试通过（含新增地图空态、真实记录筛选和视图边界检查）。40个路由渲染、资源存在性和公钥配置已检查。浏览器自动控制因为不能可靠识别当前URL而终止，尚未完成浏览器视觉、三端截图和实际鼠标键盘交互验收。响应式规则已实现，但不能把代码检查等同于实机验收。
+最近一次全套自动测试 **278/278 通过**，正式生产构建成功；`npm audit` 总计与生产依赖均为 0 漏洞。Worker 无 Node 外部依赖打包及 localhost GPX/KML HTTP 上传已通过。PostgreSQL 17.5、18.6 的隔离 SQL 测试分别 13/13 通过，验证实际 RLS、管理 RPC 与回滚。详情见 [SQL 验证](docs/supabase-sql-validation.md)。
 
-待用户通过本地版本后再连接已有 Supabase 项目，并在 Cloudflare 上配置和发布。当前仅对云端进行了只读检查；未执行 SQL 草案，未新建云端表，未发布网站。
+生产迁移 `20261031074956_chuanheng_v1_content_and_tracks` 已应用：新表 RLS 与 FORCE RLS 已开启；匿名内容 REST 返回 200 空列表，匿名报名表返回 401；新对象没有 advisors 告警。公网页面、构建资源、徽章、API 配置及匿名拒绝检查通过。待办为邮件回跳核对、用户注册和确认、首位 Auth 管理员赋权、真实账户写入及授权上传。HTTP/JSDOM 检查不代替实机视觉验收。

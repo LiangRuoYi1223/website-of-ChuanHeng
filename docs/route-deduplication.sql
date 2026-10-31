@@ -1,8 +1,9 @@
--- REVIEW DRAFT ONLY. NOT EXECUTED. Local validation precedes any cloud change.
+-- Applied in production migration 20261031074956.
+-- Readable source only; do not repeat CREATE on the migrated project.
 -- Targets the NEW public.content_items JSON model only. No table DDL or old
--- chuanheng schema changes. Review grants/RLS and run the documented matrix in
--- an isolated project before considering a migration. CREATE intentionally fails
--- if a function with the same signature already exists; do not replace blindly.
+-- chuanheng schema changes. The documented isolated matrix has passed; production
+-- objects now exist. Future changes require a new targeted migration. CREATE
+-- intentionally fails for an existing signature; do not replace blindly.
 begin;
 
 create function public.route_title_key(value text)
@@ -180,10 +181,10 @@ begin
         when 'MultiLineString' then track #> '{geojson,geometry,coordinates,0,0}'
         when 'LineString' then track #> '{geojson,geometry,coordinates,0}' else null end;
     end if;
-    if case when jsonb_typeof(point) = 'array' then
+    if (case when jsonb_typeof(point) = 'array' then
       case when jsonb_array_length(point) >= 2 and jsonb_typeof(point -> 0) = 'number' and jsonb_typeof(point -> 1) = 'number'
         then abs((point ->> 0)::numeric) <= 180 and abs((point ->> 1)::numeric) <= 90 else false end
-      else false end then
+      else false end) then
       activity_payload := jsonb_set(activity_payload, '{coordinates}', jsonb_build_array(point -> 0, point -> 1));
     else activity_payload := activity_payload - 'coordinates'; end if;
   end if;

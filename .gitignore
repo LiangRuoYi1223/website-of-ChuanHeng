@@ -7,6 +7,8 @@ dist/
 .dev.vars
 .dev.vars.*
 .wrangler/
+supabase/.temp/
+supabase/.branches/
 artifacts/
 data/
 uploads/
