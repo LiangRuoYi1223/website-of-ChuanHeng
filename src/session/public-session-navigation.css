@@ -1,0 +1,7 @@
+.mobile-menu > span.public-session-status {
+  display: flex;
+  align-items: center;
+  padding: 18px 0;
+  color: var(--text, #f5f5f5);
+  font-size: 18px;
+}
