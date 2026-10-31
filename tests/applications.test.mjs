@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { registrationAvailability, readOwnApplication, submitActivityApplication, safeInternalReturn } from '../src/applications/registration.js';
 
-const activity = overrides => ({ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', published: true, isDemo: false, title: '合成测试活动', registrationOpen: true, status: '报名中', registrationDeadline: new Date(Date.now() + 86400000).toISOString(), ...overrides });
+const activity = overrides => ({ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', published: true, isDemo: false, title: '合成测试活动', registrationOpen: true, status: '报名中', registrationStart: new Date(Date.now() - 86400000).toISOString(), registrationDeadline: new Date(Date.now() + 86400000).toISOString(), dateStart: new Date(Date.now() + 2 * 86400000).toISOString(), dateEnd: new Date(Date.now() + 3 * 86400000).toISOString(), ...overrides });
 const user = { id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', email: 'test@example.invalid' };
 const application = { id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', created_at: new Date().toISOString() };
 function client({ currentUser = user, existing = null, insertError = null, insertData = application, readError = null } = {}) {
@@ -23,6 +23,15 @@ function client({ currentUser = user, existing = null, insertError = null, inser
 test('registration availability refuses samples, drafts, archived and closed activities', () => {
   assert.equal(registrationAvailability(activity()).open, true);
   for (const changes of [{ isDemo: true }, { published: false }, { localDraft: true }, { archived: true }, { status: '已结束' }, { registrationOpen: false }, { registrationDeadline: 'not-a-date' }, { registrationDeadline: new Date(Date.now() - 1000).toISOString() }]) assert.equal(registrationAvailability(activity(changes)).open, false);
+});
+
+test('registration enforces opening, cutoff and activity boundaries including malformed legacy data', () => {
+  const at = Date.parse('2026-11-02T00:00:00Z');
+  const scheduled = activity({ registrationStart: '2026-11-02T00:00:00Z', registrationDeadline: '2026-11-03T00:00:00Z', dateStart: '2026-11-04T00:00:00Z', dateEnd: '2026-11-05T00:00:00Z' });
+  assert.equal(registrationAvailability(scheduled, at - 1).open, false);
+  assert.equal(registrationAvailability(scheduled, at).open, true);
+  assert.equal(registrationAvailability(scheduled, Date.parse(scheduled.registrationDeadline)).open, false);
+  for (const changes of [{ registrationStart: undefined }, { registrationStart: 'bad' }, { dateStart: undefined }, { dateEnd: 'bad' }, { registrationStart: scheduled.registrationDeadline }, { registrationDeadline: '2026-11-04T01:00:00Z' }, { dateEnd: scheduled.dateStart }]) assert.equal(registrationAvailability({ ...scheduled, ...changes }, at).open, false);
 });
 
 test('application insert obtains identity from Auth and writes only the schema-supported owner payload', async () => {

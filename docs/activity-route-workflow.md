@@ -1,5 +1,21 @@
 # 活动轨迹关联与同名路线处理
 
+## 当前流程（2026-10-31）
+
+已应用针对性迁移 `20261031131635_activity_route_scheduling`。GPX/KML 的唯一上传界面是后台路线管理，旧 `/routes/import` 地址跳转到该界面。先新建路线、上传轨迹并保存，再在活动编辑器选择路线；活动不再上传轨迹或自动新增路线。
+
+`save_activity_with_route(activity_record jsonb)` 原子保存活动，首次选择或改选路线时由服务端生成 `payload.routeSnapshot`。同一路线的后续普通编辑保留快照；路线之后修改不会回写历史活动。旧活动自带轨迹、原自动路线及去重审计保留，清空关联时从原始旧轨迹恢复参数。前台以快照优先、旧轨迹兼容的顺序展示地图和海拔。
+
+编辑携带 `expected:{payload,published}`，改选路线携带 `routeExpectedPayload`。源活动/路线被修改或删除时拒绝过期编辑，不重建已删除活动。触发器与延迟约束覆盖直接 DML 的引用保护；旧轨迹保存 RPC 已撤销站点调用权，删除 RPC 已解除对它的依赖。原去重 RPC 保留，重绑顶层 routeId 不修改历史快照来源。
+
+四时间为 `registrationStart`、`registrationDeadline`、`dateStart`、`dateEnd`。输入按本地时区转换为 ISO，前台按北京时间展示；新公开活动起止必填，开启报名要求 `报名开启 < 报名截止 ≤ 活动开始 < 活动结束`。前台及数据库同时判断窗口。截止后可编辑历史内容；旧记录缺失时间不补造，未修改时间的旧记录可保留原字段。
+
+活动封面独立上传 JPEG、PNG、WebP 至 `activity-covers`，最大 5 MiB；使用管理员本人目录和随机新文件名，不覆盖或自动删除历史图片。首页、列表及详情共用封面降级逻辑：缺图或坏图显示带 AI 标识的示意图，示意图也失败则显示中性占位。里程最多两位小数，未知海拔明确显示未提供。
+
+本地纯事务为 `src/tracks/activity-route-selection.js`。隔离 SQL 验证命令 `node --test scripts/validate-activity-route-sql.mjs`，`SQL_TEST_ENGINE=pg17` 选择另一引擎；双引擎各 22/22。云端旧活动保存事务验证后回滚，内容与报名哈希保持不变。真实封面文件上传及实机视觉仍待用户照片验收，不发布合成协会记录。
+
+以下旧流程保留为数据兼容性记录，不是新建活动的上传指引。
+
 本地草稿和隔离 SQL 已验证。生产迁移 `20261031074956_chuanheng_v1_content_and_tracks` 已应用，包含本文原子 RPC；旧 `chuanheng` schema 与数据保持原状。新版 Worker 已部署，公网 HTTP 验收通过；真实账号交接见 [生产交接](PRODUCTION-HANDOFF.md)。
 
 ## 本地原子更新

@@ -1,5 +1,12 @@
 # SQL 隔离验证与最小生产迁移
 
+## 新增活动时间与路线快照迁移
+
+已应用 `20261031131635_activity_route_scheduling`。`node --test scripts/validate-activity-route-sql.mjs` 直接加载实际迁移链，默认 PG18；设置 `SQL_TEST_ENGINE=pg17` 后运行 PG17。两者各 22/22 通过，覆盖旧数据/私有 sentinel、角色、时间窗口、快照冻结、直接 DML 引用保护、过期编辑拒绝、删除事务、旧轨迹回退和 Storage restrictive 策略（含已有 broad policy 组合）。
+
+生产 migration 前后现有内容/报名哈希一致；对现有活动的受信保存验证以事务回滚。没有保存合成正式内容或图片。PGlite 的 Storage 表为隔离 stub，不能证明真实文件上传服务、网络失败或多连接竞争；封面客户端另有文件类型/大小、管理员、上传失败和忙碌状态的自动测试。下方保留早期初始化迁移的独立验证记录。
+
+
 验证日期：2026-10-31。验证对象为 `docs/supabase-schema.sql` 与 `docs/route-deduplication.sql`。隔离测试只建立内存 PGlite，不读取生产密钥、不连接 Supabase、不写云端。
 
 实际结果：PGlite `0.3.14` / PostgreSQL `17.5` 为 **13/13 通过**；PGlite `0.5.13` / PostgreSQL `18.6` 为 **13/13 通过**。原始 TAP 结果保存于 `artifacts/sql-validation/pg17.tap`、`pg18.tap`。这是两个独立内存数据库中的真实安装与 SQL 调用。

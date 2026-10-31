@@ -7,9 +7,11 @@
 | 项目 | 已确认状态 |
 | --- | --- |
 | Supabase 项目 | `gftecgpbhiubrkmazlcu` |
-| 生产迁移 | `20261031074956`，名称 `chuanheng_v1_content_and_tracks`，已成功应用 |
+| 生产迁移 | `20261031074956_chuanheng_v1_content_and_tracks` 与 `20261031131635_activity_route_scheduling` 均已应用 |
+| 活动时间/路线选择 | 四时间与服务端报名窗口；活动选择路线并保留历史快照；旧轨迹保存 RPC 已撤销站点调用权 |
+| 活动封面 | public bucket `activity-covers`：5 MiB、JPEG/PNG/WebP；管理员本人目录 INSERT/SELECT，禁止覆盖/删除 |
 | 本地迁移记录 | 与上述远端版本保持一致；不重复应用同一迁移 |
-| 新内容/报名 | `public.content_items=0`、`public.applications=0`；未导入示例 |
+| 新内容/报名 | 迁移前后 content_items=2、applications=0，完整行聚合哈希一致；未导入示例或改写现有内容 |
 | 新表权限 | 两表 RLS/FORCE RLS=true；四函数 SECURITY INVOKER；匿名 EXECUTE=false |
 | 真实 REST | 匿名内容读取 HTTP 200、空列表；匿名报名表 HTTP 401 |
 | Advisors | 无新对象告警；旧 `chuanheng` 八表 RLS 无 policy 为 INFO，保持原状 |
@@ -17,11 +19,11 @@
 | Cloudflare 目标 | Worker `chuanheng-website` |
 | 目标地址 | [chuanheng-website.vulhusky.workers.dev](https://chuanheng-website.vulhusky.workers.dev) |
 | 本次新版发布 | **已部署，公网 HTTP 验收通过** |
-| 当前 Worker version | `33919f27-9e67-4350-8f64-6ee1cac5315e` |
+| 当前 Worker version | `f9084d3c-26b4-4466-a31c-7fc3f29535b0` |
 | 流量 | 100% 当前版本 |
-| Deployment ID | `47e01e4e-fcf8-470a-90c9-5002af22517f` |
-| Worker 发布指标 | 启动 14 ms；gzip 752.33 KiB |
-| 发布前回退版本 | `6fee123c-8347-42d0-b558-6884f96448ff`；该版存在轨迹身份校验兼容问题 |
+| Deployment ID | `3105a33e-4fb9-4876-babc-4acf57b4462f` |
+| Worker 发布指标 | 启动 17 ms；gzip 752.33 KiB |
+| 发布前回退版本 | `33919f27-9e67-4350-8f64-6ee1cac5315e`；旧前端与新活动保存模型不兼容，见回滚边界 |
 
 原私有 `chuanheng` 数据原样保留。已记录的旧表行数为：users 1（旧初始管理员）、activities 7（全部 isDemo=true）、projects 3、settings 1、registrations 0、sessions 0。旧表不作为新站正式内容，也不作为新 Auth 管理员身份来源。
 
@@ -32,12 +34,12 @@
 | 记录项 | 结果 |
 | --- | --- |
 | 代码版本 | 以 main 分支提交记录为准 |
-| 最终构建/测试 | 280/280 自动测试（含真实 workerd 认证上传及跳转拒绝）；正式生产构建成功；Worker 无 Node 外部依赖打包通过；此前双引擎 SQL 各 13/13 |
+| 最终构建/测试 | 328/328 自动测试；实际迁移链 PG17/18 各 22/22；正式构建及 Worker 无 Node 外部依赖打包通过 |
 | 依赖审计 | npm audit 总计与生产依赖均 0 漏洞 |
-| 新 Worker version ID | `33919f27-9e67-4350-8f64-6ee1cac5315e` |
-| 部署时间（UTC） | `2026-10-31T12:27:36.671326Z` |
+| 新 Worker version ID | `f9084d3c-26b4-4466-a31c-7fc3f29535b0` |
+| 部署时间（UTC） | `2026-10-31T13:17:37.59396Z` |
 | 页面与子路径 | `/`、`/activities`、`/routes/import`、`/about`、`/footprints`、`/login`、`/admin/debug` 均 HTTP 200，text/html |
-| 前端脚本 | 登录/注册页引用 `/assets/index-CkcR34h9.js`；全部 5 项入口资源 HTTP 200，SHA-256 与本地正式构建一致 |
+| 前端脚本 | `/assets/index-CvwdqANU.js`；5 项入口资源 HTTP 200，SHA-256 与本地正式构建完全一致 |
 | 登录/注册布局修复 | 背景和遮罩固定到视口，左侧文案独立于表单高度定位；`/login` 和 `/login?mode=register` 均引用最新 `/assets/index-BVOeYVMg.css`；实机视觉待验收 |
 | 官方徽章 | HTTP 200，image/jpeg |
 | `/api/tracks/status` | HTTP 200，`{localPreview:false,configured:true}` |
@@ -53,6 +55,14 @@
 
 轨迹身份校验兼容性修复：旧请求使用 `redirect: 'error'`，Cloudflare Workers 在构造请求时立即抛出 TypeError，导致有效管理员也收到 `503 AUTH_UNAVAILABLE`。现改为 Workers 支持的 `manual`，沿用非 2xx 拒绝逻辑，不跟随 Auth 跳转、不向其他目标转发凭据。5 秒验证时限、64 KiB 响应上限及可信 `app_metadata.role` 校验保持有效；新增真实 workerd 生产入口回归验证该链路。[Cloudflare Request](https://developers.cloudflare.com/workers/runtime-apis/request/)
 
+## 活动与封面发布验收（本次）
+
+2026-10-31 21:17（北京时间）发布活动时间、路线选择快照、独立封面上传及首页卡片修复。首页、活动/路线后台及旧导入地址均 HTTP 200，引用当前构建；默认封面资源 HTTP 200、image/webp。管理员真实登录后，新 RPC 对无效输入返回预期 `22023 INVALID_ACTIVITY`，封面目录列表读取成功。
+
+云端以受信管理员身份对现有活动运行保存并回滚，返回成功；前后内容及报名完整行哈希一致。测试未保存合成活动、路线或图片，封面桶对象数为 0。客户端上传与图片失败降级已通过自动测试；真实用户图片上传、浏览器实机布局及多连接竞争仍需验收。
+
+迁移由 CLI 先生成，再通过受信迁移工具执行；远端生成版本 `20261031131635`，本地文件已按远端真实版本对齐。新对象无 advisors 告警；Auth 存在弱泄露密码保护未启用的全局配置提醒，保持原配置，旧 chuanheng 八表 INFO 保持原状。
+
 ## 首位站点管理员
 
 身份分为三层：Supabase/Cloudflare 的平台管理账户；新站 Supabase Auth 的邮箱用户；旧 `chuanheng.users` 中的会员记录。三者不自动互认。不复制旧账号密码，不自动升级第一个注册者。
@@ -67,7 +77,7 @@
 
 ## 剩余待办
 
-页面、静态资源、API 配置状态与匿名拒绝已通过。新站空内容是预期结果，不用示例填充上线。首位测试管理员已完成邮件确认、赋权、真实登录及读取。接下来核对 Auth 邮件 URL 配置，并分别验收普通会员与管理员的真实写入权限。
+页面、静态资源、API 配置状态与匿名拒绝已通过。现有管理员内容原样保留，不用示例填充。测试管理员真实登录及新保存流程回滚验证通过；接下来核对 Auth 邮件 URL 配置，实际用户封面上传、实机布局与持久化业务写入由真实内容验收。
 
 真实活动发布前核实内容与轨迹来源。管理员写入、上传文件上限与负载、Worker CPU/内存、多连接锁竞争和实机视觉仍需实际验收。自动测试与隔离 SQL 的范围见 README 和 [SQL 验证](supabase-sql-validation.md)。
 
@@ -78,12 +88,12 @@
 需要回退时使用已记录版本：
 
 ```sh
-npx wrangler rollback 6fee123c-8347-42d0-b558-6884f96448ff --name chuanheng-website --message "Rollback track auth compatibility fix"
+npx wrangler rollback 33919f27-9e67-4350-8f64-6ee1cac5315e --name chuanheng-website --message "Emergency frontend rollback; admin writes require compatible release"
 ```
 
 也可在 Workers & Pages → `chuanheng-website` → Deployments 中选择记录版本回滚。完成后记录实际回滚部署，并重新核验页面、认证及轨迹 API。[Cloudflare Worker Rollbacks](https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/)
 
-回退上述版本会重新引入轨迹身份校验兼容问题，授权上传将受影响；应在确有回滚需要时评估这一已知限制。
+本次数据库迁移已撤销旧活动轨迹保存 RPC，旧前端不认识路线快照；单独回退到上述版本会使管理保存流程不兼容，也不能正确展示新活动快照。优先发布兼容新模型的前向修复。只有确需恢复基本访问时才临时回退，并暂停管理写入；不能通过恢复旧 RPC 或删除新数据盲目回滚。
 
 Worker 回滚不撤销 Supabase 数据、更改记录或连接资源。默认保留已安装的新 `public` 对象、已注册 Auth 用户及后续真实内容。不要用 DROP 表/schema、重跑初始化 SQL、删除迁移记录或把远端标记为未执行来代替应用回滚。数据库确需补救时，先保留数据和审计，再准备单独的针对性迁移；旧 `chuanheng` 数据保持不动。
 

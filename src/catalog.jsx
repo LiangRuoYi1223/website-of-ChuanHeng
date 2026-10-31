@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import * as samples from './data.js';
 import { supabase } from './backend.js';
 import { runtimeMode } from './runtime-mode.js';
+import { effectiveActivityStatus } from './activities/schedule.js';
+import { resolveActivityView } from './activities/presentation.js';
 
 export const isPreview = runtimeMode.sampleContent;
 const empty = { activities: [], routes: [], photos: [], articles: [] };
@@ -11,6 +13,12 @@ export function CatalogProvider({ children }) {
   const [loading, setLoading] = useState(!isPreview);
   const [error, setError] = useState('');
   const [draftActivities, setDraftActivities] = useState([]);
+  const [clock, setClock] = useState(Date.now());
+  useEffect(() => {
+    if (![...content.activities, ...draftActivities].some(item => item.dateEnd || item.registrationStart)) return undefined;
+    const timer = window.setInterval(() => setClock(Date.now()), 30000);
+    return () => window.clearInterval(timer);
+  }, [content.activities, draftActivities]);
   useEffect(() => {
     if (!isPreview) return;
     const update = () => {
@@ -40,6 +48,7 @@ export function CatalogProvider({ children }) {
     setLoading(false);
   }, []);
   useEffect(() => { refresh(); window.addEventListener('chuanheng-content-updated', refresh); return () => window.removeEventListener('chuanheng-content-updated', refresh); }, [refresh]);
-  return <Catalog.Provider value={{ ...content, footprintActivities:[...content.activities,...draftActivities], localFootprintPreview:isPreview, loading, error, refresh }}>{children}</Catalog.Provider>;
+  const activities = content.activities.map(source => ({ ...resolveActivityView(source), status: effectiveActivityStatus(source, clock) }));
+  return <Catalog.Provider value={{ ...content, activities, footprintActivities:[...activities,...draftActivities.map(resolveActivityView)], localFootprintPreview:isPreview, loading, error, refresh }}>{children}</Catalog.Provider>;
 }
 export function useCatalog() { return useContext(Catalog); }

@@ -1,3 +1,5 @@
+import { effectiveActivityStatus, scheduleInstant } from '../activities/schedule.js';
+
 const fail = (code, message) => { const error = new Error(message); error.code = code; throw error; };
 
 export function safeInternalReturn(value) {
@@ -14,10 +16,14 @@ export function safeInternalReturn(value) {
 export function registrationAvailability(activity, now = Date.now()) {
   const isPublic = Boolean(activity?.id && activity.published === true && activity.isDemo !== true && !activity.localDraft && !activity.archived);
   if (!isPublic) return { isPublic: false, open: false, reason: activity?.isDemo ? '设计示例不接受真实报名。' : '草稿或未公开活动不接受报名。' };
-  if (activity.status === '已结束') return { isPublic, open: false, reason: '本次活动已结束。' };
+  const status = effectiveActivityStatus(activity, now);
+  if (status === '已结束') return { isPublic, open: false, reason: '本次活动已结束。' };
+  if (status === '进行中') return { isPublic, open: false, reason: '活动已开始，报名已关闭。' };
   if (activity.registrationOpen !== true) return { isPublic, open: false, reason: '报名尚未开放，请关注正式活动通知。' };
-  const deadline = Date.parse(activity.registrationDeadline || '');
-  if (!Number.isFinite(deadline)) return { isPublic, open: false, reason: '报名时间尚未确认，请关注正式活动通知。' };
+  const opening = scheduleInstant(activity.registrationStart), deadline = scheduleInstant(activity.registrationDeadline);
+  const start = scheduleInstant(activity.dateStart), end = scheduleInstant(activity.dateEnd);
+  if (![opening, deadline, start, end].every(Number.isFinite) || opening >= deadline || deadline > start || start >= end) return { isPublic, open: false, reason: '报名时间尚未确认，请关注正式活动通知。' };
+  if (now < opening) return { isPublic, open: false, reason: '尚未到报名开启时间。' };
   if (deadline <= now) return { isPublic, open: false, reason: '报名已截止。' };
   return { isPublic, open: true, reason: '' };
 }

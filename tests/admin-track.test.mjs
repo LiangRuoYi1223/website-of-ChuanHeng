@@ -171,9 +171,13 @@ test('prepared local activity is accepted by the real workflow and creates a sin
 test('activity editor exposes separate route/date fields and track-derived read-only metrics without public draft controls', () => {
   const editor = { kind: 'activity', payload: { title: '活动标题', track: imported(), status: '已结束' } };
   const html = renderToStaticMarkup(createElement(StaticRouter, { location: '/admin/activities' }, createElement(ContentEditor, { editor, local: true, busy: false, error: '', onSave: () => {}, onClose: () => {} })));
-  assert.match(html, /name="routeName"/);
-  assert.match(html, /name="dateStart"[^>]*type="date"|type="date"[^>]*name="dateStart"/);
-  assert.match(html, /已结束且有日期和轨迹的活动，会自动出现在本地足迹预览/);
+  assert.match(html, /name="routeId"/);
+  assert.doesNotMatch(html, /name="routeName"/);
+  assert.match(html, /打开路线管理/);
+  assert.match(html, /刷新路线列表/);
+  for (const name of ["dateStart", "dateEnd", "registrationStart", "registrationDeadline"]) assert.match(html, new RegExp(`<input(?=[^>]*name="${name}")(?=[^>]*type="datetime-local")[^>]*>`));
+
+  assert.match(html, /历史轨迹/);
   assert.doesNotMatch(html, /name="published"/);
   const distance = html.match(/<input\b(?=[^>]*name="distance")[^>]*>/)[0];
   const ascent = html.match(/<input\b(?=[^>]*name="ascent")[^>]*>/)[0];

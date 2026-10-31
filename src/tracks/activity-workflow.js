@@ -172,7 +172,7 @@ export function deleteContentWithLinks(rows, id) {
     if (referenced) fail('CONTENT_IN_USE', '这条路线仍被活动或去重记录引用，不能直接删除。请先处理关联并保留原始记录。');
   }
   let next = rows;
-  if (record.kind === 'activity') {
+  if (record.kind === 'activity' && !record.payload?.routeSnapshot) {
     const withoutTrack = structuredClone(record);
     delete withoutTrack.payload.track;
     delete withoutTrack.payload.trackLocalId;

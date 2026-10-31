@@ -18,10 +18,10 @@ export default function ActivityApplication({ activity, localDraft = false }) {
   const authRevision = useRef(0);
 
   useEffect(() => {
-    if (!availability.open) return undefined;
+    if (!availability.isPublic) return undefined;
     const timer = window.setInterval(() => setClock(Date.now()), 30000);
     return () => window.clearInterval(timer);
-  }, [availability.open]);
+  }, [availability.isPublic]);
 
   useEffect(() => {
     if (!supabase || !availability.isPublic) { setChecking(false); return undefined; }

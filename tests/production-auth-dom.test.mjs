@@ -18,7 +18,7 @@ const { createRoot } = await import('react-dom/client');
 const { MemoryRouter, Routes, Route } = await import('react-router-dom');
 const member = { id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', email: 'member@example.invalid', app_metadata: {}, user_metadata: { role: 'admin' } };
 const admin = { id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', email: 'admin@example.invalid', app_metadata: { role: 'admin' }, user_metadata: {} };
-const activity = { id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', title: '合成公开活动', published: true, isDemo: false, status: '报名中', registrationOpen: true, registrationDeadline: new Date(Date.now() + 86400000).toISOString() };
+const activity = { id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', title: '合成公开活动', published: true, isDemo: false, status: '报名中', registrationOpen: true, registrationStart: new Date(Date.now() - 86400000).toISOString(), registrationDeadline: new Date(Date.now() + 86400000).toISOString(), dateStart: new Date(Date.now() + 2 * 86400000).toISOString(), dateEnd: new Date(Date.now() + 3 * 86400000).toISOString() };
 const controller = { session: null, verified: null, calls: [], applications: new Map(), subscribers: new Set(), signupConfirmation: true, writeError: null, insertBarrier: null };
 const mockBackend = {
   auth: {

@@ -20,7 +20,7 @@ function installGlobal(key, value) {
   originals.set(key, Object.getOwnPropertyDescriptor(globalThis, key));
   Object.defineProperty(globalThis, key, { configurable: true, writable: true, value });
 }
-for (const key of ['window', 'document', 'navigator', 'HTMLElement', 'Element', 'HTMLInputElement', 'HTMLSelectElement', 'FormData', 'File', 'Blob', 'Event', 'MouseEvent', 'KeyboardEvent']) installGlobal(key, key === 'window' ? dom.window : key === 'document' ? dom.window.document : key === 'navigator' ? dom.window.navigator : dom.window[key]);
+for (const key of ['window', 'document', 'navigator', 'HTMLElement', 'Element', 'HTMLInputElement', 'HTMLSelectElement', 'FileReader', 'FormData', 'File', 'Blob', 'Event', 'MouseEvent', 'KeyboardEvent']) installGlobal(key, key === 'window' ? dom.window : key === 'document' ? dom.window.document : key === 'navigator' ? dom.window.navigator : dom.window[key]);
 installGlobal('localStorage', dom.window.localStorage);
 installGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 // JSDOM has no layout. Supply nonzero rectangles only for the focus-trap check;
@@ -134,143 +134,66 @@ async function saveEditor() {
   await waitFor(() => !dialog(), 'the saved editor to close');
 }
 
-test('real admin forms persist track-backed activities and resolve duplicate routes without losing activity tracks', async t => {
+test('route uploads are reused by activity selection, with frozen history and refresh preserving edits', async t => {
   localStorage.clear();
-  let changedEvents = 0;
-  dom.window.addEventListener('chuanheng-drafts-updated', () => changedEvents++);
-  let firstActivity, secondActivity, firstRoute, secondRoute;
-
-  await t.test('route editor uploads a real File through the client and keeps large geometry in IndexedDB', async () => {
+  let route, firstActivity;
+  await t.test('route editor remains the sole upload entry and stores derived summary outside geometry', async () => {
     await mount('/admin/routes?preview=1');
-    assert.equal(container.querySelector('a[href^="/admin/settings"]'), null);
-    assert.equal(container.querySelector('a[href^="/admin/footprints"]'), null);
-    assert.ok(container.querySelector('a[href="/routes/import"]'));
     await click(button('新建路线'));
-    await fill('title', '独立路线草稿');
+    await fill('title', '共享山野路线');
     await chooseFile('manual.gpx');
     assert.equal(button('保存本地草稿', dialog()).disabled, true);
     await releaseFile('manual.gpx');
     await saveEditor();
-    const row = drafts().find(item => item.kind === 'route');
-    assert.ok(row.payload.trackLocalId);
-    assert.equal(row.published, false);
-    assert.equal(row.payload.track, undefined);
-    assert.deepEqual((await getLocalTrack(row.payload.trackLocalId)).geojson, fixtures.get('manual.gpx').track.geojson);
-    assert.ok(container.querySelector(`a[href="/routes/${row.id}?draft=1"]`));
+    route = drafts().find(row => row.kind === 'route');
+    assert.ok(route.payload.trackLocalId);
+    assert.equal(route.payload.track, undefined);
+    assert.deepEqual(route.payload.trackSummary.stats, fixtures.get('manual.gpx').track.stats);
+    assert.equal(route.payload.locationStatus, 'matched');
   });
-
-  await t.test('activity conversion blocks submission until complete then saves one activity and its automatic route', async () => {
+  await t.test('activity has four datetime fields, no track upload and refresh retains typed input and selection', async () => {
     await navigateAdmin('activities');
     await click(button('新建活动'));
-    await fill('title', '合成活动甲');
-    await fill('routeName', '共享山野路线');
-    await fill('dateStart', '2026-10-01');
+    await fill('title', '路线选择活动甲');
+    await fill('description', '刷新前未提交的介绍');
+    for (const name of ['dateStart', 'dateEnd', 'registrationStart', 'registrationDeadline']) assert.equal(dialog().querySelector(`[name="${name}"]`).type, 'datetime-local');
+    assert.ok(![...dialog().querySelectorAll('input[type="file"]')].some(input => /gpx|kml/i.test(input.accept)), 'activity never exposes a track upload');
+    assert.equal(dialog().querySelector('[name="routeName"]'), null);
+    const manage = [...dialog().querySelectorAll('a')].find(link => text(link).includes('打开路线管理'));
+    assert.equal(manage.target, '_blank');
+    assert.equal(manage.getAttribute('href'), '/admin/routes?preview=1');
+    await fill('routeId', route.id);
+    await fill('dateStart', '2026-10-01T08:00');
+    await fill('dateEnd', '2026-10-01T18:00');
     await fill('status', '已结束');
-    assert.equal(dialog().querySelector('[name="includeFootprint"]'), null, 'activity footprints are automatic, with no extra opt-in toggle');
-    assert.match(text(dialog()), /自动出现在本地足迹预览/);
-    const before = localStorage.getItem('chuanheng-drafts');
-    await chooseFile('activity-a.gpx');
-    assert.equal(button('保存本地草稿', dialog()).disabled, true);
-    await act(async () => dialog().querySelector('form').dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })));
-    assert.equal(localStorage.getItem('chuanheng-drafts'), before, 'even direct form submission must not save an unfinished conversion');
-    await releaseFile('activity-a.gpx');
+    const added = { id: 'another-route', kind: 'route', published: false, payload: { title: '另一个窗口新增路线', distance: 1, ascent: null } };
+    localStorage.setItem('chuanheng-drafts', JSON.stringify([...drafts(), added]));
+    await click(button('刷新路线列表', dialog()));
+    assert.match(text(dialog().querySelector('[name="routeId"]')), /另一个窗口新增路线/);
+    assert.equal(dialog().querySelector('[name="description"]').value, '刷新前未提交的介绍');
+    assert.equal(dialog().querySelector('[name="dateStart"]').value, '2026-10-01T08:00');
+    assert.equal(dialog().querySelector('[name="routeId"]').value, route.id);
     assert.equal(dialog().querySelector('[name="distance"]').readOnly, true);
-    assert.equal(dialog().querySelector('[name="location"]').readOnly, true);
     await saveEditor();
-    const rows = drafts();
-    firstActivity = rows.find(row => row.kind === 'activity');
-    firstRoute = rows.find(row => row.kind === 'route' && row.payload.generatedFromActivityId === firstActivity.id);
-    assert.ok(firstRoute);
-    assert.equal(firstActivity.payload.routeId, firstRoute.id);
-    assert.equal(firstRoute.payload.title, '共享山野路线');
-    assert.equal(firstActivity.payload.trackLocalId, firstRoute.payload.trackLocalId);
-    assert.equal(firstActivity.payload.organizer, 'chuanheng');
-    assert.equal(firstActivity.payload.dateStart, '2026-10-01');
-    assert.equal(firstActivity.payload.status, '已结束');
-    assert.equal(firstActivity.payload.includeFootprint, true);
-    assert.equal(firstActivity.payload.footprintEligible, true);
-    assert.equal(firstActivity.published, false);
-    assert.equal(firstRoute.published, false);
-    assert.deepEqual(firstActivity.payload.trackSummary.stats, fixtures.get('activity-a.gpx').track.stats);
-    assert.equal(firstActivity.payload.track, undefined);
-    assert.equal(firstRoute.payload.track, undefined);
-    assert.ok(!localStorage.getItem('chuanheng-drafts').includes('"geojson"'));
-    assert.ok(!localStorage.getItem('chuanheng-drafts').includes('"profile"'));
-    assert.deepEqual(await getLocalTrack(firstActivity.payload.trackLocalId), fixtures.get('activity-a.gpx').track);
-    assert.ok(container.querySelector(`a[href="/activities/${firstActivity.id}?draft=1"]`));
-    const publicShape = { ...firstActivity.payload, id: firstActivity.id, published: false, localDraft: true };
-    assert.equal(getFootprints([publicShape]).length, 0, 'a local preview must not publish a draft footprint');
-    assert.equal(getFootprints([publicShape], { allowLocalPreview: true }).length, 1);
+    firstActivity = drafts().find(row => row.kind === 'activity');
+    assert.equal(firstActivity.payload.routeSnapshot.sourceRouteId, route.id);
+    assert.equal(firstActivity.payload.routeSnapshot.trackLocalId, route.payload.trackLocalId);
+    assert.equal(drafts().filter(row => row.kind === 'route').length, 2, 'activity save creates no route');
   });
-
-  await t.test('a second same-name route remains separate until an explicit Debug choice', async () => {
+  await t.test('two activities reuse one route while existing activity version stays frozen after route edit', async () => {
     await click(button('新建活动'));
-    await fill('title', '合成活动乙');
-    await fill('routeName', '共享山野路线');
-    await fill('dateStart', '2026-10-02');
-    await fill('status', '已结束');
-    assert.equal(dialog().querySelector('[name="includeFootprint"]'), null);
-    await chooseFile('activity-b.gpx');
-    await releaseFile('activity-b.gpx');
+    await fill('title', '路线选择活动乙');
+    await fill('routeId', route.id);
     await saveEditor();
-    const rows = drafts();
-    secondActivity = rows.find(row => row.kind === 'activity' && row.id !== firstActivity.id);
-    secondRoute = rows.find(row => row.kind === 'route' && row.payload.generatedFromActivityId === secondActivity.id);
-    assert.notEqual(secondRoute.id, firstRoute.id);
-    assert.equal(rows.filter(row => row.kind === 'route' && row.payload.title === '共享山野路线' && !row.payload.archived).length, 2);
-    assert.equal(secondActivity.payload.includeFootprint, true, 'completed dated activities with tracks automatically join local footprint preview');
-    assert.equal(secondActivity.payload.ascent, null, 'missing altitude must not become zero during form save');
-    await navigateAdmin('debug');
-    assert.equal(container.querySelectorAll('.admin-debug-group input[type="radio"]').length, 2);
-    const retain = button('保留所选并归档其他版本');
-    assert.equal(retain.disabled, true);
-    assert.match(text(container.querySelector('.admin-debug-locations')), /合成活动乙.*部分地点待核实/s);
-    const selection = [...container.querySelectorAll('.admin-debug-group input[type="radio"]')].find(input => input.value === secondRoute.id);
-    await click(selection);
-    assert.equal(retain.disabled, false);
-    await click(retain);
-    await waitFor(() => !container.querySelector('.admin-debug-group'), 'duplicate archive transaction');
-    assert.equal(dom.window.document.activeElement.id, 'admin-debug-title', 'successful consolidation must return keyboard focus to the Debug heading');
-    const after = drafts();
-    const loser = after.find(row => row.id === firstRoute.id);
-    const winner = after.find(row => row.id === secondRoute.id);
-    assert.equal(loser.payload.archived, true);
-    assert.equal(loser.payload.archivedReason, 'duplicate');
-    assert.equal(loser.payload.duplicateWinnerId, secondRoute.id);
-    assert.equal(winner.payload.duplicateResolutions.length, 1);
-    assert.deepEqual(winner.payload.duplicateResolutions[0].originalIds, [firstRoute.id, secondRoute.id].sort());
-    const activities = after.filter(row => row.kind === 'activity');
-    assert.ok(activities.every(row => row.payload.routeId === secondRoute.id));
-    assert.equal(activities.find(row => row.id === firstActivity.id).payload.trackLocalId, firstActivity.payload.trackLocalId);
-    assert.equal(activities.find(row => row.id === secondActivity.id).payload.trackLocalId, secondActivity.payload.trackLocalId);
-    assert.deepEqual(await getLocalTrack(firstActivity.payload.trackLocalId), fixtures.get('activity-a.gpx').track);
-    assert.deepEqual(await getLocalTrack(secondActivity.payload.trackLocalId), fixtures.get('activity-b.gpx').track);
-  });
-
-  await t.test('remount preserves archives and activity tracks, while editor keyboard focus stays inside the dialog', async () => {
-    await mount('/admin/debug?preview=1');
-    assert.equal(container.querySelectorAll('.admin-debug-group input[type="radio"]').length, 0);
-    assert.match(text(container), /路线整理记录/);
-    assert.match(text(container.querySelector('.admin-debug-locations')), /合成活动乙/);
-    await navigateAdmin('activities');
-    const edit = container.querySelector(`button[aria-label="编辑${firstActivity.payload.title}"]`);
-    await click(edit);
-    await waitFor(() => dialog()?.querySelector('.track-import-result'), 'existing IndexedDB track hydration');
-    assert.match(text(dialog().querySelector('.track-import-result')), /activity-a\.gpx/);
-    assert.equal(Number(dialog().querySelector('[name="distance"]').value), fixtures.get('activity-a.gpx').track.stats.distanceM / 1000);
-    assert.equal(dom.window.document.body.style.overflow, 'hidden');
-    const save = button('保存本地草稿', dialog());
-    const close = dialog().querySelector('button[aria-label="关闭编辑器"]');
-    await act(async () => { save.focus(); save.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })); });
-    assert.ok(dom.window.document.activeElement === close, 'Tab from the last control must wrap to the modal close button');
-    await act(async () => close.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true })));
-    assert.ok(dom.window.document.activeElement === save, 'Shift+Tab from the first control must wrap to the save button');
-    await act(async () => save.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })));
-    assert.equal(dialog(), null);
-    assert.equal(dom.window.document.body.style.overflow, '');
-    assert.ok(dom.window.document.activeElement === edit, 'closing must restore focus to the activity edit button');
-    assert.deepEqual(requests, ['manual.gpx', 'activity-a.gpx', 'activity-b.gpx']);
-    assert.equal(changedEvents, 4, 'each of three saves and the duplicate resolution dispatches one content update');
+    assert.equal(drafts().filter(row => row.kind === 'activity' && row.payload.routeId === route.id).length, 2);
+    const latest = drafts().map(row => row.id === route.id ? { ...row, payload: { ...row.payload, distance: 999 } } : row);
+    localStorage.setItem('chuanheng-drafts', JSON.stringify(latest));
+    await click(container.querySelector('button[aria-label="编辑路线选择活动甲"]'));
+    await click(button('刷新路线列表', dialog()));
+    assert.notEqual(dialog().querySelector('[name="distance"]').value, '999');
+    await fill('description', '保留历史版本');
+    await saveEditor();
+    assert.deepEqual(drafts().find(row => row.id === firstActivity.id).payload.routeSnapshot, firstActivity.payload.routeSnapshot);
   });
 });
 
@@ -299,7 +222,7 @@ test('admin safety regressions preserve concurrent route decisions, links and un
     const seed = await seedConcurrentActivities();
     await mount('/admin/activities?preview=1');
     await click(container.querySelector('button[aria-label="编辑跨窗活动甲"]'));
-    await waitFor(() => dialog()?.querySelector('.track-import-result'), 'original activity track');
+    await waitFor(() => dialog()?.querySelector('.admin-legacy-track'), 'original activity track');
     await fill('description', '未提交的用户编辑内容');
     const serialized = consolidateInAnotherTab(seed);
     await act(async () => dom.window.dispatchEvent(new dom.window.StorageEvent('storage', { key: 'chuanheng-drafts', storageArea: localStorage, newValue: serialized })));
@@ -378,7 +301,7 @@ test('admin safety regressions preserve concurrent route decisions, links and un
     await seedConcurrentActivities();
     await mount('/admin/activities?preview=1');
     await click(container.querySelector('button[aria-label="编辑跨窗活动甲"]'));
-    await waitFor(() => dialog()?.querySelector('.track-import-result'), 'editable existing track');
+    await waitFor(() => dialog()?.querySelector('.admin-legacy-track'), 'editable existing track');
     await fill('description', '本窗口未保存的说明');
     const latest = drafts().map(row => row.id === 'concurrent-b' ? { ...row, payload: { ...row.payload, title: '另一窗口改过的活动乙' } } : row);
     localStorage.setItem('chuanheng-drafts', JSON.stringify(latest));
@@ -390,38 +313,136 @@ test('admin safety regressions preserve concurrent route decisions, links and un
     assert.equal(drafts().find(row => row.id === 'concurrent-b').payload.title, '另一窗口改过的活动乙');
   });
 
-  await t.test('blank manual ascent stays null for new content and after an elevation-less track is removed', async () => {
+  await t.test('blank manual route ascent stays null and legacy activity track is read only', async () => {
     localStorage.clear();
     await mount('/admin/routes?preview=1');
     await click(button('新建路线'));
     await fill('title', '未知爬升路线');
     await fill('distance', '8.7');
-    assert.equal(dialog().querySelector('[name="ascent"]').value, '', 'unknown ascent must not be presented as a zero value');
+    assert.equal(dialog().querySelector('[name="ascent"]').value, '');
     await saveEditor();
     assert.equal(drafts()[0].payload.ascent, null);
     await seedConcurrentActivities();
     await mount('/admin/activities?preview=1');
     await click(container.querySelector('button[aria-label="编辑跨窗活动乙"]'));
-    await waitFor(() => dialog()?.querySelector('.track-import-result'), 'elevation-less activity track');
-    await click(button('移除', dialog()));
+    await waitFor(() => dialog()?.querySelector('.admin-legacy-track'), 'legacy track read');
+    assert.ok(![...dialog().querySelectorAll('input[type="file"]')].some(input => /gpx|kml/i.test(input.accept)), 'activity never exposes a track upload');
+    assert.equal(button('移除', dialog()), undefined);
     assert.equal(dialog().querySelector('[name="ascent"]').value, '');
+    const original = drafts().find(row => row.id === 'concurrent-b').payload;
     await saveEditor();
     const activity = drafts().find(row => row.id === 'concurrent-b');
+    assert.equal(activity.payload.trackLocalId, original.trackLocalId);
+    assert.equal(activity.payload.dateStart, '2026-10-01', 'unknown legacy time is not fabricated');
+    assert.equal(Object.hasOwn(activity.payload, 'dateEnd'), false, 'legacy missing keys remain absent');
     assert.equal(activity.payload.ascent, null);
-    assert.equal(activity.payload.trackLocalId, undefined);
-    assert.equal(activity.payload.includeFootprint, false, 'removing the track automatically removes local footprint eligibility');
+  });
+
+  await t.test('legacy activity shows its historical metrics rather than the current linked route version', async () => {
+    const seed = await seedConcurrentActivities();
+    localStorage.setItem('chuanheng-drafts', JSON.stringify(seed.rows.map(row => row.id === seed.loserId ? { ...row, payload: { ...row.payload, distance: 999, ascent: 999, location: '后来修改的地点' } } : row)));
+    await mount('/admin/activities?preview=1');
+    await click(container.querySelector('button[aria-label="编辑跨窗活动甲"]'));
+    await waitFor(() => dialog()?.querySelector('.admin-legacy-track'), 'historical activity track');
+    assert.equal(Number(dialog().querySelector('[name="distance"]').value), fixtures.get('activity-a.gpx').track.stats.distanceM / 1000);
+    assert.notEqual(dialog().querySelector('[name="location"]').value, '后来修改的地点');
+  });
+
+  await t.test('missing legacy track blocks save without exposing track removal or track upload', async () => {
+    localStorage.setItem('chuanheng-drafts', JSON.stringify([{ id: 'missing-track', kind: 'activity', published: false, payload: { title: '丢失轨迹活动', dateStart: '2026-10-01', trackLocalId: 'not-in-indexeddb' } }]));
+    await mount('/admin/activities?preview=1');
+    await click(container.querySelector('button[aria-label="编辑丢失轨迹活动"]'));
+    await waitFor(() => dialog()?.querySelector('.admin-track-load-error'), 'legacy track failure protection');
+    assert.equal(button('保存本地草稿', dialog()).disabled, true);
+    assert.ok(button('重试读取', dialog()));
+    assert.equal(button('移除旧轨迹引用', dialog()), undefined);
+    assert.ok(![...dialog().querySelectorAll('input[type="file"]')].some(input => /gpx|kml/i.test(input.accept)), 'activity never exposes a track upload');
+    const before = localStorage.getItem('chuanheng-drafts');
+    await act(async () => dialog().querySelector('form').dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })));
+    assert.equal(localStorage.getItem('chuanheng-drafts'), before);
+  });
+
+  await t.test('selected route updated in another tab rejects save and retains unsaved text', async () => {
+    await seedConcurrentActivities();
+    await mount('/admin/activities?preview=1');
+    await click(button('新建活动'));
+    await fill('title', '路线过期选择');
+    await fill('description', '不可丢失的填写内容');
+    const selected = drafts().find(row => row.kind === 'route');
+    await fill('routeId', selected.id);
+    const changed = drafts().map(row => row.id === selected.id ? { ...row, payload: { ...row.payload, title: '另一窗口更新路线' } } : row);
+    localStorage.setItem('chuanheng-drafts', JSON.stringify(changed));
+    const before = localStorage.getItem('chuanheng-drafts');
+    await click(button('保存本地草稿', dialog()));
+    assert.match(text(dialog()), /所选路线已被更新/);
+    assert.equal(dialog().querySelector('[name="description"]').value, '不可丢失的填写内容');
+    assert.equal(localStorage.getItem('chuanheng-drafts'), before);
+  });
+
+  await t.test('past booking cutoff can be saved and time order errors retain the form', async () => {
+    localStorage.clear();
+    await mount('/admin/activities?preview=1');
+    await click(button('新建活动'));
+    await fill('title', '历史报名窗口');
+    await fill('dateStart', '2026-01-02T08:00');
+    await fill('dateEnd', '2026-01-02T18:00');
+    await fill('registrationStart', '2026-01-01T08:00');
+    await fill('registrationDeadline', '2026-01-02T08:00');
+    await click(dialog().querySelector('[name="registrationOpen"]'));
+    await saveEditor();
+    assert.equal(drafts()[0].payload.registrationOpen, true);
+    await click(container.querySelector('button[aria-label="编辑历史报名窗口"]'));
+    await fill('dateEnd', '2026-01-02T07:00');
+    await click(button('保存本地草稿', dialog()));
+    assert.match(text(dialog()), /活动结束时间必须晚于开始时间/);
+    const save = button('保存本地草稿', dialog());
+    const close = dialog().querySelector('button[aria-label="关闭编辑器"]');
+    await act(async () => { save.focus(); save.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })); });
+    assert.equal(dom.window.document.activeElement, close);
+    await act(async () => close.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })));
+    assert.equal(dialog(), null);
+  });
+
+  await t.test('activity cover upload blocks submission until ready then persists the selected image', async () => {
+    localStorage.clear();
+    await mount('/admin/activities?preview=1');
+    await click(button('新建活动'));
+    await fill('title', '单独封面活动');
+    let releaseCover;
+    const OriginalReader = globalThis.FileReader;
+    globalThis.FileReader = class extends OriginalReader {
+      readAsDataURL(file) { releaseCover = () => super.readAsDataURL(file); }
+    };
+    try {
+      const input = dialog().querySelector('input[type="file"]');
+      assert.ok(input && /image|png|jpe?g|webp/i.test(input.accept));
+      const file = new dom.window.File([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])], 'synthetic-cover.png', { type: 'image/png' });
+      Object.defineProperty(input, 'files', { configurable: true, value: [file] });
+      await act(async () => input.dispatchEvent(new dom.window.Event('change', { bubbles: true })));
+      await waitFor(() => releaseCover, 'cover reader start');
+      assert.equal(dialog().querySelector('.admin-form-actions .primary').disabled, true);
+      const before = localStorage.getItem('chuanheng-drafts');
+      await act(async () => dialog().querySelector('form').dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })));
+      assert.equal(localStorage.getItem('chuanheng-drafts'), before);
+      await act(async () => releaseCover());
+      await waitFor(() => dialog()?.querySelector('[name="image"]')?.value.startsWith('data:image/png;base64,'), 'cover image ready');
+      await saveEditor();
+      assert.match(drafts()[0].payload.image, /^data:image\/png;base64,/);
+      assert.equal(drafts()[0].payload.track, undefined, 'cover image is independent of the activity route');
+    } finally { globalThis.FileReader = OriginalReader; }
   });
 
   await t.test('changing a completed tracked activity back to upcoming automatically removes its local footprint', async () => {
     await seedConcurrentActivities();
     await mount('/admin/activities?preview=1');
     await click(container.querySelector('button[aria-label="编辑跨窗活动乙"]'));
-    await waitFor(() => dialog()?.querySelector('.track-import-result'), 'tracked activity to change status');
+    await waitFor(() => dialog()?.querySelector('.admin-legacy-track'), 'tracked activity to change status');
     await fill('status', '即将开始');
     assert.equal(dialog().querySelector('[name="dateStart"]').required, false);
     await saveEditor();
     const activity = drafts().find(row => row.id === 'concurrent-b');
-    assert.equal(activity.payload.includeFootprint, false);
+    assert.equal(activity.payload.includeFootprint, true, 'track/date preserve footprint permission');
+    assert.equal(getFootprints([{ ...activity.payload, id: activity.id, localDraft: true }], { allowLocalPreview: true }).length, 0, 'upcoming legacy activity does not display a footprint');
     assert.equal(activity.payload.status, '即将开始');
     assert.ok(activity.payload.trackLocalId, 'the activity keeps its real track even when it is no longer a completed footprint');
   });

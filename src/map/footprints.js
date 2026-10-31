@@ -1,13 +1,15 @@
 import geography from './geography.json' with { type: 'json' };
+import { effectiveActivityStatus } from '../activities/schedule.js';
 
 // Basemap geography and association activity records are independent.
 // Never promote design samples or unverified locations into association history.
-export function getFootprints(activities = [], {allowLocalPreview = false} = {}) {
+export function getFootprints(activities = [], {allowLocalPreview = false, now = Date.now()} = {}) {
   if (!Array.isArray(activities)) return [];
   return activities.flatMap(item => {
     if (!item || item.isDemo !== false || item.organizer !== 'chuanheng' || item.footprintEligible === false) return [];
-    if (item.status && item.status !== '已结束') return [];
-    const local = allowLocalPreview && item.localDraft === true && item.includeFootprint === true && item.status === '已结束' && Boolean(item.track || item.trackLocalId);
+    const status = item.dateEnd ? effectiveActivityStatus(item, now) : item.status;
+    if (status && status !== '已结束') return [];
+    const local = allowLocalPreview && item.localDraft === true && item.includeFootprint === true && status === '已结束' && Boolean(item.routeSnapshot?.track || item.routeSnapshot?.trackLocalId || item.track || item.trackLocalId);
     if (item.published !== true && !local) return [];
     if (typeof item.id !== 'string' || !item.id.trim() || typeof item.title !== 'string' || !item.title.trim()) return [];
     const point = item.coordinates;

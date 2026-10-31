@@ -50,6 +50,12 @@ test('local completed activity tracks appear only in an explicitly enabled local
   assert.equal(getFootprints([record({footprintEligible:false})]).length,0);
 });
 
+test('scheduled route snapshots become footprints only after the actual activity end', () => {
+  const item = record({ status: '即将开始', dateStart: '2026-11-10T00:00:00Z', dateEnd: '2026-11-10T10:00:00Z', routeSnapshot: { trackLocalId: 'route-history-track' }, includeFootprint: true, footprintEligible: true, published: false, localDraft: true });
+  assert.equal(getFootprints([item], { allowLocalPreview: true, now: Date.parse('2026-11-10T09:59:59Z') }).length, 0);
+  assert.equal(getFootprints([item], { allowLocalPreview: true, now: Date.parse('2026-11-10T10:00:00Z') }).length, 1);
+});
+
 test('a footprint requires a nonblank identity, title and a parseable activity date', () => {
   const excluded = [
     record({ id: undefined }),
