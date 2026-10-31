@@ -104,6 +104,8 @@ test('registration migration: ordered queue, retained data, role isolation and i
  await fail(()=>q('delete from public.applications'),/permission/);
  await fail(()=>q("insert into public.registration_events(activity_id,action) values($1,'registered')",[id(100)]),/permission/);
  await fail(()=>q("update public.registration_events set actor_label='forged'"),/permission/);
+ await fail(()=>q('delete from public.registration_events'),/permission/);
+ await fail(()=>q('truncate table public.registration_events'),/permission/);
  },n===900?{app_metadata:{role:'admin'}}:{});
  await as(1,async()=>{
  await fail(()=>v('select private.registration_state($1,true) v',[id(100)]),/ADMIN/);
@@ -153,6 +155,13 @@ test('registration migration: ordered queue, retained data, role isolation and i
  await fail(()=>rpc('delete_content_with_links',[id(100)]),/foreign key/);
  },{app_metadata:{role:'admin'}});
  for(const signature of ['public.register_activity(uuid)','private.register_activity(uuid)','public.withdraw_activity_registration(uuid)','private.withdraw_activity_registration(uuid)','public.set_activity_registration_payment(uuid,text,text)','private.set_activity_registration_payment(uuid,text,text)']) assert.equal(await v('select to_regprocedure($1)::text v',[signature]),null,'old unbound write overload must not exist');
+ const beforePlatformMaintenance=await q('select * from public.registration_events order by id');
+ await db.exec('begin');
+ try {
+   const edited=await q("update public.registration_events set actor_label=actor_label || ' isolated platform maintenance' where id=(select min(id) from public.registration_events) returning id");
+   assert.equal(edited.length,1,'trusted database owner can maintain logs outside website roles');
+ } finally { await db.exec('rollback'); }
+ assert.deepEqual(await q('select * from public.registration_events order by id'),beforePlatformMaintenance);
  assert.equal(await v('select v from chuanheng.sentinel'),'untouched');
  assert.ok((await q("select prosecdef from pg_proc where pronamespace='public'::regnamespace")).every(x=>!x.prosecdef));
  }finally{await db.close();}
