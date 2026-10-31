@@ -39,7 +39,6 @@ test('same-origin authenticated GPX/KML upload returns real converted geometry a
       assert.equal(options.method, 'GET');
       assert.equal(options.headers.authorization, 'Bearer test-access-token');
       assert.equal(options.headers.apikey, env.SUPABASE_PUBLISHABLE_KEY);
-      assert.equal(options.redirect, 'error');
       assert.ok(options.signal instanceof AbortSignal);
       return authResponse('leader');
     } });

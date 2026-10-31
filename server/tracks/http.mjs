@@ -100,7 +100,8 @@ async function verifyUser(request, config, options) {
       const response = await (options.fetchImpl || fetch)(config.url, {
         method: 'GET',
         headers: { apikey: config.key, authorization: `Bearer ${bearer}`, accept: 'application/json' },
-        redirect: 'error',
+        // Workers supports manual/follow only; reject 3xx below without forwarding credentials.
+        redirect: 'manual',
         signal: controller.signal,
       });
       if (!response.ok || controller.signal.aborted) {

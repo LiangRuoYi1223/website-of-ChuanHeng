@@ -17,11 +17,11 @@
 | Cloudflare 目标 | Worker `chuanheng-website` |
 | 目标地址 | [chuanheng-website.vulhusky.workers.dev](https://chuanheng-website.vulhusky.workers.dev) |
 | 本次新版发布 | **已部署，公网 HTTP 验收通过** |
-| 当前 Worker version | `6fee123c-8347-42d0-b558-6884f96448ff` |
+| 当前 Worker version | `33919f27-9e67-4350-8f64-6ee1cac5315e` |
 | 流量 | 100% 当前版本 |
-| Deployment ID | `0ec6fcf6-ad87-4cec-bd00-98a02213f19d` |
-| Worker 发布指标 | 启动 13 ms；gzip 752.27 KiB |
-| 发布前回退版本 | `9c159570-c589-4813-9dfb-6f819479d40e` |
+| Deployment ID | `47e01e4e-fcf8-470a-90c9-5002af22517f` |
+| Worker 发布指标 | 启动 14 ms；gzip 752.33 KiB |
+| 发布前回退版本 | `6fee123c-8347-42d0-b558-6884f96448ff`；该版存在轨迹身份校验兼容问题 |
 
 原私有 `chuanheng` 数据原样保留。已记录的旧表行数为：users 1（旧初始管理员）、activities 7（全部 isDemo=true）、projects 3、settings 1、registrations 0、sessions 0。旧表不作为新站正式内容，也不作为新 Auth 管理员身份来源。
 
@@ -32,10 +32,10 @@
 | 记录项 | 结果 |
 | --- | --- |
 | 代码版本 | 以 main 分支提交记录为准 |
-| 最终构建/测试 | 278/278 自动测试；正式生产构建成功；双引擎 SQL 各 13/13 |
+| 最终构建/测试 | 280/280 自动测试（含真实 workerd 认证上传及跳转拒绝）；正式生产构建成功；Worker 无 Node 外部依赖打包通过；此前双引擎 SQL 各 13/13 |
 | 依赖审计 | npm audit 总计与生产依赖均 0 漏洞 |
-| 新 Worker version ID | `6fee123c-8347-42d0-b558-6884f96448ff` |
-| 部署时间（UTC） | `2026-10-31T11:54:53.712236Z` |
+| 新 Worker version ID | `33919f27-9e67-4350-8f64-6ee1cac5315e` |
+| 部署时间（UTC） | `2026-10-31T12:27:36.671326Z` |
 | 页面与子路径 | `/`、`/activities`、`/routes/import`、`/about`、`/footprints`、`/login`、`/admin/debug` 均 HTTP 200，text/html |
 | 前端脚本 | 登录/注册页引用 `/assets/index-CkcR34h9.js`；全部 5 项入口资源 HTTP 200，SHA-256 与本地正式构建一致 |
 | 登录/注册布局修复 | 背景和遮罩固定到视口，左侧文案独立于表单高度定位；`/login` 和 `/login?mode=register` 均引用最新 `/assets/index-BVOeYVMg.css`；实机视觉待验收 |
@@ -44,17 +44,20 @@
 | 匿名 POST `/api/tracks/convert` | HTTP 401，`AUTH_REQUIRED` |
 | 未知 `/api/*` | HTTP 404，JSON 响应 |
 | 真实管理员登录/读取 | 密码登录、Auth getUser 的 admin 角色及 content_items 读取 HTTP 200 通过；未写入示例 |
-| 真实授权上传与活动/路线 CRUD | 管理员已就绪，写入及上传仍待验收 |
+| 真实授权轨迹转换 | 测试管理员 GPX/KML 均 HTTP 200；各 2 点、累计爬升 10 m；匿名/无效会话 HTTP 401，跨站 HTTP 403；合成轨迹仅转换、不保存 |
+| 活动/路线 CRUD 与上传负载 | 真实内容写入和上传负载仍待验收 |
 
-页面资源与 API 已通过公网 HTTP 检查。本次补验登录/注册页与入口资源哈希、API 配置，以及同源匿名上传 HTTP 401；无 Origin 的上传请求被 HTTP 403 拒绝。邮件确认由用户操作及 Auth 记录核实，管理员密码登录和读取单独通过真实请求验证；实机视觉、邮件回跳管理配置及真实账户上传未验收。启动耗时与压缩包体积不代表上传负载验收结果。
+页面资源与 API 已通过公网 HTTP 检查。已补验登录/注册页与入口资源哈希、API 配置，以及同源匿名上传 HTTP 401；无 Origin 的上传请求被 HTTP 403 拒绝。邮件确认由用户操作及 Auth 记录核实，管理员密码登录、读取及 GPX/KML 转换单独通过真实请求验证；合成轨迹不保存到正式内容，content_items 复查仍为 0 行。实机视觉、邮件回跳管理配置、真实内容写入及上传负载未验收。启动耗时与压缩包体积不代表上传负载验收结果。
 
 正式构建使用 `npm run build:production`，只读取 Wrangler 中的 Supabase URL 和 publishable 公钥并固定 live 模式。授权重复发布可用 `npm run deploy`。Worker SPA 回退由 assets 配置负责；`public/_redirects` 原通配 rewrite 导致 Cloudflare 100324 循环，已移除并成功部署。
+
+轨迹身份校验兼容性修复：旧请求使用 `redirect: 'error'`，Cloudflare Workers 在构造请求时立即抛出 TypeError，导致有效管理员也收到 `503 AUTH_UNAVAILABLE`。现改为 Workers 支持的 `manual`，沿用非 2xx 拒绝逻辑，不跟随 Auth 跳转、不向其他目标转发凭据。5 秒验证时限、64 KiB 响应上限及可信 `app_metadata.role` 校验保持有效；新增真实 workerd 生产入口回归验证该链路。[Cloudflare Request](https://developers.cloudflare.com/workers/runtime-apis/request/)
 
 ## 首位站点管理员
 
 身份分为三层：Supabase/Cloudflare 的平台管理账户；新站 Supabase Auth 的邮箱用户；旧 `chuanheng.users` 中的会员记录。三者不自动互认。不复制旧账号密码，不自动升级第一个注册者。
 
-2026-10-31 按用户授权创建独立测试账号；用户完成确认邮件后，受信后台仅对该已确认 Auth UUID 赋予 `app_metadata.role=admin`，保留其他 app_metadata。已重新进行密码登录并调用 Auth `getUser` 确认 admin 角色，正式 `content_items` 读取 HTTP 200、0 行。未测试内容写入或轨迹上传；账号邮箱、UUID、密码及会话令牌不写入仓库。
+2026-10-31 按用户授权创建独立测试账号；用户完成确认邮件后，受信后台仅对该已确认 Auth UUID 赋予 `app_metadata.role=admin`，保留其他 app_metadata。已重新进行密码登录并调用 Auth `getUser` 确认 admin 角色，正式 `content_items` 读取 HTTP 200、0 行。随后用该账号完成 GPX/KML 授权转换，不保存合成轨迹；未测试内容写入。账号邮箱、UUID、密码及会话令牌不写入仓库。
 
 1. 在 Supabase Auth 管理面核对 Site URL 为正式站点 origin；允许回跳包含完整 `https://chuanheng-website.vulhusky.workers.dev/login`。当前注册代码使用 `${window.location.origin}/login`。只有确实需要本地调试时才单独加入对应 localhost 地址。生产使用精确回跳路径。[Supabase Redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls)
 2. 用户在已发布站点 `/login?mode=register` 自行注册并完成确认邮件。email confirmation=true，注册响应不等于已确认或已登录。邮件送达与回跳成功需实际检查。
@@ -66,7 +69,7 @@
 
 页面、静态资源、API 配置状态与匿名拒绝已通过。新站空内容是预期结果，不用示例填充上线。首位测试管理员已完成邮件确认、赋权、真实登录及读取。接下来核对 Auth 邮件 URL 配置，并分别验收普通会员与管理员的真实写入权限。
 
-真实活动发布前核实内容与轨迹来源。管理员写入、授权上传及文件上限、Worker CPU/内存、多连接锁竞争和实机视觉仍需实际验收。自动测试与隔离 SQL 的范围见 README 和 [SQL 验证](supabase-sql-validation.md)。
+真实活动发布前核实内容与轨迹来源。管理员写入、上传文件上限与负载、Worker CPU/内存、多连接锁竞争和实机视觉仍需实际验收。自动测试与隔离 SQL 的范围见 README 和 [SQL 验证](supabase-sql-validation.md)。
 
 ## Worker 回滚
 
@@ -75,10 +78,12 @@
 需要回退时使用已记录版本：
 
 ```sh
-npx wrangler rollback 9c159570-c589-4813-9dfb-6f819479d40e --name chuanheng-website --message "Rollback login background fix"
+npx wrangler rollback 6fee123c-8347-42d0-b558-6884f96448ff --name chuanheng-website --message "Rollback track auth compatibility fix"
 ```
 
 也可在 Workers & Pages → `chuanheng-website` → Deployments 中选择记录版本回滚。完成后记录实际回滚部署，并重新核验页面、认证及轨迹 API。[Cloudflare Worker Rollbacks](https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/)
+
+回退上述版本会重新引入轨迹身份校验兼容问题，授权上传将受影响；应在确有回滚需要时评估这一已知限制。
 
 Worker 回滚不撤销 Supabase 数据、更改记录或连接资源。默认保留已安装的新 `public` 对象、已注册 Auth 用户及后续真实内容。不要用 DROP 表/schema、重跑初始化 SQL、删除迁移记录或把远端标记为未执行来代替应用回滚。数据库确需补救时，先保留数据和审计，再准备单独的针对性迁移；旧 `chuanheng` 数据保持不动。
 
