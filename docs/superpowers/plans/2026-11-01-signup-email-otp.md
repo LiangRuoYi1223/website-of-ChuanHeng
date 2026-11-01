@@ -2,6 +2,8 @@
 
 > 2026-11-02后续修正：首次实现沿用了早先聊天的“六位码”假设，实际注册邮件为8位，导致输入被截断。前端已改为允许Supabase支持的6–10位完整数字验证码；实际长度、码是否正确及是否过期仍由Auth服务器校验。下文六位码描述保留为首次实现的历史记录，当前行为以`docs/DEPLOYMENT.md`和最新生产交接记录为准。
 
+长度修正已先RED后GREEN，针对性17/17、完整集逐项运行567/567及生产构建通过；修复提交`af7f29c2d3b2410845abd3ca2e4d2b92295dde55`已推送并于北京时间2026-11-02 00:50发布为Worker `e40417e0-2985-42ec-ae79-1adb1c1384fb`（100%流量）。00:52注册入口确认新JS入口；线上JS哈希核验受TLS中断影响未完成，未记为通过。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 在现有邮箱密码注册后输入邮件中的六位验证码，核验成功后登录并安全返回原页面。
