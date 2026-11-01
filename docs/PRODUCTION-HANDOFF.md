@@ -1,6 +1,26 @@
 # 川衡 V1 生产交接与回滚
 
-## 当前发布：活动状态标签文字恢复（北京时间2026-11-01）
+## 当前发布：活动报名费用（北京时间2026-11-01）
+
+后台活动编辑在预设人数下方新增“报名费用（元）”。金额随每场活动单独保存，支持两位小数；留空为“未公布”、0为“免费”，正数统一显示为如`¥12.50`。活动资料、报名区域和缴费窗口使用同一金额。现有活动不自动填价，由管理员填写实际费用。
+
+| 项目 | 本次确认结果 |
+| --- | --- |
+| 功能提交 | `b78507dca46652798b75e55770119d4ef18c6e99`，已推送GitHub `main` |
+| 正式发布 | 2026-11-01 22:35（北京时间），Worker `16ad12ed-02b0-4982-ba3f-43e2cc897a14`，100%流量 |
+| 金额存储 | 活动JSON可选`registrationFeeCents`整数分；十进制精确转换，拒绝负值、超两位小数和不安全数值；旧记录缺失键保持未知，清空已有值保存null |
+| 前台行为 | 未登录、候补、入选均可看金额；切换活动不沿用旧金额；免费配置不自动修改人工缴费状态 |
+| 自动验证 | 最终全套559/559通过，生产构建和独立审查通过；涵盖后台保存/回填/清空、RPC参数及并发预期、金额精度、报名区和缴费窗口 |
+| 线上核验 | 22:39完成；5个页面HTTP200，全部8个JS/CSS资源HTTP200且SHA-256与本地一致；入口`index-3RjehpXy.js`、样式`index-UtpndSS2.css` |
+| 服务与数据 | `/api/tracks/status`为HTTP200、`configured:true`、`localPreview:false`；无需数据库迁移；未写入真实活动价格或会员资料 |
+| 回退版本 | `62d0f596-c7b7-445e-92e3-a8ab923ce59a`；保留登录状态、状态标签、报名缴费及敏感资料清理规则 |
+| 验收边界 | 前台/后台DOM与RPC边界为合成自动测试；线上核验为版本、页面、资源及服务状态；未进行真实管理员金额写入或Windows浏览器截图验收 |
+
+首次并行构建时，既有`activity end immediately hides an already opened proof and disables sensitive actions`及`final identity verification crossing end also discards export and server cleaning blocks a completed response`两个短时序用例失败；独立复核21/21通过，停止并行构建后最终全套559/559通过。未修改相关用例或放宽到期规则。
+
+最终测试、部署及线上核验记录分别保存在ignored `artifacts/registration-fee-publish-final-tests.log`、`artifacts/registration-fee-deploy.log`与`artifacts/registration-fee-live-verification.json`。
+
+## 上一发布：活动状态标签文字恢复（北京时间2026-11-01）
 
 活动详情的分类文字样式曾覆盖状态标签前景色，导致“报名中”与橙色背景同色。现仅收窄分类选择器，排除`.status`，恢复“报名中”橙底深色文字，以及其他状态原有的黑/白文字；普通活动分类文字保留品牌橙。活动状态计算、组件逻辑、数据库与Worker接口未修改。
 
