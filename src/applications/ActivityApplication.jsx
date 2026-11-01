@@ -10,6 +10,7 @@ import { uploadPaymentProof } from '../payments/payment-proof.js';
 import { paymentLabel } from '../payments/status.js';
 import '../payments/payment-status.css';
 import { formatActivityTime } from '../activities/schedule.js';
+import { formatRegistrationFee } from '../activities/registration-fee.js';
 import './application.css';
 
 const labels = { confirmed: '入选', waitlisted: '候补', withdrawn: '已退出', unconfirmed: '名额尚未确认' };
@@ -174,7 +175,7 @@ export default function ActivityApplication({ activity, localDraft = false, chil
   </div>;
   const detailsLabel = canPay ? '' : '查看报名详情';
   const registrationDialog = <RegistrationDetailsDialog key={`${activity?.id}:${user?.id || ''}`} open={Boolean(detailsMode) && Boolean(user) && sensitiveAllowed} userId={user?.id} activity={activity} supplement={detailsMode==='details'} busy={Boolean(busy)} onClose={()=>setDetailsMode('')} onSubmit={input=>mutate(detailsMode,input)}/>;
-  const paymentDialog = <PaymentDialog open={paymentOpen && Boolean(user) && availability.isPublic} qrUrl={state?.paymentQrUrl || ''} busy={busy === 'proof'} onClose={closePayment} onSubmit={submitProof}/>;
+  const paymentDialog = <PaymentDialog open={paymentOpen && Boolean(user) && availability.isPublic} feeCents={activity.registrationFeeCents} qrUrl={state?.paymentQrUrl || ''} busy={busy === 'proof'} onClose={closePayment} onSubmit={submitProof}/>;
   if (typeof children === 'function') return <>{children({ summary, details, actions, shortLabel, detailsLabel, checking: checking || Boolean(busy) })}{paymentDialog}{registrationDialog}</>;
-  return <><section className="activity-application" id="application" aria-label="活动报名" aria-busy={checking || Boolean(busy)}><h3>活动报名</h3>{summary}{details}{actions}</section>{paymentDialog}{registrationDialog}</>;
+  return <><section className="activity-application" id="application" aria-label="活动报名" aria-busy={checking || Boolean(busy)}><h3>活动报名</h3><p className="application-registration-fee"><span>报名费用</span><strong>{formatRegistrationFee(activity.registrationFeeCents)}</strong></p>{summary}{details}{actions}</section>{paymentDialog}{registrationDialog}</>;
 }

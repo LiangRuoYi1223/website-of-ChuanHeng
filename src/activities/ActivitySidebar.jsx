@@ -4,6 +4,7 @@ import { Compass, Mountain, Route as RouteIcon, X } from 'lucide-react';
 import ActivityApplication from '../applications/ActivityApplication.jsx';
 import ActivityScheduleDetails from './ActivityScheduleDetails.jsx';
 import { formatActivityTime, scheduleInstant } from './schedule.js';
+import { formatRegistrationFee } from './registration-fee.js';
 import './activity-sidebar.css';
 
 const MOBILE_QUERY = '(max-width: 800px)';
@@ -155,10 +156,10 @@ function SidebarPanel({ activity, summary, details, actions, shortLabel, details
           {tabs.map((item, index) => <button key={item.key} ref={node => { tabRefs.current[index] = node; }} type="button" role="tab" id={item.tabId} aria-controls={item.panelId} aria-selected={tab === item.key} tabIndex={tab === item.key ? 0 : -1} onClick={() => selectTab(index)} onKeyDown={event => tabKeys(event, index)}>{item.label}</button>)}
         </div>
         <div ref={scrolling} className="activity-sidebar-content" tabIndex={0} aria-label="可滚动的活动详情">
-          <section role="tabpanel" id={tabs[0].panelId} aria-labelledby={tabs[0].tabId} hidden={tab !== 'information'}><dl className="activity-sidebar-information"><div><dt>活动地点</dt><dd>{activity.location || '待确认'}</dd></div><ActivityScheduleDetails activity={activity}/><div><dt>组织与保障</dt><dd>正式发布时公布</dd></div><div><dt>活动费用</dt><dd>未公布</dd></div></dl><p className="activity-sidebar-note">{activity.isDemo ? '示例内容 · 请勿据此安排行程' : '以正式领队通知及最新安排为准'}</p></section>
+          <section role="tabpanel" id={tabs[0].panelId} aria-labelledby={tabs[0].tabId} hidden={tab !== 'information'}><dl className="activity-sidebar-information"><div><dt>活动地点</dt><dd>{activity.location || '待确认'}</dd></div><ActivityScheduleDetails activity={activity}/><div><dt>组织与保障</dt><dd>正式发布时公布</dd></div><div><dt>活动费用</dt><dd>{formatRegistrationFee(activity.registrationFeeCents)}</dd></div></dl><p className="activity-sidebar-note">{activity.isDemo ? '示例内容 · 请勿据此安排行程' : '以正式领队通知及最新安排为准'}</p></section>
           <section role="tabpanel" id={tabs[1].panelId} aria-labelledby={tabs[1].tabId} hidden={tab !== 'registration'}>{details}</section>
         </div>
-        <footer className="activity-sidebar-footer" aria-busy={checking || undefined}>{summary}{detailsLabel && tab !== 'registration' && detailsLabel === '查看缴费提醒' && <button className="activity-sidebar-registration-link is-payment-reminder" type="button" onClick={() => selectTab(1, true)}>{detailsLabel}</button>}{actions}{detailsLabel && tab !== 'registration' && detailsLabel !== '查看缴费提醒' && <button className="activity-sidebar-registration-link" type="button" onClick={() => selectTab(1, true)}>{detailsLabel}</button>}</footer>
+        <footer className="activity-sidebar-footer" aria-busy={checking || undefined}><p className="application-registration-fee"><span>报名费用</span><strong>{formatRegistrationFee(activity.registrationFeeCents)}</strong></p>{summary}{detailsLabel && tab !== 'registration' && detailsLabel === '查看缴费提醒' && <button className="activity-sidebar-registration-link is-payment-reminder" type="button" onClick={() => selectTab(1, true)}>{detailsLabel}</button>}{actions}{detailsLabel && tab !== 'registration' && detailsLabel !== '查看缴费提醒' && <button className="activity-sidebar-registration-link" type="button" onClick={() => selectTab(1, true)}>{detailsLabel}</button>}</footer>
       </div>
     </dialog>
     <div className="activity-sidebar-mobile-bar"><span className="activity-sidebar-mobile-status" role="status">{shortLabel}</span><button ref={trigger} type="button" aria-haspopup="dialog" aria-expanded={mobile && open} onClick={showPanel}>活动信息与报名</button></div>

@@ -1,10 +1,11 @@
 import {useEffect,useId,useRef,useState} from 'react';
 import {createPortal} from 'react-dom';
 import {X} from 'lucide-react';
+import {formatRegistrationFee} from '../activities/registration-fee.js';
 import './payment.css';
 
 const types=['image/jpeg','image/png','image/webp'];
-export default function PaymentDialog({open,qrUrl='',onClose,onSubmit,busy=false}) {
+export default function PaymentDialog({open,qrUrl='',feeCents=null,onClose,onSubmit,busy=false}) {
   const [step,setStep]=useState('pay'),[file,setFile]=useState(null),[preview,setPreview]=useState(''),[error,setError]=useState(''),[submitting,setSubmitting]=useState(false),[qrBroken,setQrBroken]=useState(false);
   const dialog=useRef(null),closing=useRef(onClose),selection=useRef(null),generation=useRef(0),sending=useRef(false);
   closing.current=onClose;
@@ -47,7 +48,7 @@ export default function PaymentDialog({open,qrUrl='',onClose,onSubmit,busy=false
   const processing=busy||submitting;
   return createPortal(<dialog ref={dialog} className="payment-dialog" aria-labelledby={titleId} onCancel={event=>{event.preventDefault();closing.current?.();}} onClick={event=>{if(event.target===event.currentTarget)closing.current?.();}} onKeyDown={keydown}>
     <section className="payment-dialog-panel">
-      <header><h2 id={titleId}>{step==='pay'?'活动缴费':'提交缴费记录'}</h2><button type="button" aria-label="关闭缴费窗口" onClick={()=>closing.current?.()}><X size={21} aria-hidden="true"/></button></header>
+      <header><div><h2 id={titleId}>{step==='pay'?'活动缴费':'提交缴费记录'}</h2><p className="payment-registration-fee"><span>报名费用</span><strong>{formatRegistrationFee(feeCents)}</strong></p></div><button type="button" aria-label="关闭缴费窗口" onClick={()=>closing.current?.()}><X size={21} aria-hidden="true"/></button></header>
       {step==='pay'?<div className="payment-dialog-content">
         <p className="payment-name-instruction">付款时请备注姓名</p>
         {qrUrl&&!qrBroken?<div className="payment-qr-frame"><img src={qrUrl} alt="微信收款二维码" onError={()=>setQrBroken(true)}/></div>:<p className="payment-empty-code" role="status">{qrBroken?'收款码暂时无法显示，请联系活动管理员核实。':'管理员尚未上传本活动收款码，请按正式活动通知联系管理员。'}</p>}

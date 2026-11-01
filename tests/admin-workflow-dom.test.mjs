@@ -533,3 +533,37 @@ test('activity row double click and explicit button open registration management
  await act(async()=>row.dispatchEvent(new dom.window.MouseEvent('dblclick',{bubbles:true})));
  assert.ok(container.querySelector('[role="dialog"]'));assert.match(text(container),/报名管理/);
 });
+
+test('activity fee remains unknown for old records, saves exact cents, refills and can be cleared', async () => {
+ localStorage.clear();
+ localStorage.setItem('chuanheng-drafts', JSON.stringify([{id:'fee-activity',kind:'activity',published:false,payload:{title:'合成费用活动',registrationCapacity:5}}]));
+ await mount('/admin/activities?preview=1');
+ const edit = async () => click(container.querySelector('button[aria-label="编辑合成费用活动"]'));
+ await edit();
+ assert.ok(dialog().querySelector('[name="registrationFee"]'), 'activity editor must offer a fee field in yuan');
+ assert.equal(dialog().querySelector('[name="registrationFee"]').value, '');
+ await saveEditor();
+ assert.equal(Object.hasOwn(drafts()[0].payload, 'registrationFeeCents'), false, 'saving an old activity must not invent its fee');
+ await edit(); await fill('registrationFee', '12.50'); await saveEditor();
+ assert.equal(drafts()[0].payload.registrationFeeCents, 1250);
+ await edit(); assert.equal(dialog().querySelector('[name="registrationFee"]').value, '12.50');
+ await fill('registrationFee', '0'); await saveEditor();
+ assert.equal(drafts()[0].payload.registrationFeeCents, 0);
+ await edit(); assert.equal(dialog().querySelector('[name="registrationFee"]').value, '0.00');
+ await fill('registrationFee', ''); await saveEditor();
+ assert.equal(drafts()[0].payload.registrationFeeCents, null);
+});
+
+test('invalid fees never replace the last saved activity price', async () => {
+ localStorage.clear();
+ localStorage.setItem('chuanheng-drafts', JSON.stringify([{id:'fee-invalid',kind:'activity',published:false,payload:{title:'合成金额校验活动',registrationCapacity:5,registrationFeeCents:1250}}]));
+ await mount('/admin/activities?preview=1');
+ await click(container.querySelector('button[aria-label="编辑合成金额校验活动"]'));
+ for (const amount of ['1.234', '-1']) {
+   await fill('registrationFee', amount);
+   await act(async () => dialog().querySelector('form').dispatchEvent(new Event('submit', {bubbles:true,cancelable:true})));
+   await waitFor(() => [...container.querySelectorAll('[role="alert"]')].some(node => /报名费用/.test(text(node))), 'fee validation error');
+   assert.equal(drafts()[0].payload.registrationFeeCents, 1250);
+   assert.ok(dialog(), 'invalid amount must keep the editor open');
+ }
+});

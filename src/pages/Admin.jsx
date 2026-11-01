@@ -18,6 +18,7 @@ import { OFFICIAL_BADGE } from '../Brand.jsx';
 import { runtimeMode } from '../runtime-mode.js';
 import { safeInternalReturn } from '../applications/registration.js';
 import { parseRegistrationCapacity } from '../applications/settings.js';
+import { parseRegistrationFee, registrationFeeInputValue } from '../activities/registration-fee.js';
 import ActivityRegistrationAdmin from '../applications/ActivityRegistrationAdmin.jsx';
 
 const DRAFT_KEY = 'chuanheng-drafts';
@@ -327,6 +328,8 @@ export function AdminPage() {
         if (capacity !== null) payload.registrationCapacity = capacity;
         else if (!Object.hasOwn(editor.payload, 'registrationCapacity')) delete payload.registrationCapacity;
         else payload.registrationCapacity = null;
+        const fee = parseRegistrationFee(form.get('registrationFee'));
+        if (fee !== null || Object.hasOwn(editor.payload, 'registrationFeeCents')) payload.registrationFeeCents = fee;
         payload.paymentInstructions = String(form.get('paymentInstructions') || '').trim();
         if (payload.paymentInstructions.length > 1000) throw new Error('缴费说明不能超过1000字。');
         payload.routeId = String(form.get('routeId') || '');
@@ -598,6 +601,7 @@ function ContentFields({ editor, track, routeData, trackBlocked = false, activit
       <label>活动状态<select name="status" value={activityStatus} onChange={event => onStatusChange(event.target.value)}><option>即将开始</option><option>报名中</option><option>进行中</option><option>已结束</option></select></label>
       <label>日期说明<input name="date" defaultValue={payload.date || ''} maxLength={100} placeholder="补充集合时间等说明" /></label>
       <label>预设报名人数<input name="registrationCapacity" type="number" min="1" max="100000" step="1" defaultValue={payload.registrationCapacity ?? ''} placeholder="例如：5" /><small>按有效报名时间排序，名额内入选，其余候补；退出后顺次递补。旧活动未设置时保持未知。</small></label>
+      <label>报名费用（元）<input name="registrationFee" type="number" min="0" step="0.01" inputMode="decimal" defaultValue={registrationFeeInputValue(payload.registrationFeeCents)} placeholder="例如：50.00" /><small>留空显示“未公布”，填写0显示“免费”。金额会显示在活动报名区域与缴费窗口。</small></label>
       <label>缴费说明<textarea name="paymentInstructions" defaultValue={payload.paymentInstructions || ''} maxLength={1000} rows={3} placeholder="请填写缴费方式、联系人员等正式说明" /><small>入选且未缴费的会员会看到此说明。会员上传记录后显示“应已缴费”，管理员核实后再改为“已缴费”。</small></label>
       <label className="admin-checkbox"><input name="registrationOpen" type="checkbox" defaultChecked={payload.registrationOpen === true} />开启活动报名</label>
       <div className="admin-field-grid"><label>报名开启时间<input name="registrationStart" type="datetime-local" defaultValue={toLocalDateTime(payload.registrationStart)} /></label><label>报名截止时间<input name="registrationDeadline" type="datetime-local" defaultValue={toLocalDateTime(payload.registrationDeadline)} /></label></div>

@@ -110,6 +110,31 @@ test('summary preserves zero metrics and unknown schedule without fabricating ac
   assert.equal(container.querySelectorAll('#application').length, 1);
 });
 
+for (const [fee, expected] of [[undefined, '未公布'], [null, '未公布'], [0, '免费'], [1250, '¥12.50']]) {
+  test(`registration footer and activity information display the fee ${String(fee)}`, async () => {
+    await mount({ overrides: { registrationFeeCents: fee } });
+    const footer = container.querySelector('.activity-sidebar-footer');
+    assert.match(footer.textContent, /报名费用/);
+    assert.ok(footer.textContent.includes(expected), footer.textContent);
+    const feeLabel = [...container.querySelectorAll('.activity-sidebar-information dt')].find(node => node.textContent === '活动费用');
+    assert.equal(feeLabel.nextElementSibling.textContent, expected);
+    await click(tabs()[1]);
+    assert.ok(footer.textContent.includes(expected), 'fee remains available while reading registration details');
+    assert.equal(footer.closest('[hidden]'), null);
+  });
+}
+
+test('changing activity replaces the registration fee without keeping the previous amount', async () => {
+  await mount({ overrides: { registrationFeeCents: 1250 } });
+  assert.match(container.querySelector('.activity-sidebar-footer').textContent, /¥12\.50/);
+  await act(async () => root.render(createElement(MemoryRouter, { initialEntries: ['/activities/test'] }, createElement(Component, { activity: { ...activity, id: 'free-event', registrationFeeCents: 0 } }))));
+  assert.match(container.querySelector('.activity-sidebar-footer').textContent, /免费/);
+  assert.equal(container.textContent.includes('¥12.50'), false);
+  await act(async () => root.render(createElement(MemoryRouter, { initialEntries: ['/activities/test'] }, createElement(Component, { activity: { ...activity, id: 'unknown-fee-event' } }))));
+  assert.match(container.querySelector('.activity-sidebar-footer').textContent, /未公布/);
+  assert.equal(container.textContent.includes('免费'), false);
+});
+
 test('changing activity resets the drawer and unmounting restores the original scroll setting', async () => {
   document.body.style.overflow = 'scroll';
   await mount({ mobile: true });
