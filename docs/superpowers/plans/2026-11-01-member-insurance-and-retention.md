@@ -1,6 +1,6 @@
 # 会员保险资料与自动清理 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** 完成实名保险报名、个人设置、1 MiB缴费图、保险导出与每3分钟连续两轮核验的真实清理。
 
@@ -36,10 +36,10 @@
 
 **Interfaces:** RPC/JSON contract in `.superpowers/sdd/2026-11-01-member-insurance-and-retention/contracts.md`; produces profile, insurance, registration details, admin/export/manual cleanup and service-only cleanup functions.
 
-- [ ] 先在隔离PG写失败用例：有效资料原子报名；旧入口失效；手机号保留分界；保险CAS；匿名/跨用户隔离；日志不可读改；手动两确认；三分钟双轮核验。
-- [ ] 使用官方CLI创建新迁移，建立private活动资料、profile和cleanup队列；保留旧报名时间、付款和审计。
-- [ ] 加入结束后读写限制和Storage前缀全扫、服务身份领取/完成接口及双确认token；无任意目标删除能力。
-- [ ] PG17/18运行完整链并确认新用例全部通过，报告权限及兼容性。
+- [x] 先在隔离PG写失败用例：有效资料原子报名；旧入口失效；手机号保留分界；保险CAS；匿名/跨用户隔离；日志不可读改；手动两确认；三分钟双轮核验。
+- [x] 使用官方CLI创建新迁移，建立private活动资料、profile和cleanup队列；保留旧报名时间、付款和审计。
+- [x] 加入结束后读写限制和Storage前缀全扫、服务身份领取/完成接口及双确认token；无任意目标删除能力。
+- [x] PG17/18运行完整链并确认新用例全部通过，报告权限及兼容性。
 
 ### Task 2: 本人设置和实名报名
 
@@ -47,10 +47,10 @@
 
 **Interfaces:** Consumes contract profile/history/register/details RPC; owns member service/form validation. Reuses session commit1731f1a, retains auth invalidation and admin links.
 
-- [ ] 写失败测试：个人设置无邮箱、手机号预填但本次修改不改profile、明示用途与同意、旧报名补资料不改排位、换号清空/丢弃晚到响应。
-- [ ] 实现本人资料页面和活动记录、用户名导航、资料弹窗以及新参数报名接口；不将身份证写入浏览器持久存储或Auth metadata。
-- [ ] 活动结束/清理中的状态禁资料/图片操作；付款状态白字及圆点保留含义；注册/退出原行为兼容。
-- [ ] 运行新DOM/服务测试和原applications/sidebars/paymentUI测试，修正真实回归。
+- [x] 写失败测试：个人设置无邮箱、手机号预填但本次修改不改profile、明示用途与同意、旧报名补资料不改排位、换号清空/丢弃晚到响应。
+- [x] 实现本人资料页面和活动记录、用户名导航、资料弹窗以及新参数报名接口；不将身份证写入浏览器持久存储或Auth metadata。
+- [x] 活动结束/清理中的状态禁资料/图片操作；付款状态白字及圆点保留含义；注册/退出原行为兼容。
+- [x] 运行新DOM/服务测试和原applications/sidebars/paymentUI测试，修正真实回归。
 
 ### Task 3: 后台保险、Excel和两次确认清理
 
@@ -58,10 +58,10 @@
 
 **Interfaces:** Consumes contract admin/insurance/export/manualcleanup RPC; uses lazy generated realxlsx (text cells), no server export file. Do not modify App/Admin page shell.
 
-- [ ] 写失败测试：移除日志、姓名左侧三色点/白字、保险取消无写入及确认CAS、双确认清理取消/过期/换号、导出仅入选和18位文本。
-- [ ] 实现保险操作确认、管理员导出、私有图片清理状态和两次确认；父对话框键盘事件避让子dialog。
-- [ ] 默认和唯一导出范围有效入选者；缺失字段明确列出，所有值文本防公式；动态加载writer，及时释放Blob。
-- [ ] 运行新增及原后台服务/DOM测试，报告无敏感日志输出。
+- [x] 写失败测试：移除日志、姓名左侧三色点/白字、保险取消无写入及确认CAS、双确认清理取消/过期/换号、导出仅入选和18位文本。
+- [x] 实现保险操作确认、管理员导出、私有图片清理状态和两次确认；父对话框键盘事件避让子dialog。
+- [x] 默认和唯一导出范围有效入选者；缺失字段明确列出，所有值文本防公式；动态加载writer，及时释放Blob。
+- [x] 运行新增及原后台服务/DOM测试，报告无敏感日志输出。
 
 ### Task 4: 图片上限、受信清理执行器与定时计划
 
@@ -69,16 +69,16 @@
 
 **Interfaces:** Consumes service-only claim/list/confirm RPC contract; Storage API remove only, fixed bucket. Upload new1MiB vs olddownload3MiB separate.
 
-- [ ] 写失败测试：真实1–8MiB原图压缩不超1MiB，旧图授权下载仍兼容；每轮删除后检查，连续两轮跨180秒才完成，失败/残留重置，固定范围且幂等。
-- [ ] 实现图片限制和Edge bounded executor；不接受请求中任意activity/path/bucket，平台服务密钥只在Edge运行环境。
-- [ ] 设置3分钟Cron固定唤醒，受信数据库独立控制租约/到期；执行错误仅返回无敏感内容计数。
-- [ ] 跑图片真实处理/HTTP/清理单测，验证Worker打包无Node依赖。
+- [x] 写失败测试：真实1–8MiB原图压缩不超1MiB，旧图授权下载仍兼容；每轮删除后检查，连续两轮跨180秒才完成，失败/残留重置，固定范围且幂等。
+- [x] 实现图片限制和Edge bounded executor；不接受请求中任意activity/path/bucket，平台服务密钥只在Edge运行环境。
+- [x] 设置3分钟Cron固定唤醒，受信数据库独立控制租约/到期；执行错误仅返回无敏感内容计数。
+- [x] 跑图片真实处理/HTTP/清理单测，验证Worker打包无Node依赖。
 
 ### Task 5: 集成审查、验证和统一发布
 
 **Files:** Update `AGENTS.md`, `docs/activity-registration-workflow.md`, `docs/PRODUCTION-HANDOFF.md`, spec/plan progress; retain session commit1731f1a changes.
 
-- [ ] 独立审查数据库与清理安全、会员/后台功能；处理重要问题并作定向复核。
-- [ ] 完整npm test、PG17/18完整链、build:production及Worker dry-run；可用时真实桌面/手机UI验收，诚实记录限制。
-- [ ] 应用针对性迁移、部署Edge及3分钟Cron，验证真实删除机制及权限；避免生产合成敏感资料，保留原数据哈希证据。
+- [x] 独立审查数据库与清理安全、会员/后台功能；处理重要问题并作定向复核。
+- [x] 完整npm test、PG17/18完整链、build:production及Worker dry-run；可用时真实桌面/手机UI验收，诚实记录限制。
+- [x] 应用针对性迁移、部署Edge及3分钟Cron，验证真实删除机制及权限；避免生产合成敏感资料，保留原数据哈希证据。
 - [ ] 合并main、发布Cloudflare、验证线上资源与接口，记录部署版本并同步GitHub。

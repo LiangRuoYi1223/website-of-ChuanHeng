@@ -44,6 +44,8 @@ JPEG/PNG/WebP原图最多8 MiB，服务器自动去元数据、压缩成不超�
 
 真实文件必须通过Storage API删除，SQL仅查询存储元数据用于核验。任务租约、限批、超时和幂等保护允许失败后继续。生产应核对Cron任务active、`*/3 * * * *`、Edge响应及private.activity_data_cleanup状态；不得把密钥或原始资料打印到诊断日志。
 
+本项目pg_net由平台supabase_admin持有，默认SQL权限由平台管理；项目postgres发出的REVOKE不代表这些平台授权已撤销。net不在网站DataAPI暴露列表（仅public、graphql_public），实际REST请求net返回406/PGRST106；GraphQL请求确认pg_graphql未启用，anon/authenticated无数据库登录权限。安全advisors仍可能提示该非可移动扩展的public命名空间登记，实际12个函数均在net。不得据此声称advisors零新增，或尝试修改平台所有者和强制删除扩展；后续改变DataAPI暴露范围须重新审查。四个private业务表已有明确restrictive false策略与表级撤权。
+
 网站硬删除后不提供恢复入口。Supabase历史数据库备份及管理员下载的Excel有独立保留范围，不能声称一并擦除。恢复数据库备份后须先重新执行到期清理并核验，再开放敏感资料访问；已被Storage API删除的真实文件不会随数据库备份复原。
 
 ## 验证范围

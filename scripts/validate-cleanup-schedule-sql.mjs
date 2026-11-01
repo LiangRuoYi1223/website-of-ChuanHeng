@@ -8,7 +8,7 @@ test('scheduler authentication uses a protected service-only boolean check and r
  const token='00000000-0000-4000-8000-00000000000800000000-0000-4000-8000-000000000009';
  try{
   await db.exec('create role anon;create role authenticated;create role service_role;create schema private;grant usage on schema private to service_role;create schema vault;create table vault.secrets(name text,decrypted_secret text);create view vault.decrypted_secrets as select * from vault.secrets;');
-  await db.exec(await readFile(new URL('../supabase/migrations/20261031200708_activity_cleanup_schedule.sql',import.meta.url),'utf8'));
+  await db.exec(await readFile(new URL('../supabase/migrations/20261101050040_activity_cleanup_schedule.sql',import.meta.url),'utf8'));
   const check=async value=>(await db.query('select public.authorize_activity_cleanup_wake($1) as valid',[value])).rows[0].valid;
   await db.exec('set role service_role');assert.equal(await check(token),false);await db.exec('reset role');
   await db.query('insert into vault.secrets values($1,$2)',['activity_cleanup_wake_token',token]);
