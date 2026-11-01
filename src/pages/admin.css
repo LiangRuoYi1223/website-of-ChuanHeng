@@ -217,6 +217,15 @@
 .login-feedback{font-size:10px;padding:11px 12px;border:1px solid;border-radius:4px;margin:0 0 17px;line-height:1.8}
 .login-feedback.error{color:#eeada4;border-color:#75413c;background:#32211f}
 .login-feedback.success{color:#9bcaad;border-color:#385c45;background:#1c2c23}
+.login-verification-email{font-size:13px;line-height:1.8;color:#bfcad4;margin:0 0 22px}
+.login-verification-email strong{display:block;color:#f4f5f7;font-size:15px;font-weight:500;overflow-wrap:anywhere}
+.login-card .login-otp-input{font-size:20px;letter-spacing:.22em;font-variant-numeric:tabular-nums;min-height:48px}
+.login-card .login-otp-input::placeholder{font-size:14px;letter-spacing:normal;color:#a1b1bf}
+.login-verification-help{font-size:12px;line-height:1.9;color:#bfcad4;margin:-5px 0 20px}
+.login-verification-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px}
+.login-verification-actions button{border:0;background:transparent;color:#f5af80;font-size:12px;min-height:44px;padding:8px 0}
+.login-verification-actions button:hover{color:#ffd5b9;text-decoration:underline;text-underline-offset:4px}
+.login-verification-actions button:disabled{color:#bfcad4;opacity:1;text-decoration:none}
 .login-footer{display:flex;justify-content:space-between;gap:20px;padding:20px 5.5vw;font-size:9px;color:#8b9eae}
 @media(min-width:1600px){.admin-workspace{padding-top:44px}.admin-heading{margin-bottom:34px}.admin-stats{gap:23px}.admin-stat{padding:23px}.admin-overview-grid{grid-template-columns:minmax(0,1fr) 285px}}
 @media(max-width:1200px){.admin-sidebar{width:204px;padding-left:10px;padding-right:10px}.admin-main{margin-left:204px}.admin-toolbar{padding:0 24px}.admin-workspace{padding-left:24px;padding-right:24px}.admin-overview-grid{grid-template-columns:minmax(0,1fr)}.admin-side-panels{display:grid;grid-template-columns:1fr 1fr}.admin-quick-links{margin-bottom:23px}.admin-stat{padding:16px}.admin-panel-heading{padding-left:18px;padding-right:18px}.admin-stat>strong{font-size:28px}.login-layout{gap:5vw;grid-template-columns:minmax(0,1fr) 400px}}

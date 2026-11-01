@@ -64,7 +64,11 @@ VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_YOUR_PUBLIC_KEY
 
 ## 登录与权限
 
-已检查到 Supabase Auth 允许注册，且 email confirmation 为 true。Site URL 与邮件回跳允许列表仍需在管理面核对，尚未宣称已配置。目标 Site URL 为 `https://chuanheng-website.vulhusky.workers.dev`，注册代码传入的回跳为同源 `/login`；生产允许列表应包含完整 `https://chuanheng-website.vulhusky.workers.dev/login`，不以开发通配地址代替正式路径。注册调用 `signUp` 后应完成邮件确认，登录调用 `signInWithPassword`。[Supabase 回跳配置](https://supabase.com/docs/guides/auth/redirect-urls)
+已检查到 Supabase Auth 允许注册，且 email confirmation 为 true。Site URL 与邮件回跳允许列表仍需在管理面核对，尚未宣称已配置。目标 Site URL 为 `https://chuanheng-website.vulhusky.workers.dev`，注册代码传入的回跳为同源 `/login`；生产允许列表应包含完整 `https://chuanheng-website.vulhusky.workers.dev/login`，不以开发通配地址代替正式路径。登录调用 `signInWithPassword`。[Supabase 回跳配置](https://supabase.com/docs/guides/auth/redirect-urls)
+
+注册先以 `signUp({email,password})` 发送注册确认邮件，没有 session 时显示固定收件邮箱及六位数字验证码输入框。`Confirm signup` 模板需包含 `{{ .Token }}`，可保留原有 `{{ .ConfirmationURL }}` 作为备用确认链接；本次前端接入不修改 SMTP 或邮件模板。提交调用 `verifyOtp({email,token,type:'email'})`，拿到 session 后再由 `getUser` 核对用户 ID 和待验证邮箱，验证通过才返回原站内页面（无返回目标时回首页）。验证码错误或过期可重试；重发使用 `resend({type:'signup',email})`，每次发信后等待60秒，服务端限流仍以实际响应为准。[验证码验证](https://supabase.com/docs/reference/javascript/auth-verifyotp)、[重发注册邮件](https://supabase.com/docs/reference/javascript/auth-resend)。
+
+待验证邮箱和验证码仅保留在当前页面，不新增浏览器持久化；更换邮箱或切换登录页会退出验证步骤并清除表单，刷新后需要重新进入注册流程。密码不保留到验证码步骤。自动回归使用合成账号和受控 Auth 响应；真实邮件收取、验证码时效与实际 SMTP 发信仍需用用户本人邮箱联调，不能将合成测试当作真实发信验收。
 
 Supabase/Cloudflare 平台账户不是网站会员账户；旧 `chuanheng.users` 记录也不是新站 Auth 身份。管理员由受信后台给确认后的 Auth UUID 赋角色；不复制旧密码，不因旧表存在“admin”就自动授权。2026-10-31 已按用户授权创建独立测试账号，用户完成邮件确认后赋权；真实登录、Auth `getUser` 的 admin 角色及内容读取均已核实，凭据不进入仓库。
 

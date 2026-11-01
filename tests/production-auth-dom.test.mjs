@@ -28,7 +28,24 @@ const mockBackend = {
     getUser: async () => { controller.calls.push({ operation: 'getUser' }); return { data: { user: controller.verified }, error: controller.verified ? null : { name: 'AuthSessionMissingError' } }; },
     onAuthStateChange(callback) { controller.subscribers.add(callback); return { data: { subscription: { unsubscribe: () => controller.subscribers.delete(callback) } } }; },
     async signInWithPassword(credentials) { controller.calls.push({ operation: 'signIn', credentials }); controller.session = member; controller.verified = member; for (const callback of controller.subscribers) callback('SIGNED_IN', { user: member }); return { data: { user: member }, error: null }; },
-    async signUp(credentials) { controller.calls.push({ operation: 'signUp', credentials }); if (controller.signupConfirmation) return { data: { user: member, session: null }, error: null }; controller.session = member; controller.verified = member; return { data: { user: member, session: { user: member } }, error: null }; },
+    async signUp(credentials) { controller.calls.push({ operation: 'signUp', credentials }); if (controller.signupBarrier) await controller.signupBarrier; if (controller.signupConfirmation) return { data: { user: member, session: null }, error: null }; controller.session = member; controller.verified = member; return { data: { user: member, session: { user: member } }, error: null }; },
+    async verifyOtp(credentials) {
+      controller.calls.push({ operation: 'verifyOtp', credentials });
+      const error = controller.otpError;
+      const user = { ...member, email: credentials.email };
+      const session = controller.otpSessionMissing ? null : { user, access_token: 'synthetic-otp-token' };
+      const verified = controller.verifiedIdentityOverride === undefined ? user : controller.verifiedIdentityOverride;
+      if (controller.verifyBarrier) await controller.verifyBarrier;
+      if (error) return { data: { user: null, session: null }, error };
+      controller.session = session?.user || null; controller.verified = verified;
+      return { data: { user, session }, error: null };
+    },
+    async resend(credentials) {
+      controller.calls.push({ operation: 'resend', credentials });
+      const error = controller.resendError;
+      if (controller.resendBarrier) await controller.resendBarrier;
+      return { data: {}, error };
+    },
   },
   async rpc(name,args) {
     const verified=controller.verified;
@@ -102,8 +119,24 @@ const container = dom.window.document.getElementById('app');
 const text = node => node.textContent.replace(/\s+/g, ' ').trim();
 const button = label => [...container.querySelectorAll('button')].find(node => text(node) === label);
 async function click(node) { assert.ok(node); await act(async () => { node.focus(); node.click(); }); }
-async function waitFor(predicate, reason) { const deadline = Date.now() + 4000; while (Date.now() < deadline) { if (predicate()) return; await act(async () => { await new Promise(resolve => setTimeout(resolve, 10)); }); } assert.fail(`Timed out waiting for ${reason}: ${text(container).slice(-900)}`); }
-async function fill(name, value) { const input = container.querySelector(`[name="${name}"]`); assert.ok(input); await act(async () => { input.value = value; input.dispatchEvent(new dom.window.Event('input', { bubbles: true })); }); }
+async function waitFor(predicate, reason) { const deadline = performance.now() + 4000; while (performance.now() < deadline) { if (predicate()) return; await act(async () => { await new Promise(resolve => setTimeout(resolve, 10)); }); } assert.fail(`Timed out waiting for ${reason}: ${text(container).slice(-900)}`); }
+async function fill(name, value) { const input = container.querySelector(`[name="${name}"]`); assert.ok(input); await act(async () => { Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value').set.call(input, value); input.dispatchEvent(new dom.window.Event('input', { bubbles: true })); }); }
+const signupEmail = 'synthetic-new@example.invalid';
+async function signup(location = '/login?mode=register', email = signupEmail) {
+  await mount(location);
+  await fill('email', email);
+  await fill('password', 'Synthetic-test-password-123');
+  await fill('confirmation', 'Synthetic-test-password-123');
+  await click(button('创建账号'));
+  assert.ok(container.querySelector('[name="token"]'), 'signup without a session must offer the email OTP form');
+}
+async function submitOtp(token = '123456') {
+  await fill('token', token);
+  const form = container.querySelector('[name="token"]').form;
+  await act(async () => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+}
+const authTab = label => [...container.querySelectorAll('.login-tabs a')].find(node => text(node) === label);
+function deferred() { let release; const promise = new Promise(resolve => { release = resolve; }); return { promise, release }; }
 async function submitRegistrationDetails(){
   await click(button('确认提交报名申请'));
   await waitFor(()=>document.querySelector('[name="phone"]')?.value==='13800138000','profile prefill');
@@ -122,7 +155,7 @@ async function mount(location) {
     createElement(Route, { path: '/', element: createElement('p', null, '已返回网站首页') }),
   ))));
 }
-function reset() { controller.calls = []; controller.session = null; controller.verified = null; controller.applications.clear(); controller.signupConfirmation = true; controller.writeError = null; controller.insertBarrier = null; localStorage.clear(); }
+function reset() { controller.calls = []; controller.session = null; controller.verified = null; controller.applications.clear(); controller.signupConfirmation = true; controller.writeError = null; controller.insertBarrier = null; controller.signupBarrier = null; controller.verifyBarrier = null; controller.resendBarrier = null; controller.otpError = null; controller.resendError = null; controller.otpSessionMissing = false; controller.verifiedIdentityOverride = undefined; localStorage.clear(); }
 
 test('production auth and activity application use verified identities and real schema results', async t => {
   await t.test('preview query and user-editable metadata cannot grant production administration', async () => {
@@ -153,7 +186,168 @@ test('production auth and activity application use verified identities and real 
     await click(button('创建账号'));
     await waitFor(() => text(container).includes('验证邮件将发送到邮箱'), 'email confirmation notice');
     assert.ok(!text(container).includes('账号已注册并登录'));
+    assert.ok(container.querySelector('[name="token"]'), 'signup without a session must offer the email OTP form');
+    const input = container.querySelector('[name="token"]');
+    assert.equal(input.type, 'text');
+    assert.equal(input.inputMode, 'numeric');
+    assert.equal(input.autocomplete, 'one-time-code');
+    assert.equal(input.maxLength, 6);
+    assert.ok(input.pattern, 'the OTP has a browser validation pattern');
+    assert.equal(new RegExp(`^(?:${input.pattern})$`).test('123456'), true);
+    assert.equal(new RegExp(`^(?:${input.pattern})$`).test('12345x'), false);
+    assert.equal(container.querySelectorAll('input:not([type="hidden"])').length, 1, 'only the code is editable while verifying the fixed signup email');
+    assert.ok(text(container).includes(signupEmail));
+    assert.ok(button('验证并登录'));
+    assert.equal(controller.calls.filter(call => call.operation === 'verifyOtp').length, 0);
     assert.equal(controller.calls.find(call => call.operation === 'signUp').credentials.options.emailRedirectTo, 'https://frontend.invalid/login');
+  });
+
+  await t.test('email OTP verifies the pending email and returns only to a safe destination', async () => {
+    const returnPath = `/activities/${activity.id}#application`;
+    for (const destination of [returnPath, 'https://outside.invalid/steal', '//outside.invalid/steal']) {
+      reset();
+      await signup(`/login?mode=register&next=${encodeURIComponent(destination)}`);
+      await submitOtp('012345');
+      assert.deepEqual(controller.calls.find(call => call.operation === 'verifyOtp').credentials, { email: signupEmail, token: '012345', type: 'email' });
+      assert.ok(controller.calls.some(call => call.operation === 'getUser'), 'the returned session must be verified before navigation');
+      if (destination === returnPath) await waitFor(() => button('确认提交报名申请'), 'verified signup activity return');
+      else await waitFor(() => text(container).includes('已返回网站首页'), 'safe default OTP destination');
+    }
+  });
+
+  await t.test('invalid OTP formats never call the authentication service', async () => {
+    reset(); await signup();
+    for (const token of ['', '12345', '1234567', 'abcdef', '１２３４５６']) {
+      await submitOtp(token);
+      assert.equal(controller.calls.filter(call => call.operation === 'verifyOtp').length, 0, `invalid code ${JSON.stringify(token)} must stay local`);
+      assert.ok(container.querySelector('[name="token"]'));
+    }
+    await submitOtp('654321');
+    await waitFor(() => text(container).includes('已返回网站首页'), 'valid code after local format errors');
+  });
+
+  await t.test('wrong or expired email codes preserve the pending address and can be retried', async () => {
+    reset(); await signup();
+    for (const code of ['otp_expired', 'invalid_credentials']) {
+      controller.otpError = { code, message: 'Synthetic code is invalid or expired', status: 403 };
+      await submitOtp();
+      assert.ok(container.querySelector('[role="alert"]'), 'verification failure must be visible');
+      assert.ok(container.querySelector('[name="token"]'));
+      assert.ok(text(container).includes(signupEmail));
+      assert.equal(button('验证并登录').disabled, false);
+      assert.ok(!text(container).includes('已返回网站首页'));
+    }
+    controller.otpError = null;
+    await submitOtp('654321');
+    await waitFor(() => text(container).includes('已返回网站首页'), 'OTP retry success');
+    assert.equal(controller.calls.filter(call => call.operation === 'verifyOtp').length, 3);
+  });
+
+  await t.test('OTP success without a session or a matching verified identity never navigates', async () => {
+    for (const variant of ['missing-session', 'missing-user', 'wrong-id', 'wrong-email']) {
+      reset(); await signup();
+      if (variant === 'missing-session') controller.otpSessionMissing = true;
+      if (variant === 'missing-user') controller.verifiedIdentityOverride = null;
+      if (variant === 'wrong-id') controller.verifiedIdentityOverride = { ...member, id: admin.id, email: signupEmail };
+      if (variant === 'wrong-email') controller.verifiedIdentityOverride = { ...member, email: 'different@example.invalid' };
+      await submitOtp();
+      assert.ok(container.querySelector('[name="token"]'), `${variant} must retain verification`);
+      assert.ok(container.querySelector('[role="alert"]'), `${variant} must report the unconfirmed identity`);
+      assert.ok(!text(container).includes('已返回网站首页'));
+      assert.equal(button('验证并登录').disabled, false);
+    }
+  });
+
+  await t.test('resending uses signup email parameters and enforces cooldown including rate limits', async () => {
+    reset();
+    const realNow = Date.now;
+    let now = realNow();
+    Date.now = () => now;
+    try {
+      await signup();
+      const resendControl = () => [...container.querySelectorAll('button')].find(node => /重新发送验证码|秒后可重发/.test(text(node)));
+      assert.ok(resendControl());
+      assert.equal(resendControl().disabled, true);
+      await click(resendControl());
+      assert.equal(controller.calls.filter(call => call.operation === 'resend').length, 0);
+      now += 61000;
+      await waitFor(() => button('重新发送验证码') && !button('重新发送验证码').disabled, 'resend cooldown expiry');
+      await click(button('重新发送验证码'));
+      const call = controller.calls.find(call => call.operation === 'resend');
+      assert.equal(call.credentials.type, 'signup');
+      assert.equal(call.credentials.email, signupEmail);
+      const callback = new URL(call.credentials.options.emailRedirectTo);
+      assert.equal(callback.origin, 'https://frontend.invalid');
+      assert.equal(callback.pathname, '/login');
+      assert.equal(resendControl().disabled, true, 'successful resend starts another cooldown');
+      now += 61000;
+      await waitFor(() => button('重新发送验证码') && !button('重新发送验证码').disabled, 'second resend cooldown expiry');
+      controller.resendError = { status: 429, code: 'over_email_send_rate_limit', message: 'Synthetic rate limit' };
+      await click(button('重新发送验证码'));
+      assert.equal(resendControl().disabled, true, 'the server rate limit restarts the cooldown');
+      assert.ok(container.querySelector('[role="alert"]'));
+      assert.equal(controller.calls.filter(call => call.operation === 'resend').length, 2);
+    } finally { Date.now = realNow; }
+  });
+
+  await t.test('changing email or switching auth mode discards pending verification and credentials', async () => {
+    reset(); await signup();
+    await click(button('更换邮箱'));
+    assert.equal(container.querySelector('[name="token"]'), null);
+    assert.equal(container.querySelector('[name="email"]').value, '');
+    assert.equal(container.querySelector('[name="password"]').value, '');
+    assert.equal(container.querySelector('[name="confirmation"]').value, '');
+    await signup();
+    await click(authTab('登录'));
+    assert.equal(container.querySelector('[name="token"]'), null);
+    assert.ok(button('登录'));
+    assert.equal(container.querySelector('[name="email"]').value, '');
+    assert.equal(container.querySelector('[name="password"]').value, '');
+    await click(authTab('注册'));
+    assert.equal(container.querySelector('[name="token"]'), null);
+    assert.ok(button('创建账号'));
+  });
+
+  await t.test('duplicate verification and late auth responses cannot replace a new stage', async () => {
+    reset();
+    await mount('/login?mode=register');
+    await fill('email', signupEmail); await fill('password', 'Synthetic-test-password-123'); await fill('confirmation', 'Synthetic-test-password-123');
+    const pendingSignup = deferred(); controller.signupBarrier = pendingSignup.promise;
+    await click(button('创建账号'));
+    await click(authTab('登录'));
+    await act(async () => pendingSignup.release());
+    assert.equal(container.querySelector('[name="token"]'), null, 'an old signup cannot reopen the verification stage');
+    assert.ok(button('登录'));
+    reset(); await signup();
+    const pendingVerify = deferred(); controller.verifyBarrier = pendingVerify.promise;
+    await submitOtp();
+    await submitOtp();
+    assert.equal(controller.calls.filter(call => call.operation === 'verifyOtp').length, 1);
+    await click(button('更换邮箱'));
+    await fill('email', 'replacement@example.invalid');
+    await act(async () => pendingVerify.release());
+    assert.ok(button('创建账号'), 'an old verified response cannot navigate after changing the email');
+    assert.equal(container.querySelector('[name="email"]').value, 'replacement@example.invalid');
+    assert.equal(container.querySelector('[name="token"]'), null);
+    assert.ok(!text(container).includes('已返回网站首页'));
+    reset();
+    const realNow = Date.now;
+    let now = realNow();
+    Date.now = () => now;
+    try {
+      await signup();
+      now += 61000;
+      await waitFor(() => button('重新发送验证码') && !button('重新发送验证码').disabled, 'resend before changing the stage');
+      const pendingResend = deferred(); controller.resendBarrier = pendingResend.promise;
+      controller.resendError = { status: 429, code: 'over_email_send_rate_limit' };
+      await click(button('重新发送验证码'));
+      assert.equal(controller.calls.filter(call => call.operation === 'resend').length, 1);
+      await click(authTab('登录'));
+      await act(async () => pendingResend.release());
+      assert.ok(button('登录'));
+      assert.equal(container.querySelector('[name="token"]'), null);
+      assert.equal(container.querySelector('[role="alert"]'), null, 'a late resend failure belongs to the abandoned verification stage');
+    } finally { Date.now = realNow; }
   });
 
   await t.test('login returns to the activity and submission waits for the application row response', async () => {

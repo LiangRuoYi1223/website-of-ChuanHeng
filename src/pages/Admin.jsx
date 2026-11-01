@@ -20,6 +20,7 @@ import { safeInternalReturn } from '../applications/registration.js';
 import { parseRegistrationCapacity } from '../applications/settings.js';
 import { parseRegistrationFee, registrationFeeInputValue } from '../activities/registration-fee.js';
 import ActivityRegistrationAdmin from '../applications/ActivityRegistrationAdmin.jsx';
+import SignupVerification from '../auth/SignupVerification.jsx';
 
 const DRAFT_KEY = 'chuanheng-drafts';
 const NAV = [
@@ -650,37 +651,52 @@ export function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  useEffect(() => { setError(''); setNotice(''); }, [register]);
+  const [pendingEmail, setPendingEmail] = useState('');
+  const requestVersion = useRef(0);
+  const submitting = useRef(false);
+  const emailRedirectTo = `${typeof window === 'undefined' ? '' : window.location.origin}/login`;
+  useEffect(() => {
+    setError(''); setNotice(''); setPendingEmail(''); setBusy(false); submitting.current = false;
+    return () => { requestVersion.current++; };
+  }, [location.search]);
   useEffect(() => {
     const callback = new URLSearchParams(location.hash.replace(/^#/, ''));
     if (callback.get('error') || callback.get('error_code')) setError('邮箱验证链接无效或已过期，请重新登录或重新申请验证邮件。');
   }, [location.hash]);
   async function submit(event) {
     event.preventDefault(); setError(''); setNotice('');
+    if (submitting.current) return;
     if (!supabase) { setError(runtimeMode.allowLocalPreview ? '当前为本地设计预览，登录与注册尚未连接。可使用下方入口浏览网站或管理本地草稿。' : '登录服务暂时不可用，请稍后重试。'); return; }
     const form = new FormData(event.currentTarget);
     const email = String(form.get('email')).trim(); const password = String(form.get('password'));
     if (register && password !== form.get('confirmation')) return setError('两次输入的密码不一致。');
-    setBusy(true);
+    const current = ++requestVersion.current;
+    const active = () => current === requestVersion.current;
+    const formElement = event.currentTarget;
+    submitting.current = true; setBusy(true);
     try {
       if (register) {
-        const { data, error: signupError } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/login` } });
+        const { data, error: signupError } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo } });
+        if (!active()) return;
         if (signupError) throw new Error('注册未完成，请检查邮箱格式、密码要求或稍后重试。');
         if (data.session) {
           const { data: verified, error: verificationError } = await supabase.auth.getUser();
+          if (!active()) return;
           if (verificationError || !verified?.user) throw new Error('账号已创建，但无法确认登录状态，请验证邮箱或重新登录。');
           if (next) navigate(next, { replace: true });
           else setNotice('账号已注册并登录。普通会员可继续浏览网站，后台需要另行授权。');
-        } else setNotice('如果该邮箱可以注册，验证邮件将发送到邮箱。请查看邮件并完成验证。');
+        } else { formElement.reset(); setPendingEmail(email); }
       } else {
         const { error: signinError } = await supabase.auth.signInWithPassword({ email, password });
+        if (!active()) return;
         if (signinError) throw new Error('登录未完成，请检查邮箱、密码及邮件验证状态。');
         const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (!active()) return;
         if (userError || !user) throw new Error('无法确认登录身份，请稍后重试。');
         navigate(next || (user.app_metadata?.role === 'admin' ? '/admin' : '/'), { replace: true });
       }
-    } catch (caught) { setError(caught.message || '暂时无法连接认证服务。'); }
-    finally { setBusy(false); }
+    } catch (caught) { if (active()) setError(caught.message || '暂时无法连接认证服务。'); }
+    finally { if (active()) { submitting.current = false; setBusy(false); } }
   }
-  return <section className="login-page"><img className="login-background" src="/images/redesign-v2/join-hiker.webp" alt="" /><div className="login-shade" /><header className="login-header"><Link className="login-brand" to="/"><img className="login-official-badge" src={OFFICIAL_BADGE} alt="川衡社官方徽章" width="46" height="46"/><span>川衡<span>CHUANHENG</span></span></Link><Link to="/"><ArrowLeft size={15} />返回网站</Link></header><div className="login-layout"><div className="login-story"><span>THE MOUNTAINS ARE CALLING</span><h1>山野很远，<br />我们一起。</h1><p>每一次出发，都是和更辽阔的自己相遇。</p><div><i /><span>以山为伴 · 一路同行</span></div></div><section className="login-card"><span className="login-card-eyebrow">CHUANHENG COMMUNITY</span><h2>{register ? '开启你的山野之旅' : '欢迎回来'}</h2><p>{register ? '加入川衡，遇见一起出发的人。' : '登录川衡，继续你的探索。'}</p><div className="login-tabs"><Link className={!register ? 'active' : ''} to={loginPath}>登录</Link><Link className={register ? 'active' : ''} to={registerPath}>注册</Link></div>{!isBackendConfigured && <div className="login-preview-label"><span />{runtimeMode.allowLocalPreview ? '本地设计预览 · 认证服务尚未连接' : '登录服务暂时不可用，请稍后重试。'}</div>}<form onSubmit={submit}><label>邮箱地址<input type="email" name="email" autoComplete="email" placeholder="输入你的邮箱" maxLength={254} required /></label><label>登录密码<div className="login-password-field"><input type={showPassword ? 'text' : 'password'} name="password" autoComplete={register ? 'new-password' : 'current-password'} placeholder={register ? '设置至少 8 位密码' : '输入你的密码'} minLength={register ? 8 : 1} maxLength={128} required /><button type="button" aria-label={showPassword ? '隐藏密码' : '显示密码'} onClick={() => setShowPassword(value => !value)}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></label>{register && <label>确认密码<input type={showPassword ? 'text' : 'password'} name="confirmation" autoComplete="new-password" placeholder="再次输入密码" minLength={8} maxLength={128} required /></label>}{!register && <div className="login-form-note"><ShieldCheck size={14} /><span>你的密码由认证服务安全管理</span></div>}{error && <div className="login-feedback error" role="alert">{error}</div>}{notice && <div className="login-feedback success" role="status">{notice}</div>}<button className="login-submit" disabled={busy || !supabase}>{busy ? '正在连接…' : register ? '创建账号' : '登录'}<ArrowRight size={18} /></button></form><div className="login-visitor"><Link to="/">以访客身份，继续探索<ArrowRight size={15} /></Link>{runtimeMode.allowLocalPreview && !isBackendConfigured && <Link className="login-preview-entry" to="/admin">进入本地设计预览</Link>}</div><p className="login-bottom-note">{register ? '注册后为普通会员，后台管理需额外授权。' : '山野相逢，从这里开始。'}</p></section></div><footer className="login-footer"><span>© {new Date().getFullYear()} 川衡登山协会</span><span>背景为 AI 生成的山岳视觉示意</span></footer></section>;
+  return <section className="login-page"><img className="login-background" src="/images/redesign-v2/join-hiker.webp" alt="" /><div className="login-shade" /><header className="login-header"><Link className="login-brand" to="/"><img className="login-official-badge" src={OFFICIAL_BADGE} alt="川衡社官方徽章" width="46" height="46"/><span>川衡<span>CHUANHENG</span></span></Link><Link to="/"><ArrowLeft size={15} />返回网站</Link></header><div className="login-layout"><div className="login-story"><span>THE MOUNTAINS ARE CALLING</span><h1>山野很远，<br />我们一起。</h1><p>每一次出发，都是和更辽阔的自己相遇。</p><div><i /><span>以山为伴 · 一路同行</span></div></div><section className="login-card"><span className="login-card-eyebrow">CHUANHENG COMMUNITY</span><h2>{pendingEmail ? '验证邮箱，继续启程' : register ? '开启你的山野之旅' : '欢迎回来'}</h2><p>{pendingEmail ? '完成邮箱验证，即可加入川衡。' : register ? '加入川衡，遇见一起出发的人。' : '登录川衡，继续你的探索。'}</p><div className="login-tabs"><Link className={!register ? 'active' : ''} to={loginPath}>登录</Link><Link className={register ? 'active' : ''} to={registerPath}>注册</Link></div>{!isBackendConfigured && <div className="login-preview-label"><span />{runtimeMode.allowLocalPreview ? '本地设计预览 · 认证服务尚未连接' : '登录服务暂时不可用，请稍后重试。'}</div>}{pendingEmail ? <SignupVerification key={`${pendingEmail}:${location.search}`} email={pendingEmail} emailRedirectTo={emailRedirectTo} onVerified={() => navigate(next || '/', { replace: true })} onChangeEmail={() => { setPendingEmail(''); setError(''); setNotice(''); }} /> : <form key={register ? 'register' : 'login'} onSubmit={submit}><label>邮箱地址<input type="email" name="email" autoComplete="email" placeholder="输入你的邮箱" maxLength={254} required /></label><label>登录密码<div className="login-password-field"><input type={showPassword ? 'text' : 'password'} name="password" autoComplete={register ? 'new-password' : 'current-password'} placeholder={register ? '设置至少 8 位密码' : '输入你的密码'} minLength={register ? 8 : 1} maxLength={128} required /><button type="button" aria-label={showPassword ? '隐藏密码' : '显示密码'} onClick={() => setShowPassword(value => !value)}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></label>{register && <label>确认密码<input type={showPassword ? 'text' : 'password'} name="confirmation" autoComplete="new-password" placeholder="再次输入密码" minLength={8} maxLength={128} required /></label>}{!register && <div className="login-form-note"><ShieldCheck size={14} /><span>你的密码由认证服务安全管理</span></div>}{error && <div className="login-feedback error" role="alert">{error}</div>}{notice && <div className="login-feedback success" role="status">{notice}</div>}<button className="login-submit" disabled={busy || !supabase}>{busy ? '正在连接…' : register ? '创建账号' : '登录'}<ArrowRight size={18} /></button></form>}<div className="login-visitor"><Link to="/">以访客身份，继续探索<ArrowRight size={15} /></Link>{runtimeMode.allowLocalPreview && !isBackendConfigured && <Link className="login-preview-entry" to="/admin">进入本地设计预览</Link>}</div><p className="login-bottom-note">{register ? '注册后为普通会员，后台管理需额外授权。' : '山野相逢，从这里开始。'}</p></section></div><footer className="login-footer"><span>© {new Date().getFullYear()} 川衡登山协会</span><span>背景为 AI 生成的山岳视觉示意</span></footer></section>;
 }
