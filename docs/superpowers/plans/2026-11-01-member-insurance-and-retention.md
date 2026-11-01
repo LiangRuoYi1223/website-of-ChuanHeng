@@ -81,4 +81,4 @@
 - [x] 独立审查数据库与清理安全、会员/后台功能；处理重要问题并作定向复核。
 - [x] 完整npm test、PG17/18完整链、build:production及Worker dry-run；可用时真实桌面/手机UI验收，诚实记录限制。
 - [x] 应用针对性迁移、部署Edge及3分钟Cron，验证真实删除机制及权限；避免生产合成敏感资料，保留原数据哈希证据。
-- [ ] 合并main、发布Cloudflare、验证线上资源与接口，记录部署版本并同步GitHub。
+- [x] 合并main、发布Cloudflare、验证线上资源与接口，记录部署版本并同步GitHub。

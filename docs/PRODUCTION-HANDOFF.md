@@ -1,6 +1,33 @@
 # 川衡 V1 生产交接与回滚
 
-## 当前发布：全站微信收款码与缴费记录（北京时间2026-11-01）
+## 当前发布：保险报名、个人设置与自动清理（北京时间2026-11-01）
+
+报名确认真实姓名、身份证、活动手机号及用途，号码预填个人设置且本次修改不回写账户。后台登记保险、二次确认购买、仅导出有效入选者Excel；号码为文本。新缴费图自动压至1 MiB，姓名左侧白/蓝/绿圆点、文字统一白色。网站移除日志页签，日志仅Supabase受控追加。
+
+活动结束立即封存敏感读写，Cron每3分钟清除及核验，连续两轮实际至少180秒的空检查才停止。公平队列、同槽去重及租约支持失败重试。手动清理从报名开启可用，须两次确认；期间暂缓敏感提交，完成且未结束可恢复收集。删除活动身份证、活动手机号、全部历史及未关联缴费图；保留账户手机号、姓名和报名/缴费/保险结果。
+
+| 项目 | 本次确认结果 |
+| --- | --- |
+| 入口 | https://chuanheng-website.vulhusky.workers.dev ／ `/settings` ／ `/admin/activities` |
+| 部署源 | `00f5236274dd382a5aafd853e4fe0097346b6d83`；核心 `b89cc2e9457b757cd9b44bf1acbb8eb39dcae5eb` |
+| 登录修复 | 另一对话1731f1a已精确整合为3fbf23d，保留独立管理后台及后台「打开网站」新标签页 |
+| Worker | `a74f0437-088a-4b05-b19b-69f2e28c990e` |
+| 生产迁移 | `20261101045621_member_insurance_retention`、`20261101050040_activity_cleanup_schedule`、`20261101051053_activity_cleanup_permissions`，各执行一次，文件名与远程一致 |
+| Edge | activity-data-cleanup v1 ACTIVE，ID ac1ab069-48cc-4ea3-8303-be39ad2adbf7，包SHA-256 deda2b06c51e7a4b56912ce838421783172fc90fb4b2773877931c09ea33da4d |
+| 认证 | Edge自有Vault令牌认证，无令牌401；服务密钥仅平台运行环境，网站身份不能领取清理任务 |
+| Cron | 唯一job1，active，`*/3 * * * *`；实际计划触发HTTP200、claimed=0/failed=0，当前无到期活动 |
+| 自动验证 | 特性与合并后main各537/537；PG17/18含权限迁移各53/53；生产构建通过；Worker50输入，无Node及外部bundle imports；全部独立审查通过 |
+| 线上资源 | index-CZvpyipy.js、index-Cn-JG8v0.css、insurance-export-DG7tvVJ4.js均HTTP200且SHA-256与main一致；首页载入新JS，/settings为200 |
+| 匿名访问 | 缴费图处理401 AUTH_REQUIRED；资料RPC401/42501；无凭证清理唤醒401 AUTH_REQUIRED |
+| 原数据 | 迁移后、上线前2条内容、1条报名原字段、5条日志及0个对象的哈希与迁移前一致；无生产合成身份证/手机号/缴费图 |
+| 私有权限 | 网站无日志表SELECT/UPDATE/DELETE；四个private业务表明确restrictive false及表级撤权；旧二参报名入口移除 |
+| 验收边界 | 真实本机图片处理/DOM/SQL和云端调度/资源核对；未实测真实支付、保险购买、金融图云端删除、多连接锁竞争或Excel桌面打开。Windows浏览器因无法识别当前URL停止，未做实机视觉验收 |
+
+流程、权限及删除/备份边界见 [会员保险及资料清理](member-insurance-retention-workflow.md)。运行记录为ignored artifacts/registration-management下的insurance-main-tests.log、deploy-insurance-retention.log、insurance-live-verification.json。平台pg_net由supabase_admin持有，项目postgres的REVOKE未移除平台SQL默认授权；实际DataAPI隔离已验证（net为406/PGRST106，GraphQL未启用，网站角色不能登录数据库）。advisors保留该非可移动扩展的命名空间WARN，不能声明零新增；原8个旧schema INFO及密码保护WARN保持，四个新增private无策略INFO已消除。
+
+回滚须保持六参报名、三态缴费/五参凭证CAS和清理兼容。不得恢复绕过资料入口、网站日志读取、清空审计或停用保留期限任务；优先向前修复。恢复数据库备份后先清理到期资料再开放敏感访问，不能靠恢复历史备份重曝已删数据。
+
+## 上一发布：全站微信收款码与缴费记录（北京时间2026-11-01）
 
 服务配置统一管理一张真实微信收款码，所有活动共用。会员缴费窗口展示「付款时请备注姓名」，点击「我已缴费」后须上传缴费记录图片；提交成功后为蓝色「应已缴费」，最终由管理员核实为绿色「已缴费」，未缴费显示白色。活动报名名单可看最新及历史图片。
 
