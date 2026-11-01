@@ -1,6 +1,24 @@
 # 川衡 V1 生产交接与回滚
 
-## 当前发布：活动报名费用（北京时间2026-11-01）
+## 当前发布：注册邮箱六位验证码（北京时间2026-11-02）
+
+注册提交邮箱和密码后，在同一页面输入注册邮件中的六位数字验证码；成功取得会话并由Auth服务器核实用户ID及邮箱后，返回原站内页面，无返回目标时回首页。支持错误/过期重试、60秒后重发和更换邮箱；切换登录或离开验证步骤后，迟到响应不能恢复旧页面或触发跳转。邮箱确认前不会假称已登录，注册不授予管理员角色。
+
+| 项目 | 本次确认结果 |
+| --- | --- |
+| 功能提交 | `c7ee903161347a3123d4c53ca4f33974ef63640f`，已推送GitHub `main` |
+| 正式发布 | 2026-11-02 00:18（北京时间），Worker `05cf46d1-69ce-46d9-bf9a-3bfe76464f1e`，100%流量；部署ID `7af622a1-dd86-479e-b79d-d3cc84385de5` |
+| 正式网站 | https://chuanheng-website.vulhusky.workers.dev/login?mode=register |
+| Supabase | 项目`gftecgpbhiubrkmazlcu`为`ACTIVE_HEALTHY`；公开Auth设置确认邮箱注册启用、注册未关闭、必须邮件确认；本次使用现有`verifyOtp`/`resend`接口，无需数据库迁移，未改写SMTP或用户已配置的邮件模板 |
+| 自动验证 | 提交前完整测试逐项运行566/566通过，生产构建通过；独立代码审查和发布范围检查通过；涵盖前导零、非法格式、错误/过期、身份不符、重发冷却/限流、安全回跳、重复提交与迟到响应 |
+| 线上核验 | 首页与注册入口HTTP200，均确认引用新入口`/assets/index-82UQRgjg.js`；Cloudflare管理面确认本次Worker承担100%流量；本地构建样式为`index-VJH47iGR.css` |
+| 资源与数据 | Wrangler确认3个变更静态资源上传成功；完整线上资源SHA-256核验因当前网络反复TLS连接中断未完成；未写入真实会员、活动或报名资料，未发送测试注册邮件 |
+| 回退版本 | `16ad12ed-02b0-4982-ba3f-43e2cc897a14`；保留此前活动费用、登录状态和报名敏感资料清理规则 |
+| 验收边界 | 自动DOM与Auth边界使用合成数据；未进行真实邮件收取、实际验证码提交及浏览器实机截图验收；不能将页面HTTP200等同于真实邮件流程已经验收 |
+
+提交前测试和构建记录分别保存在ignored `artifacts/signup-email-otp-publish-tests.log`、`artifacts/signup-email-otp-publish-build.log`；部署记录为`artifacts/signup-email-otp-deploy.log`，前后Cloudflare版本快照为`artifacts/signup-email-otp-before-deploy.json`、`artifacts/signup-email-otp-after-deploy.json`。线上检查摘要为`artifacts/signup-email-otp-live-verification.json`，明确区分已确认入口与未完成的资源哈希检查。
+
+## 上一发布：活动报名费用（北京时间2026-11-01）
 
 后台活动编辑在预设人数下方新增“报名费用（元）”。金额随每场活动单独保存，支持两位小数；留空为“未公布”、0为“免费”，正数统一显示为如`¥12.50`。活动资料、报名区域和缴费窗口使用同一金额。现有活动不自动填价，由管理员填写实际费用。
 

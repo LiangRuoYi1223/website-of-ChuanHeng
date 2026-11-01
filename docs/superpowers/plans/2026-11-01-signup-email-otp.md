@@ -37,7 +37,7 @@
 - [x] 更新 `docs/DEPLOYMENT.md` 说明邮件六位码流程及验收边界。
 - [x] 完整测试逐项运行566/566通过（`npm test -- --test-concurrency=1`）；首轮生产构建通过。
 - [x] 检查最终差异和仓库状态，排除旧 KML 计划和所有运行产物。
-- [ ] 按2026-11-02用户后续授权同步 GitHub，并发布 Cloudflare 线上网站；核对 Supabase 设置，记录实际部署与回退版本。
+- [x] 按2026-11-02用户后续授权同步 GitHub，并发布 Cloudflare 线上网站；核对 Supabase 设置，记录实际部署与回退版本。
 
 ## 验证记录
 
@@ -46,3 +46,5 @@
 初次并行全套中的既有 `export response arriving after end never downloads and releases returned contacts`、`final identity verification crossing end also discards export and server cleaning blocks a completed response` 时序用例因负载失败；独立复核21/21通过，完整集逐项运行566/566通过。未修改这些用例或放宽业务规则。
 
 2026-11-02提交前再次逐项运行完整集566/566通过。Supabase项目状态为`ACTIVE_HEALTHY`，公开Auth设置确认邮箱注册启用、注册未关闭且必须邮件确认；本次仅前端对接现有Auth接口，无需数据库迁移，不改写SMTP或用户已经设置的邮件模板。真实收信、验证码时效及浏览器实机验收仍与自动测试分开记录。
+
+功能提交`c7ee903161347a3123d4c53ca4f33974ef63640f`已推送`main`，Cloudflare版本`05cf46d1-69ce-46d9-bf9a-3bfe76464f1e`于北京时间2026-11-02 00:18上线并承担100%流量。首页和注册入口HTTP200且引用本次新入口；完整资源哈希检查因当前网络TLS中断未完成。实际状态与回退版本见`docs/PRODUCTION-HANDOFF.md`，未将未完成检查记为通过。
