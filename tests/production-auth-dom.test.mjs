@@ -191,7 +191,8 @@ test('production auth and activity application use verified identities and real 
     assert.equal(input.type, 'text');
     assert.equal(input.inputMode, 'numeric');
     assert.equal(input.autocomplete, 'one-time-code');
-    assert.equal(input.maxLength, 6);
+    assert.equal(input.minLength, 6);
+    assert.equal(input.maxLength, 10);
     assert.ok(input.pattern, 'the OTP has a browser validation pattern');
     assert.equal(new RegExp(`^(?:${input.pattern})$`).test('123456'), true);
     assert.equal(new RegExp(`^(?:${input.pattern})$`).test('12345x'), false);
@@ -215,9 +216,25 @@ test('production auth and activity application use verified identities and real 
     }
   });
 
+  await t.test('six through ten digit email codes pass browser validation and reach verifyOtp unchanged', async () => {
+    for (const token of ['01357924', '012345', '0123456', '012345678', '0123456789']) {
+      reset(); await signup();
+      await fill('token', token);
+      const input = container.querySelector('[name="token"]');
+      assert.ok(input.maxLength >= token.length, `${token.length} digit code must fit the input`);
+      assert.equal(input.value, token, 'leading zero and full code must remain text');
+      assert.equal(input.checkValidity(), true, `${token.length} digit code must pass browser validation`);
+      await click(button('验证并登录'));
+      assert.deepEqual(controller.calls.find(call => call.operation === 'verifyOtp')?.credentials, { email: signupEmail, token, type: 'email' });
+      await waitFor(() => text(container).includes('已返回网站首页'), `${token.length} digit OTP success`);
+    }
+  });
+
   await t.test('invalid OTP formats never call the authentication service', async () => {
     reset(); await signup();
-    for (const token of ['', '12345', '1234567', 'abcdef', '１２３４５６']) {
+    for (const token of ['', '12345', '12345678901', 'abcdef', '１２３４５６']) {
+      await fill('token', token);
+      assert.equal(container.querySelector('[name="token"]').checkValidity(), false, `invalid code ${JSON.stringify(token)} must fail browser validation`);
       await submitOtp(token);
       assert.equal(controller.calls.filter(call => call.operation === 'verifyOtp').length, 0, `invalid code ${JSON.stringify(token)} must stay local`);
       assert.ok(container.querySelector('[name="token"]'));

@@ -7,7 +7,7 @@ const RESEND_DELAY = 60_000;
 export default function SignupVerification({ email, emailRedirectTo, onVerified, onChangeEmail }) {
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
-  const [notice, setNotice] = useState('如果该邮箱可以注册，验证邮件将发送到邮箱。请查收邮件并输入六位验证码。');
+  const [notice, setNotice] = useState('如果该邮箱可以注册，验证邮件将发送到邮箱。请查收邮件并输入完整验证码。');
   const [resendAt, setResendAt] = useState(() => Date.now() + RESEND_DELAY);
   const [now, setNow] = useState(Date.now);
   const version = useRef(0);
@@ -31,7 +31,7 @@ export default function SignupVerification({ email, emailRedirectTo, onVerified,
     if (inFlight.current) return;
     setError(''); setNotice('');
     const token = String(new FormData(event.currentTarget).get('token') || '').trim();
-    if (!/^[0-9]{6}$/.test(token)) return setError('请输入邮件中的六位数字验证码。');
+    if (!/^[0-9]{6,10}$/.test(token)) return setError('请输入邮件中的完整数字验证码（6–10 位）。');
     const current = ++version.current;
     const active = () => current === version.current;
     inFlight.current = true; setBusy('verify');
@@ -88,7 +88,7 @@ export default function SignupVerification({ email, emailRedirectTo, onVerified,
   return <div className="login-verification">
     <p className="login-verification-email">待验证邮箱<strong>{email}</strong></p>
     <form onSubmit={verify} aria-busy={Boolean(busy)}>
-      <label>邮箱验证码<input ref={tokenInput} className="login-otp-input" name="token" type="text" inputMode="numeric" autoComplete="one-time-code" placeholder="输入六位验证码" minLength={6} maxLength={6} pattern="[0-9]{6}" required disabled={Boolean(busy)} aria-describedby="signup-otp-help" /></label>
+      <label>邮箱验证码<input ref={tokenInput} className="login-otp-input" name="token" type="text" inputMode="numeric" autoComplete="one-time-code" placeholder="输入邮件中的完整验证码" minLength={6} maxLength={10} pattern="[0-9]{6,10}" required disabled={Boolean(busy)} aria-describedby="signup-otp-help" /></label>
       <p className="login-verification-help" id="signup-otp-help">请查看收件箱或垃圾邮件。验证码过期时，可重新发送。</p>
       {error && <div className="login-feedback error" role="alert">{error}</div>}
       {notice && <div className="login-feedback success" role="status">{notice}</div>}

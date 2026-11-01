@@ -1,5 +1,7 @@
 # 注册邮箱验证码接入计划
 
+> 2026-11-02后续修正：首次实现沿用了早先聊天的“六位码”假设，实际注册邮件为8位，导致输入被截断。前端已改为允许Supabase支持的6–10位完整数字验证码；实际长度、码是否正确及是否过期仍由Auth服务器校验。下文六位码描述保留为首次实现的历史记录，当前行为以`docs/DEPLOYMENT.md`和最新生产交接记录为准。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 在现有邮箱密码注册后输入邮件中的六位验证码，核验成功后登录并安全返回原页面。
