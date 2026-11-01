@@ -121,7 +121,7 @@ test('administrator and public pages share verified login state', async t => {
 
   await t.test('a member is shown as logged in without trusting an editable admin claim', async () => {
     await reset(member); await mount('public', '/');
-    await waitFor(() => Boolean(findLink(header(), '个人设置')), 'member header');
+    await waitFor(() => Boolean(findLink(header(), '已登录')), 'member header');
     assert.equal(header().querySelector('a[href="/admin"]'), null);
     assert.equal(findLink(header(), '登录 / 注册'), undefined);
   });
@@ -129,7 +129,7 @@ test('administrator and public pages share verified login state', async t => {
   await t.test('cached administrator claims never replace server-verified membership', async () => {
     await reset(member); controller.session = admin;
     await mount('public', '/');
-    await waitFor(() => Boolean(findLink(header(), '个人设置')), 'verified member despite cached admin');
+    await waitFor(() => Boolean(findLink(header(), '已登录')), 'verified member despite cached admin');
     assert.equal(header().querySelector('a[href="/admin"]'), null);
   });
 
@@ -137,7 +137,7 @@ test('administrator and public pages share verified login state', async t => {
     await reset(admin); await mount('public', '/');
     await waitFor(() => findLink(header(), '管理后台'), 'initial administrator');
     await act(async () => emit('TOKEN_REFRESHED', member));
-    await waitFor(() => Boolean(findLink(header(), '个人设置')), 'refreshed member');
+    await waitFor(() => Boolean(findLink(header(), '已登录')), 'refreshed member');
     assert.equal(header().querySelector('a[href="/admin"]'), null);
     await act(async () => emit('USER_UPDATED', admin));
     await waitFor(() => findLink(header(), '管理后台'), 'updated administrator');
@@ -164,7 +164,7 @@ test('administrator and public pages share verified login state', async t => {
     await act(async () => finish({ data: { user: admin }, error: null }));
     assert.equal(header().querySelector('a[href="/admin"]'), null);
     await act(async () => emit('SIGNED_IN', member));
-    await waitFor(() => Boolean(findLink(header(), '个人设置')), 'replacement member');
+    await waitFor(() => Boolean(findLink(header(), '已登录')), 'replacement member');
     assert.equal(header().querySelector('a[href="/admin"]'), null);
   });
 
@@ -179,5 +179,67 @@ test('administrator and public pages share verified login state', async t => {
 
 test('verified username links to settings and late profile cannot restore a previous account',async()=>{
  await reset(member);controller.username='山野同行';await mount('public','/');await waitFor(()=>findLink(header(),'山野同行'),'verified username');assert.equal(findLink(header(),'山野同行').getAttribute('href'),'/settings');assert.doesNotMatch(text(header()),/member@example/);
- await reset(member);let release;controller.nextProfile=new Promise(resolve=>release=resolve);await mount('public','/');await waitFor(()=>findLink(header(),'个人设置'),'profile pending fallback');await act(async()=>emit('SIGNED_OUT',null));await act(async()=>release({data:{userId:member.id,username:'旧用户名',realName:'',phone:'',updatedAt:null}}));assert.ok(findLink(header(),'登录 / 注册'));assert.doesNotMatch(text(header()),/旧用户名/);
+ await reset(member);let release;controller.nextProfile=new Promise(resolve=>release=resolve);await mount('public','/');await waitFor(()=>findLink(header(),'已登录'),'profile pending fallback');await act(async()=>emit('SIGNED_OUT',null));await act(async()=>release({data:{userId:member.id,username:'旧用户名',realName:'',phone:'',updatedAt:null}}));assert.ok(findLink(header(),'登录 / 注册'));assert.doesNotMatch(text(header()),/旧用户名/);
+});
+
+test('returning to a public page rechecks a missed login and displays the current username', async () => {
+  await reset(); await mount('public', '/activities');
+  await waitFor(() => findLink(header(), '登录 / 注册'), 'initial guest navigation');
+  // A restored tab can miss the event emitted while it was suspended.
+  controller.session = member; controller.verified = member; controller.username = '山野同行';
+  await act(async () => window.dispatchEvent(new Event('pageshow')));
+  await waitFor(() => findLink(header(), '山野同行'), 'restored member username');
+  assert.equal(findLink(header(), '登录 / 注册'), undefined);
+  assert.equal(findLink(header(), '山野同行').getAttribute('href'), '/settings');
+});
+
+test('public route navigation recovers a login without requiring a full reload', async () => {
+  await reset(); await mount('public', '/');
+  await waitFor(() => findLink(header(), '登录 / 注册'), 'initial guest navigation');
+  controller.session = member; controller.verified = member; controller.username = '山野同行';
+  await act(async () => findLink(header(), '活动').click());
+  await waitFor(() => findLink(header(), '山野同行'), 'member username after route navigation');
+  assert.equal(header().querySelector('a[href="/admin"]'), null);
+});
+
+test('focus recovery clears the previous account and profile edits update desktop and mobile usernames', async () => {
+  await reset(admin); controller.username = '原用户名'; await mount('public', '/');
+  await waitFor(() => findLink(header(), '原用户名'), 'initial username');
+  controller.session = member; controller.verified = member; controller.username = '新用户名';
+  await act(async () => window.dispatchEvent(new Event('focus')));
+  await waitFor(() => findLink(header(), '新用户名'), 'replacement username after focus');
+  assert.equal(findLink(header(), '原用户名'), undefined);
+  assert.equal(header().querySelector('a[href="/admin"]'), null);
+  await act(async () => header().querySelector('[aria-controls="mobile-menu"]').click());
+  await waitFor(() => findLink(containers.public.querySelector('#mobile-menu'), '新用户名'), 'mobile username');
+  controller.username = '修改后的用户名';
+  await act(async () => window.dispatchEvent(new Event('member-profile-updated')));
+  await waitFor(() => findLink(header(), '修改后的用户名') && findLink(containers.public.querySelector('#mobile-menu'), '修改后的用户名'), 'profile update in both navigations');
+});
+
+test('returning to a visible tab rechecks identity and signout invalidates a queued recovery', async () => {
+  await reset(); await mount('public', '/');
+  await waitFor(() => findLink(header(), '登录 / 注册'), 'guest navigation');
+  controller.session = member; controller.verified = member; controller.username = '山野同行';
+  await act(async () => document.dispatchEvent(new Event('visibilitychange')));
+  await waitFor(() => findLink(header(), '山野同行'), 'visible tab username');
+  await act(async () => { window.dispatchEvent(new Event('focus')); emit('SIGNED_OUT', null); });
+  await waitFor(() => findLink(header(), '登录 / 注册'), 'signout after recovery');
+  assert.equal(findLink(header(), '山野同行'), undefined);
+});
+
+test('unmounting both navigation instances removes recovery listeners and pending requests', async () => {
+  await reset(member); controller.username = '山野同行'; await mount('public', '/');
+  await waitFor(() => findLink(header(), '山野同行'), 'member navigation');
+  await act(async () => header().querySelector('[aria-controls="mobile-menu"]').click());
+  await waitFor(() => findLink(containers.public.querySelector('#mobile-menu'), '山野同行'), 'mobile navigation');
+  await act(async () => roots.get('public').unmount()); roots.delete('public');
+  assert.equal(controller.subscribers.size, 0);
+  const before = controller.calls.length;
+  await act(async () => {
+    for (const type of ['focus', 'pageshow', 'member-profile-updated']) window.dispatchEvent(new Event(type));
+    document.dispatchEvent(new Event('visibilitychange'));
+    await new Promise(resolve => setTimeout(resolve, 10));
+  });
+  assert.equal(controller.calls.length, before, 'unmounted navigation must not keep making Auth requests');
 });

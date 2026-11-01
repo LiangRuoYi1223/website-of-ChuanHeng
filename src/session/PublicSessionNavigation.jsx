@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowUpRight } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { ArrowUpRight, UserRound } from 'lucide-react';
 import { supabase } from '../backend.js';
 import './public-session-navigation.css';
 import {readMemberProfile} from '../members/profile.js';
 
 // Display the existing site session; protected operations still verify on the server.
 export default function PublicSessionNavigation({ mobile = false }) {
+  const { pathname } = useLocation();
   const [auth, setAuth] = useState({ status: supabase ? 'checking' : 'anonymous', user: null });
   useEffect(() => {
     if (!supabase) return;
@@ -28,24 +29,39 @@ export default function PublicSessionNavigation({ mobile = false }) {
         update({ status: 'error', user: null });
       }
     };
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(event => {
-      // Invalidate pending results immediately, including requests from a previous account.
+    const recheck = () => {
+      if (!alive) return;
       const current = ++version;
       clearTimeout(timer);
-      setAuth({ status: event === 'SIGNED_OUT' ? 'anonymous' : 'checking', user: null });
+      setAuth({ status: 'checking', user: null });
       // Auth callbacks run under a lock: defer all further Auth requests.
-      if (event !== 'SIGNED_OUT') timer = setTimeout(() => verify(current), 0);
+      timer = setTimeout(() => verify(current), 0);
+    };
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(event => {
+      if (event !== 'SIGNED_OUT') return recheck();
+      version++;
+      clearTimeout(timer);
+      setAuth({ status: 'anonymous', user: null });
     });
-    const profileUpdated=()=>verify(++version);
-    window.addEventListener('member-profile-updated',profileUpdated);
-    verify(++version);
-    return () => { alive = false; window.removeEventListener('member-profile-updated',profileUpdated); version++; clearTimeout(timer); subscription.unsubscribe(); };
-  }, []);
+    const visible = () => { if (document.visibilityState === 'visible') recheck(); };
+    window.addEventListener('member-profile-updated', recheck);
+    window.addEventListener('pageshow', recheck);
+    window.addEventListener('focus', recheck);
+    document.addEventListener('visibilitychange', visible);
+    recheck();
+    return () => {
+      alive = false; version++; clearTimeout(timer); subscription.unsubscribe();
+      window.removeEventListener('member-profile-updated', recheck);
+      window.removeEventListener('pageshow', recheck);
+      window.removeEventListener('focus', recheck);
+      document.removeEventListener('visibilitychange', visible);
+    };
+  }, [pathname]);
 
   const className = mobile ? 'public-session-status' : 'login-link';
   const arrow = mobile ? <ArrowUpRight /> : null;
   if (auth.status === 'anonymous') return <Link to="/login" className={className}>登录 / 注册{arrow}</Link>;
   if (auth.status === 'error') return <Link to="/login" className={className} title="无法确认登录状态，请检查网络或重新登录">登录状态待确认{arrow}</Link>;
   if (auth.status === 'checking') return <span className={className} role="status">正在确认登录…</span>;
-  return <span className={mobile ? 'public-session-member public-session-member-mobile' : 'public-session-member'}><Link to="/settings" className={className}>{auth.username || '个人设置'}{arrow}</Link>{auth.user.app_metadata?.role === 'admin' && <Link to="/admin" className={className} target="_blank" rel="noopener noreferrer" title="在新标签页打开管理后台">管理后台{arrow}</Link>}</span>;
+  return <span className={mobile ? 'public-session-member public-session-member-mobile' : 'public-session-member'}><Link to="/settings" className={`${className} public-session-username`} title={auth.username ? `已登录：${auth.username}，打开个人设置` : '已登录，打开个人设置以设置用户名'}><UserRound size={15} aria-hidden="true"/><span className="public-session-name">{auth.username || '已登录'}</span>{arrow}</Link>{auth.user.app_metadata?.role === 'admin' && <Link to="/admin" className={className} target="_blank" rel="noopener noreferrer" title="在新标签页打开管理后台">管理后台{arrow}</Link>}</span>;
 }
