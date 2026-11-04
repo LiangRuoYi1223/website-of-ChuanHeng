@@ -31,7 +31,7 @@ const result = await build({
   } }],
 });
 await writeFile(bundlePath, result.outputFiles[0].text, 'utf8');
-const { prepareRouteTrackPayload, prepareActivityTrackPayload, DebugPanel, ContentEditor } = await import(pathToFileURL(bundlePath).href);
+const { prepareRouteTrackPayload, prepareActivityTrackPayload, ContentEditor } = await import(pathToFileURL(bundlePath).href);
 
 const imported = overrides => ({ version: 1, name: 'Synthetic track', stats: { distanceM: 2350, ascentM: null }, ...overrides });
 
@@ -131,22 +131,17 @@ test('explicit activity track removal clears derived map data and local inclusio
   assert.equal(removed.location, '保留地点说明');
 });
 
-test('Debug renders independent retention choices with each source, statistics and linked activity', () => {
+test('route editor discloses matching existing routes without offering automatic merge or archive', () => {
   const routes = [
     { id: 'route-a', kind: 'route', created_at: '2026-10-01', payload: { title: '同名路线', source: '第一来源', distance: 8.5, ascent: 500 } },
     { id: 'route-b', kind: 'route', created_at: '2026-10-02', payload: { title: '同名路线', source: '第二来源', distance: 9.2, ascent: null } },
   ];
   const rows = [...routes, { id: 'activity-a', kind: 'activity', payload: { title: '关联的真实活动', routeId: 'route-a' } }];
-  const html = renderToStaticMarkup(createElement(StaticRouter, { location: '/admin/debug' }, createElement(DebugPanel, { groups: [{ key: '同名路线', title: '同名路线', routes }], rows, local: true, busy: false, resolvingGroup: '', onResolve: async () => true })));
-  assert.equal([...html.matchAll(/type="radio"/g)].length, 2);
-  assert.doesNotMatch(html, /checked=""/, 'retention must require an explicit choice');
+  const html = renderToStaticMarkup(createElement(StaticRouter, {}, createElement(ContentEditor, { editor: { kind: 'route', payload: { title: '同名路线' } }, rows, local: true, busy: false })));
+  assert.match(html, /已有 2 条同名路线/);
   assert.match(html, /第一来源/);
   assert.match(html, /第二来源/);
-  assert.match(html, /8\.5 km/);
-  assert.match(html, /9\.2 km/);
-  assert.match(html, /关联的真实活动/);
-  assert.match(html, /disabled=""[^>]*>.*?保留所选并归档其他版本/s);
-  assert.match(html, /归档保留原记录及处理日志/);
+  assert.doesNotMatch(html, /type="radio"|保留所选并归档|路线整理记录/);
 });
 
 test('prepared local activity is accepted by the real workflow and creates a single linked route without inline geometry', async () => {
@@ -200,8 +195,7 @@ test('manual missing metrics survive route preparation and local summary without
   const result=await prepareRouteTrackPayload({},track,{local:true,storeTrack:async()=> 'manual'});
   assert.equal(result.ascent,0);assert.equal(result.trackSummary.manualMetrics.ascentM,0);assert.equal(result.trackSummary.stats.ascentM,null);
 });
-test('Debug exposes only actual active routes with missing metrics and offers route editing',()=>{
-  const rows=[{id:'r-missing',kind:'route',payload:{title:'实际待补路线',track:imported()}},{id:'r-demo',kind:'route',payload:{title:'示例排除',isDemo:true}},{id:'r-archived',kind:'route',payload:{title:'归档排除',archived:true}}];
-  const html=renderToStaticMarkup(createElement(StaticRouter,{},createElement(DebugPanel,{groups:[],rows,local:true,busy:false})));
-  assert.match(html,/路线参数待补/);assert.match(html,/实际待补路线/);assert.match(html,/edit=r-missing/);assert.doesNotMatch(html,/示例排除|归档排除/);
+test('route editor shows unavailable name checking when route loading fails',()=>{
+  const html=renderToStaticMarkup(createElement(StaticRouter,{},createElement(ContentEditor,{editor:{kind:'route',payload:{}},rows:[],local:true,busy:false,routesError:'读取失败'})));
+  assert.match(html,/暂无法核对重名/);
 });

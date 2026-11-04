@@ -6,7 +6,7 @@ React + Vite 川衡官网，使用 Cloudflare Workers 和 Supabase。发布基�
 - Node.js 24；`npm ci`、`npm run dev`（127.0.0.1:5178）、`npm test`。本地构建为 `npm run build`，正式构建为 `npm run build:production`；授权重复发布可用 `npm run deploy`。正式脚本只从 Wrangler 配置读取项目地址及 publishable 公钥，固定 live 模式。Windows 目录是联接时优先使用实际目录，Vite 已使用 realpath。
 - 轨迹后端位于 `server/tracks`，生产入口 `server/worker.mjs`；本地 Vite 适配和生产 Worker 使用同一解析器。生产上传必须由服务端验证可信领队/管理员身份。
 - GPX/KML 统一由路线管理上传；活动选择路线并保存当时的轨迹快照，后续路线修改不改写历史活动。多段同图、海拔分段，不补造缺失海拔或省市归属。
-- 里程与爬升优先读取轨迹自动统计；缺失时仅在路线管理弹窗补充，保留原统计，并记录 `manualMetrics` 的管理员来源与确认时间。可跳过，未知值显示“暂不提供数据”并在 Debug 提醒。活动编辑器只读展示路线快照指标，不另设输入。
+- 里程与爬升优先读取轨迹自动统计；缺失时仅在路线管理弹窗补充，保留原统计，并记录 `manualMetrics` 的管理员来源与确认时间。可跳过，未知值显示“暂不提供数据”并在路线管理提醒。活动编辑器只读展示路线快照指标，不另设输入。
 - 自动路线去重须明确选择，归档保留原数据和审计；更新、删除与跨标签页编辑须保护活动关联。
 - Supabase 项目 `gftecgpbhiubrkmazlcu` 已应用 `20261031074956_chuanheng_v1_content_and_tracks`、`20261031131635_activity_route_scheduling`、`20261031142417_route_manual_metrics_and_cover_limit`、`20261031163237_activity_registration_management`、`20261031163336_gallery_photo_upload`、`20261031185118_activity_payment_proofs`、`20261101045621_member_insurance_retention`、`20261101050040_activity_cleanup_schedule` 与 `20261101051053_activity_cleanup_permissions`；`public.content_items/applications` 为新模型，初始化为空，现有管理员内容保留。旧 `chuanheng` 全部表与数据原样保留。不得重复执行两份 docs SQL 的 CREATE 或把示例迁为正式内容；后续变更使用针对性迁移。
 - 报名预设人数为正整数；有效报名按服务器时间排队，名额内入选、其余候补，退出后递补，重报排队尾。报名须确认姓名、身份证、活动手机号和用途；手机号预填个人设置号码，仅本次修改不回写账户。资料与报名原子保存，补资料不重排；保险已购买锁定更改，相同投保资料重报可保留保险排队尾。会员仅可读本人和匿名汇总，网站不读取、显示、修改或删除日志，受控业务只追加审计，历史维护仅限Supabase受信数据库管理；自动缴费调整暂未实现。当前规则见 `docs/member-insurance-retention-workflow.md`。

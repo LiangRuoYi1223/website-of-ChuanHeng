@@ -123,6 +123,24 @@ test('production legacy import URL redirects to route management without enablin
   assert.equal(container.querySelector('input[type="file"]'), null, 'redirect does not open a second upload interface');
 });
 
+test('cloud route name checks refresh on returning to the window and manually without replacing typed text', async () => {
+  controller.rows = []; controller.reject = false;
+  await mount('/admin/routes');
+  await waitFor(() => button('新建路线') && !text(container).includes('正在读取内容'), 'cloud route list ready');
+  await click(button('新建路线'));
+  await fill('title', '新窗口路线'); await fill('description', '尚未保存的路线说明');
+  assert.equal(container.querySelector('#route-name-feedback'), null);
+  controller.rows = [{ id: 'external-route', kind: 'route', payload: { title: '新窗口路线', source: '另一窗口保存' } }];
+  await act(async () => window.dispatchEvent(new dom.window.Event('focus')));
+  await waitFor(() => /已有 1 条同名路线/.test(container.querySelector('#route-name-feedback')?.textContent || ''), 'fresh cloud name warning after focus');
+  assert.equal(container.querySelector('[name="description"]').value, '尚未保存的路线说明');
+  controller.rows.push({ id: 'second-external-route', kind: 'route', payload: { title: '新窗口路线' } });
+  await click(button('刷新已有路线'));
+  await waitFor(() => /已有 2 条同名路线/.test(container.querySelector('#route-name-feedback')?.textContent || ''), 'manual name check refresh');
+  assert.equal(container.querySelector('[name="title"]').value, '新窗口路线');
+  assert.equal(container.querySelector('[name="description"]').value, '尚未保存的路线说明');
+});
+
 const oldScheduleActivity = (published = true, registrationOpen = true) => ({
   id: 'legacy-schedule', kind: 'activity', published, created_at: '2025-01-01T00:00:00Z',
   payload: { title: '旧日期活动', dateStart: '2025-01-02', registrationDeadline: '2025-01-01T12:00:00Z', registrationOpen, image: '/images/legacy-cover.webp' },

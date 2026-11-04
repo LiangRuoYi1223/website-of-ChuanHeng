@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1 --port 5178 --configLoader runner",
-    "build": "vite build --configLoader runner",
-    "preview": "vite preview --host 127.0.0.1 --port 5178 --configLoader runner",
+    "dev": "node scripts/vite-local.mjs --host 127.0.0.1 --port 5178 --configLoader runner",
+    "build": "node scripts/vite-local.mjs build --configLoader runner",
+    "preview": "node scripts/vite-local.mjs preview --host 127.0.0.1 --port 5178 --configLoader runner",
     "test": "node --test tests/*.test.mjs",
     "build:production": "node scripts/build-production.mjs",
     "deploy": "npm run build:production && wrangler deploy --keep-vars"

@@ -483,17 +483,53 @@ test('missing metric dialog preserves prior track on cancel, supports skip and a
 
 
 
-test('Debug edit link opens exactly the requested route once; closing and refreshing never reopens it',async()=>{
- localStorage.clear();localStorage.setItem('chuanheng-drafts',JSON.stringify([{id:'debug-edit-route',kind:'route',published:false,payload:{title:'Debug待补参数路线',distance:2,ascent:null}}]));
+test('retired Debug URL opens route management and direct route editing never reopens after closing',async()=>{
+ localStorage.clear();localStorage.setItem('chuanheng-drafts',JSON.stringify([{id:'metrics-edit-route',kind:'route',published:false,payload:{title:'待补参数路线',distance:2,ascent:null}}]));
  await mount('/admin/debug?preview=1');
- const link=container.querySelector('a[href="/admin/routes?preview=1&edit=debug-edit-route"]');assert.ok(link);
- await click(link);await waitFor(()=>dialog(),'Debug requested route editor');
- assert.equal(dialog().querySelector('[name="title"]').value,'Debug待补参数路线');
+ assert.equal(container.querySelector('h1').textContent,'路线管理');
+ assert.ok(container.querySelector('a[href="/admin/devices?preview=1"]'));
+ assert.equal(container.querySelector('a[href*="/admin/debug"]'),null);
+ assert.match(text(container.querySelector('tbody')),/参数待补/);
+ await act(async()=>navigateWithinTest('/admin/routes?preview=1&edit=metrics-edit-route'));
+ await waitFor(()=>dialog(),'requested route editor');
+ assert.equal(dialog().querySelector('[name="title"]').value,'待补参数路线');
  await fill('description','应保留的输入');
  await act(async()=>window.dispatchEvent(new dom.window.StorageEvent('storage',{key:'chuanheng-drafts'})));
  assert.equal(dialog().querySelector('[name="description"]').value,'应保留的输入');
  await click(button('取消',dialog()));assert.equal(dialog(),null);
  await act(async()=>window.dispatchEvent(new dom.window.StorageEvent('storage',{key:'chuanheng-drafts'})));assert.equal(dialog(),null);
+});
+
+test('new route name warning normalizes input and excludes samples and archived rows without changing originals',async()=>{
+ const records=[
+  {id:'same-active',kind:'route',payload:{title:'山野 Ａ',source:'已有正式来源',location:'四川',distance:2,ascent:10}},
+  {id:'same-archived',kind:'route',payload:{title:'山野 a',source:'归档来源',archived:true}},
+  {id:'same-demo',kind:'route',payload:{title:'山野 a',source:'示例来源',isDemo:true}},
+  {id:'same-activity',kind:'activity',payload:{title:'山野 a'}},
+ ];
+ localStorage.clear();localStorage.setItem('chuanheng-drafts',JSON.stringify(records));
+ await mount('/admin/routes?preview=1');await click(button('新建路线'));
+ await fill('title','  山野 a  ');
+ const warning=()=>dialog()?.querySelector('#route-name-feedback');
+ assert.ok(warning());assert.match(text(warning()),/已有 1 条同名路线/);
+ assert.match(text(warning()),/已有正式来源/);assert.doesNotMatch(text(warning()),/归档来源|示例来源/);
+ assert.equal(button('保存本地草稿',dialog()).disabled,false,'matching names are advisory, not an automatic merge or save ban');
+ await fill('title','不同路线');assert.equal(warning(),null);
+ await fill('title','山野 a');await saveEditor();
+ assert.equal(drafts().filter(row=>row.kind==='route').length,4);
+ for(const original of records)assert.deepEqual(drafts().find(row=>row.id===original.id).payload,original.payload);
+});
+
+test('editing excludes the route itself and checks newly arriving rows without losing form text',async()=>{
+ const original={id:'self-route',kind:'route',payload:{title:'山野 A',distance:2,ascent:0}};
+ localStorage.clear();localStorage.setItem('chuanheng-drafts',JSON.stringify([original]));
+ await mount('/admin/routes?preview=1&edit=self-route');await waitFor(()=>dialog(),'existing route');
+ assert.equal(dialog().querySelector('#route-name-feedback'),null);
+ await fill('description','尚未保存的介绍');
+ localStorage.setItem('chuanheng-drafts',JSON.stringify([original,{id:'another-route',kind:'route',payload:{title:' 山野 Ａ ',source:'新窗口创建'}}]));
+ await act(async()=>window.dispatchEvent(new dom.window.StorageEvent('storage',{key:'chuanheng-drafts'})));
+ assert.match(text(dialog().querySelector('#route-name-feedback')),/已有 1 条同名路线/);
+ assert.equal(dialog().querySelector('[name="description"]').value,'尚未保存的介绍');
 });
 test('route edit requests reject missing, archived and demo routes, and other sections never edit arbitrary routes',async()=>{
  localStorage.clear();localStorage.setItem('chuanheng-drafts',JSON.stringify([{id:'archived-deep',kind:'route',payload:{title:'归档路线',archived:true}},{id:'demo-deep',kind:'route',payload:{title:'示例路线',isDemo:true}}]));

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Activity, ArrowLeft, ArrowRight, Bell, Bug, Check, ChevronRight, Eye, EyeOff, FileText, Image, KeyRound, LayoutDashboard, LogOut, Menu, MountainSnow, Pencil, Plus, Search, ShieldCheck, SlidersHorizontal, Trash2, Users, X } from 'lucide-react';
+import { Activity, ArrowLeft, ArrowRight, Bell, Check, ChevronRight, Eye, EyeOff, FileText, Image, KeyRound, LayoutDashboard, LogOut, Menu, Monitor, MountainSnow, Pencil, Plus, Search, ShieldCheck, SlidersHorizontal, Trash2, Users, X } from 'lucide-react';
 import { activities, routes as sampleRoutes, photos, articles } from '../data.js';
 import { ButtonLink, EmptyState } from '../ui.jsx';
 import { supabase, isBackendConfigured, backendConfigurationError } from '../backend.js';
@@ -10,7 +10,8 @@ import ActivityCoverUpload from '../media/ActivityCoverUpload.jsx';
 import PaymentSettingsAdmin from '../payments/PaymentSettingsAdmin.jsx';
 import GalleryPhotoUpload from '../media/GalleryPhotoUpload.jsx';
 import { getLocalTrack, putLocalTrack } from '../tracks/track-store.js';
-import { deleteContentWithLinks, findDuplicateRoutes, resolveDuplicateRoutes } from '../tracks/activity-workflow.js';
+import { deleteContentWithLinks, normalizeRouteTitle } from '../tracks/activity-workflow.js';
+import DeviceDetection from '../maintenance/DeviceDetection.jsx';
 import './admin.css';
 import { applyActivityRoute } from '../tracks/activity-route-selection.js';
 import { toLocalDateTime, readActivitySchedule } from '../activities/schedule.js';
@@ -29,7 +30,7 @@ const NAV = [
   ['routes', '路线管理', MountainSnow, '/admin/routes'],
   ['gallery', '影像管理', Image, '/admin/gallery'],
   ['news', '资讯管理', FileText, '/admin/news'],
-  ['debug', 'Debug', Bug, '/admin/debug'],
+  ['devices', '设备检测', Monitor, '/admin/devices'],
   ['backgrounds', '背景管理', Image, '/admin/backgrounds'],
   ['accounts', '账号管理', Users, '/admin/accounts'],
   ['services', '服务配置', SlidersHorizontal, '/admin/services'],
@@ -79,6 +80,14 @@ function activityLocationIssue(row) {
   if (row.kind !== 'activity') return null;
   const location = row.payload?.track?.location || row.payload?.trackSummary?.location;
   return location && ['unmatched', 'partial'].includes(location.locationStatus) ? { row, location } : null;
+}
+
+function routeMetricIssues(row) {
+  if (row.kind !== 'route' || row.isDemo || row.payload?.isDemo || row.payload?.archived) return [];
+  const payload = row.payload || {};
+  const track = payload.track || payload.trackSummary;
+  const metrics = track ? resolvedTrackMetrics(track) : { distanceM: Number.isFinite(payload.distance) ? payload.distance * 1000 : null, ascentM: Number.isFinite(payload.ascent) ? payload.ascent : null };
+  return [metrics.distanceM === null ? '里程' : null, metrics.ascentM === null ? '累计爬升' : null].filter(Boolean);
 }
 
 export async function prepareRouteTrackPayload(source, track, { local = false, storeTrack = putLocalTrack } = {}) {
@@ -193,7 +202,7 @@ export function AdminPage() {
   const auth = useVerifiedAuth(local);
   const adminPath = path => previewRequested ? `${path}?preview=1` : path;
   const requestedSection = location.pathname.replace(/\/$/, '').split('/')[2] || 'overview';
-  const section = requestedSection === 'footprints' ? 'activities' : requestedSection === 'settings' ? 'services' : requestedSection;
+  const section = requestedSection === 'footprints' ? 'activities' : requestedSection === 'settings' ? 'services' : requestedSection === 'debug' ? 'routes' : requestedSection;
   const nav = NAV.find(item => item[0] === section);
   const title = nav?.[1] || '页面未找到';
   const kind = KINDS[section];
@@ -213,11 +222,10 @@ export function AdminPage() {
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [resolvingGroup, setResolvingGroup] = useState('');
 
   useEffect(() => {
-    if (requestedSection === 'footprints') {
-      const target = requestedSection === 'footprints' ? '/admin/activities' : '/admin';
+    if (['footprints', 'debug'].includes(requestedSection)) {
+      const target = requestedSection === 'footprints' ? '/admin/activities' : '/admin/routes';
       navigate(previewRequested ? `${target}?preview=1` : target, { replace: true });
     }
   }, [requestedSection, previewRequested, navigate]);
@@ -236,6 +244,13 @@ export function AdminPage() {
     window.addEventListener('chuanheng-drafts-updated', update);
     return () => { window.removeEventListener('storage', update); window.removeEventListener('chuanheng-drafts-updated', update); };
   }, [local]);
+
+  useEffect(() => {
+    if (local || !allowed || editor?.kind !== 'route') return undefined;
+    const refreshRoutes = () => setRefresh(value => value + 1);
+    window.addEventListener('focus', refreshRoutes);
+    return () => window.removeEventListener('focus', refreshRoutes);
+  }, [local, allowed, editor?.kind]);
 
   useEffect(() => {
     if (local || auth.status !== 'admin' || !supabase) { setCloudRows([]); return; }
@@ -264,8 +279,6 @@ export function AdminPage() {
     if(row.isDemo||row.payload?.isDemo){setError('示例路线不可作为真实路线编辑，请选择已有真实路线。');return;}
     setError('');setEditor(structuredClone(row));
   },[section,requestedRouteId,allowed,showSamples,local,loading,loadError,loadedCloudVersion,auth.user?.id,refresh,location.key,editor,rows]);
-  const duplicates = findDuplicateRoutes(rows);
-  const locationIssueCount = rows.filter(row => activityLocationIssue(row)).length;
   const samples = Object.entries(SAMPLE_GROUPS).flatMap(([sampleKind, records]) => records.filter(row => row.isDemo === true).map(row => ({ id: `example-${sampleKind}-${row.id}`, kind: sampleKind, payload: { ...row, type: row.type || row.category || KIND_NAMES[sampleKind] }, published: false, created_at: null, isDemo: true })));
   const filtered = (showSamples ? samples : rows).filter(row => (!kind || row.kind === kind) && `${row.payload?.title || ''} ${row.payload?.type || ''} ${row.payload?.description || ''}`.toLowerCase().includes(query.toLowerCase()));
   const stats = [
@@ -372,33 +385,6 @@ export function AdminPage() {
     finally { setBusy(false); }
   }
 
-  async function resolveGroup(group, winnerId) {
-    if (!allowed || busy || !winnerId) return;
-    setError(''); setBusy(true); setResolvingGroup(group.key);
-    try {
-      const ids = group.routes.map(row => row.id);
-      if (local) {
-        const current = readDrafts();
-        const next = resolveDuplicateRoutes(current, ids, winnerId, { actorId: 'local-preview', now: new Date().toISOString() });
-        persistDrafts(next);
-      } else {
-        await requireVerifiedAdmin();
-        const { data, error: rpcError } = await supabase.rpc('resolve_route_duplicates', { route_ids: ids, keep_id: winnerId });
-        if (rpcError || !data) throw new Error('路线整理未完成，请检查事务接口、管理员权限和网络后重试。');
-        setRefresh(value => value + 1);
-        window.dispatchEvent(new Event('chuanheng-content-updated'));
-      }
-      setNotice('已保留所选路线，其他同名版本已归档；活动关联和处理记录已同步更新。');
-      return true;
-    } catch (caught) {
-      if (caught.code === 'STALE_DUPLICATE_GROUP') {
-        if (local) setDrafts(readDrafts()); else setRefresh(value => value + 1);
-        setError('同名路线组已经发生变化，列表已刷新。请重新检查并选择要保留的版本。');
-      } else setError(caught.message || '路线整理失败，原有路线未被修改。');
-      return false;
-    } finally { setBusy(false); setResolvingGroup(''); }
-  }
-
   async function deleteContent(row) {
     if (!allowed || showSamples || row.kind === 'route' && row.payload.archived || !window.confirm(`确认删除“${row.payload.title}”？`)) return;
     setError(''); setBusy(true);
@@ -428,13 +414,13 @@ export function AdminPage() {
     navigate(local ? '/' : '/login');
   }
 
-  const editButton = <button className="admin-btn primary" onClick={() => { setError(''); setEditor({ kind: kind || 'activity', payload: {} }); }}><Plus size={17} />新建{KIND_NAMES[kind] || '活动'}</button>;
+  const editButton = <button className="admin-btn primary" onClick={() => { setError(''); setEditor({ kind: kind || 'activity', payload: {} }); if (!local && kind === 'route') setRefresh(value => value + 1); }}><Plus size={17} />新建{KIND_NAMES[kind] || '活动'}</button>;
 
   function contentTable(overview = false) {
     const shown = overview ? filtered.slice(0, 6) : filtered;
     return <section className="admin-panel">
       <div className="admin-panel-heading"><div><h2>{overview ? '近期内容' : `${KIND_NAMES[kind]}列表`} <span>{filtered.length}</span></h2><p>{showSamples ? '界面示例只读，不计入统计，不支持报名或发布。' : local ? '管理此浏览器保存的内容草稿' : '管理云端内容与发布状态'}</p></div><div className="admin-panel-actions">{runtimeMode.allowLocalPreview && <button className={`admin-btn subtle ${showSamples ? 'selected' : ''}`} onClick={() => setShowSamples(value => !value)}><Eye size={15} />{showSamples ? '返回我的内容' : '查看示例'}</button>}{overview && <Link className="admin-text-link" to={adminPath("/admin/activities")}>全部活动<ArrowRight size={15} /></Link>}</div></div>
-      <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>内容名称</th><th>类别</th><th>状态</th><th>创建日期</th><th>操作</th></tr></thead><tbody>{shown.map(row => <tr key={row.id} onDoubleClick={event => { if (row.kind === 'activity' && !row.isDemo && allowed && !busy && !event.target.closest('button,a,input,select,textarea')) setRegistrationActivity(structuredClone(row)); }}><td><div className="admin-row-title">{row.payload.image ? <img src={row.payload.image} alt="" loading="lazy" onError={event => { event.currentTarget.style.visibility = 'hidden'; }} /> : <span className="admin-row-image"><MountainSnow size={19} /></span>}<div><strong>{row.payload.title}</strong><small>{String(row.payload.description || '').slice(0, 42) || '暂无简介'}</small></div></div></td><td>{row.payload.type || KIND_NAMES[row.kind]}</td><td><span className={`admin-status ${row.isDemo ? 'sample' : row.payload.archived ? 'archived' : row.published ? 'published' : ''}`}>{row.isDemo ? '设计示例' : row.payload.archived ? '已归档' : row.published ? '已发布' : '草稿'}</span></td><td>{dateLabel(row.created_at)}</td><td>{row.isDemo || row.kind === 'route' && row.payload.archived ? <span className="admin-muted">{row.payload.archived ? '归档只读' : '只读'}</span> : <div className="admin-row-actions">{row.kind === 'activity' && <button aria-label={`管理${row.payload.title}的报名`} title="报名管理" onClick={() => setRegistrationActivity(structuredClone(row))} disabled={busy}><Users size={16} /></button>}{local && ['route', 'activity'].includes(row.kind) && <Link to={`/${row.kind === 'activity' ? 'activities' : 'routes'}/${row.id}?draft=1`} aria-label={`预览${row.payload.title}`} title={row.kind === 'activity' ? '预览本地活动' : '预览本地路线'}><Eye size={16} /></Link>}<button aria-label={`编辑${row.payload.title}`} title="编辑" onClick={() => { setError(''); setEditor(structuredClone(row)); }} disabled={busy}><Pencil size={16} /></button><button className="danger" aria-label={`删除${row.payload.title}`} title="删除" onClick={() => deleteContent(row)} disabled={busy}><Trash2 size={16} /></button></div>}</td></tr>)}</tbody></table></div>
+      <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>内容名称</th><th>类别</th><th>状态</th><th>创建日期</th><th>操作</th></tr></thead><tbody>{shown.map(row => <tr key={row.id} onDoubleClick={event => { if (row.kind === 'activity' && !row.isDemo && allowed && !busy && !event.target.closest('button,a,input,select,textarea')) setRegistrationActivity(structuredClone(row)); }}><td><div className="admin-row-title">{row.payload.image ? <img src={row.payload.image} alt="" loading="lazy" onError={event => { event.currentTarget.style.visibility = 'hidden'; }} /> : <span className="admin-row-image"><MountainSnow size={19} /></span>}<div><strong>{row.payload.title}</strong><small>{String(row.payload.description || '').slice(0, 42) || '暂无简介'}</small>{routeMetricIssues(row).length > 0 && <small className="admin-record-warning">参数待补：{routeMetricIssues(row).join('、')}</small>}{activityLocationIssue(row) && <small className="admin-record-warning">地点待核实</small>}</div></div></td><td>{row.payload.type || KIND_NAMES[row.kind]}</td><td><span className={`admin-status ${row.isDemo ? 'sample' : row.payload.archived ? 'archived' : row.published ? 'published' : ''}`}>{row.isDemo ? '设计示例' : row.payload.archived ? '已归档' : row.published ? '已发布' : '草稿'}</span></td><td>{dateLabel(row.created_at)}</td><td>{row.isDemo || row.kind === 'route' && row.payload.archived ? <span className="admin-muted">{row.payload.archived ? '归档只读' : '只读'}</span> : <div className="admin-row-actions">{row.kind === 'activity' && <button aria-label={`管理${row.payload.title}的报名`} title="报名管理" onClick={() => setRegistrationActivity(structuredClone(row))} disabled={busy}><Users size={16} /></button>}{local && ['route', 'activity'].includes(row.kind) && <Link to={`/${row.kind === 'activity' ? 'activities' : 'routes'}/${row.id}?draft=1`} aria-label={`预览${row.payload.title}`} title={row.kind === 'activity' ? '预览本地活动' : '预览本地路线'}><Eye size={16} /></Link>}<button aria-label={`编辑${row.payload.title}`} title="编辑" onClick={() => { setError(''); setEditor(structuredClone(row)); }} disabled={busy}><Pencil size={16} /></button><button className="danger" aria-label={`删除${row.payload.title}`} title="删除" onClick={() => deleteContent(row)} disabled={busy}><Trash2 size={16} /></button></div>}</td></tr>)}</tbody></table></div>
       {!shown.length && <EmptyState title={loading ? '正在读取内容' : query ? '没有找到匹配内容' : `还没有${KIND_NAMES[kind] || '内容'}${local ? '草稿' : ''}`} description={loading ? '请稍候，正在连接内容服务。' : query ? '试试其他关键词。' : '从一次新的创建开始，记录每一次出发。'} />}
       <div className="admin-table-footer"><span>共 {filtered.length} 条内容{showSamples ? ' · 设计示例' : local ? ' · 本地保存' : ''}</span><span>{overview && filtered.length > 6 ? '显示最近 6 条' : '全部内容'}<ChevronRight size={14} /></span></div>
     </section>;
@@ -445,14 +431,14 @@ export function AdminPage() {
     <aside className={`admin-sidebar ${mobileOpen ? 'open' : ''}`}><Link className="admin-brand" to={adminPath("/admin")}><AdminMark /><span>川衡<span>管理后台</span></span></Link><div className="admin-nav-label">工作空间</div><nav aria-label="后台导航">{NAV.map(([id, label, Icon, path]) => <div key={id}>{id === 'backgrounds' && <div className="admin-nav-label admin-system-label">系统设置</div>}<Link className={section === id ? 'active' : ''} to={adminPath(path)}><Icon size={17} /><span>{label}</span>{section === id && <span className="admin-active-dot" />}</Link></div>)}</nav><div className="admin-sidebar-bottom"><Link to="/" target="_blank" rel="noopener noreferrer" title="在新标签页打开网站，保留当前后台"><ArrowRight size={16} />打开网站</Link><button onClick={signOut}><LogOut size={16} />{local ? '离开预览' : '退出登录'}</button></div></aside>
     <div className="admin-main"><header className="admin-toolbar"><div className="admin-toolbar-left"><button className="admin-menu-toggle" aria-label="打开后台菜单" onClick={() => setMobileOpen(true)}><Menu size={21} /></button><span>管理后台</span><ChevronRight size={14} /><strong>{title}</strong></div><div className="admin-toolbar-right"><span className="admin-environment"><i />{local ? '本地设计预览' : '云端服务'}</span><span className="admin-toolbar-separator" /><ShieldCheck size={18} /><span className="admin-user">{auth.status === 'admin' ? '管理员' : local ? '设计预览' : '访客'}</span><span className="admin-avatar">川</span></div></header>
     <section className="admin-workspace">
-      <div className="admin-heading"><div><div className="admin-eyebrow">CHUANHENG · WORKSPACE</div><h1>{section === 'overview' ? '欢迎回来，探索继续。' : title}</h1><p>{section === 'overview' ? '让每一次热爱，都有迹可循。' : `在这里管理川衡的${title.replace('管理', '')}。`}</p></div><div className="admin-heading-actions">{section === 'routes' && <Link className="admin-btn" to="/routes/import"><MountainSnow size={16} />导入轨迹</Link>}{allowed && (kind || section === 'overview') && !showSamples && editButton}</div></div>
+      <div className="admin-heading"><div><div className="admin-eyebrow">CHUANHENG · WORKSPACE</div><h1>{section === 'overview' ? '欢迎回来，探索继续。' : title}</h1><p>{section === 'overview' ? '让每一次热爱，都有迹可循。' : section === 'devices' ? '查看本地服务器状态与日常维护事项。' : `在这里管理川衡的${title.replace('管理', '')}。`}</p></div><div className="admin-heading-actions">{section === 'routes' && <Link className="admin-btn" to="/routes/import"><MountainSnow size={16} />导入轨迹</Link>}{allowed && (kind || section === 'overview') && !showSamples && editButton}</div></div>
       {local && <div className="admin-preview-note"><span className="admin-note-dot" /><div><strong>本地设计预览</strong><span>内容仅保存在此浏览器，尚未连接真实账号与发布服务。</span>{backendConfigurationError !== '尚未连接云端服务' && <span>{backendConfigurationError}</span>}</div></div>}
       {notice && <div className="admin-message success" role="status"><Check size={17} />{notice}<button aria-label="关闭提示" onClick={() => setNotice('')}><X size={15} /></button></div>}
       {(error || loadError) && <div className="admin-message error" role="alert">{error || loadError}{loadError && <button className="admin-text-link" onClick={() => setRefresh(value => value + 1)}>重试</button>}</div>}
       {!allowed ? <section className="admin-panel admin-access"><ShieldCheck size={42} /><h2>{auth.status === 'checking' ? '正在验证登录身份' : auth.status === 'forbidden' ? '当前账号没有管理权限' : auth.status === 'error' ? '身份验证未完成' : '请先登录管理账号'}</h2><p>{auth.error || (auth.status === 'forbidden' ? '管理后台只向已授权的协会管理员开放。普通会员可继续浏览网站。' : '云端后台需要有效登录，并由服务器确认管理员权限。')}</p>{auth.status !== 'checking' && <div className="admin-access-actions"><ButtonLink to="/login">前往登录</ButtonLink><Link to="/">返回网站</Link></div>}</section> : <>
-      {section === 'overview' && <><div className="admin-stats">{stats.map(({ name, value, icon: Icon, hint, color }) => <article key={name} className="admin-stat"><div><span>{name}</span><span className={`admin-stat-icon ${color}`}><Icon size={19} /></span></div><strong>{value}<small>条</small></strong><p>{hint}</p></article>)}</div><Link className="admin-debug-summary" to={adminPath('/admin/debug')}><Bug size={23} aria-hidden="true" /><div><strong>Debug · 内容检查</strong><p>{duplicates.length || locationIssueCount ? `${duplicates.length} 组重名路线 · ${locationIssueCount} 场活动地点待核实。` : '暂无重名路线或待核实地点。可在这里检查内容与活动关联。'}</p></div><span>{duplicates.length}<small>组</small></span><ArrowRight size={18} aria-hidden="true" /></Link><div className="admin-overview-grid"><div>{contentTable(true)}<section className="admin-quick-links"><h2>快速开始</h2><div>{[['activities', Activity, '创建活动', '筹备下一次出发'], ['routes', MountainSnow, '添加路线', '整理山野的路径'], ['gallery', Image, '整理影像', '留住沿途的光影']].map(([id, Icon, label, detail]) => <button key={id} onClick={() => { navigate(adminPath(`/admin/${id}`)); }}><Icon size={22} /><span><strong>{label}</strong><small>{detail}</small></span><ArrowRight size={17} /></button>)}</div></section></div><aside className="admin-side-panels"><section className="admin-panel admin-status-panel"><span className="admin-small-label">工作空间状态</span><h2>准备好下一次出发</h2><div className="admin-state-line"><span><i className={local ? 'orange' : 'green'} />内容存储</span><strong>{local ? '此浏览器' : 'Supabase'}</strong></div><div className="admin-state-line"><span>正式发布</span><strong>{local ? '尚未连接' : '由 RLS 管理'}</strong></div><div className="admin-state-line"><span>示例统计</span><strong>已排除</strong></div><Link to={adminPath("/admin/services")}>查看服务配置<ArrowRight size={14} /></Link></section><section className="admin-panel admin-reminder"><Bell size={21} /><h2>出发前，准备充分。</h2><p>活动正式发布前，请核实时间、路线、带队安排与安全计划。</p><Link to={adminPath("/admin/activities")}>前往活动管理<ArrowRight size={14} /></Link></section></aside></div></>}
+      {section === 'overview' && <><div className="admin-stats">{stats.map(({ name, value, icon: Icon, hint, color }) => <article key={name} className="admin-stat"><div><span>{name}</span><span className={`admin-stat-icon ${color}`}><Icon size={19} /></span></div><strong>{value}<small>条</small></strong><p>{hint}</p></article>)}</div><div className="admin-overview-grid"><div>{contentTable(true)}</div><aside className="admin-side-panels"><section className="admin-panel admin-status-panel"><span className="admin-small-label">工作空间状态</span><h2>准备好下一次出发</h2><div className="admin-state-line"><span><i className={local ? 'orange' : 'green'} />内容存储</span><strong>{local ? '此浏览器' : 'Supabase'}</strong></div><div className="admin-state-line"><span>正式发布</span><strong>{local ? '尚未连接' : '由 RLS 管理'}</strong></div><div className="admin-state-line"><span>示例统计</span><strong>已排除</strong></div><Link to={adminPath("/admin/services")}>查看服务配置<ArrowRight size={14} /></Link></section><section className="admin-panel admin-reminder"><Bell size={21} /><h2>出发前，准备充分。</h2><p>活动正式发布前，请核实时间、路线、带队安排与安全计划。</p><Link to={adminPath("/admin/activities")}>前往活动管理<ArrowRight size={14} /></Link></section></aside></div></>}
       {kind && <><div className="admin-list-toolbar"><label className="admin-search"><Search size={17} /><input aria-label="搜索内容" value={query} onChange={event => setQuery(event.target.value)} placeholder={`搜索${KIND_NAMES[kind]}名称、类别…`} /></label><span>{local ? '本地草稿工作区' : '云端内容工作区'}</span></div>{contentTable()}</>}
-      {section === 'debug' && <DebugPanel groups={duplicates} rows={rows} local={local} busy={busy} resolvingGroup={resolvingGroup} loading={loading} onResolve={resolveGroup} onEditActivity={row => { setError(''); setEditor(structuredClone(row)); }} />}
+      {section === 'devices' && <DeviceDetection />}
       {section === 'backgrounds' && <section className="admin-panel admin-background-panel"><div><h2>网站主视觉</h2><p>当前主视觉为 AI 生成的山岳示意图。图片上传、背景轮换与云端保存待接入。</p><span className="admin-status">当前使用</span></div><img src="/images/redesign-v2/home-summit.webp" alt="AI 生成的夕阳雪山主视觉" /><div className="admin-background-meta"><span>首页主视觉</span><span>/images/redesign-v2/home-summit.webp</span></div></section>}
       {section === 'password' && <PasswordPanel connected={!local} onNotice={setNotice} />}
       {section === 'services' && <PaymentSettingsAdmin local={local}/> }
@@ -466,29 +452,6 @@ export function AdminPage() {
   </div>;
 }
 
-export function DebugPanel({ groups, rows, local, busy, resolvingGroup, loading = false, onResolve, onEditActivity }) {
-  const [selections, setSelections] = useState({});
-  const heading = useRef(null);
-  const history = rows.filter(row => row.kind === 'route').flatMap(row => (Array.isArray(row.payload?.duplicateResolutions) ? row.payload.duplicateResolutions : []).map((entry, index) => ({ ...entry, routeTitle: row.payload.title, id: `${row.id}-${index}` })));
-  const locationIssues = rows.map(activityLocationIssue).filter(Boolean);
-  const metric = (value, unit) => Number.isFinite(value) ? `${Number(value.toFixed(2)).toLocaleString('zh-CN')} ${unit}` : '未提供';
-  const metricIssues=rows.filter(row=>row.kind==='route'&&!row.isDemo&&!row.payload?.isDemo&&!row.payload?.archived).map(row=>{
-    const track=row.payload.track||row.payload.trackSummary;
-    const metrics=track?resolvedTrackMetrics(track):{distanceM:Number.isFinite(row.payload.distance)?row.payload.distance*1000:null,ascentM:Number.isFinite(row.payload.ascent)?row.payload.ascent:null};
-    return {row,missing:[metrics.distanceM===null?'里程':null,metrics.ascentM===null?'累计爬升':null].filter(Boolean)};
-  }).filter(item=>item.missing.length);
-  return <section className="admin-debug" aria-labelledby="admin-debug-title"><header className="admin-debug-intro"><div><span className="admin-small-label">内容检查</span><h2 id="admin-debug-title" ref={heading} tabIndex={-1}>重名路线 Debug</h2><p>核对每条路线的来源、轨迹统计与关联活动，再选择要保留的版本。其他版本会归档，活动会转向保留路线。</p></div><span className="admin-debug-count">{groups.length}<small>组待检查</small></span></header>{groups.length ? <div className="admin-debug-groups">{groups.map((group, groupIndex) => {
-    const selected = selections[group.key] || '';
-    const validSelection = group.routes.some(row => row.id === selected);
-    return <section className="admin-debug-group" key={group.key} aria-labelledby={`debug-group-${groupIndex}`}><div className="admin-debug-group-heading"><div><span className="admin-eyebrow">同名路线 · {group.routes.length} 个版本</span><h3 id={`debug-group-${groupIndex}`}>{group.title}</h3></div><Bug size={22} aria-hidden="true" /></div><fieldset disabled={busy}><legend className="admin-sr-only">为{group.title}选择保留路线</legend>{group.routes.map(row => {
-      const payload = row.payload || {};
-      const stats = payload.trackSummary?.stats || payload.track?.stats || {};
-      const linked = rows.filter(activity => activity.kind === 'activity' && activity.payload?.routeId === row.id && !activity.payload?.archived);
-      return <label className={`admin-debug-option ${selected === row.id ? 'is-selected' : ''}`} key={row.id}><input type="radio" name={`keep-route-${groupIndex}`} value={row.id} checked={selected === row.id} onChange={() => setSelections(current => ({ ...current, [group.key]: row.id }))} /><div className="admin-debug-option-body"><div className="admin-debug-option-title"><strong>{payload.title}</strong><span>{row.published ? '已发布' : '草稿'}</span></div><div className="admin-debug-metadata"><span>来源：{payload.source || payload.track?.sourceFile || '未注明'}</span><span>创建：{dateLabel(row.created_at)}</span><span>里程：{metric(Number.isFinite(payload.distance) ? payload.distance : Number.isFinite(stats.distanceM) ? stats.distanceM / 1000 : null, 'km')}</span><span>爬升：{metric(Number.isFinite(payload.ascent) ? payload.ascent : stats.ascentM, 'm')}</span></div><p className="admin-debug-linked">关联活动 {linked.length} 场{linked.length > 0 && <span>：{linked.map(activity => activity.payload.title).join('、')}</span>}</p><small className="admin-debug-record-id">记录 {row.id}</small></div><span className="admin-debug-keep-label">{selected === row.id ? '将保留' : '选择保留'}</span></label>;
-    })}</fieldset><div className="admin-debug-group-footer"><span>归档保留原记录及处理日志，不会删除轨迹。</span><button type="button" className="admin-btn primary" disabled={busy || !validSelection} onClick={async () => { const saved = await onResolve(group, selected); if (saved) heading.current?.focus(); }}><Check size={15} />{resolvingGroup === group.key ? '正在整理…' : '保留所选并归档其他版本'}</button></div></section>;
-  })}</div> : <section className="admin-panel"><EmptyState title={loading ? '正在检查路线内容' : '暂未发现重名路线'} description={loading ? '正在读取已有路线与活动关联。' : '活动关联路线保存后，重名版本会在这里供你检查。'} /></section>}<section className="admin-debug-locations" aria-labelledby="debug-locations-title"><header><div><h3 id="debug-locations-title">活动地点待核实</h3><p>显示轨迹识别结果。未识别的省市保持空缺，请核对源轨迹和地点资料。</p></div><span>{locationIssues.length} 场</span></header>{locationIssues.length ? <div>{locationIssues.map(({ row, location }) => <article key={row.id}><div><div className="admin-debug-location-title"><h4>{row.payload.title}</h4><span>{location.locationStatus === 'partial' ? '部分地点待核实' : '地点尚未识别'}</span></div><dl><div><dt>识别省份</dt><dd>{location.province || '未识别'}</dd></div><div><dt>识别城市</dt><dd>{location.city || '未识别'}</dd></div></dl>{Array.isArray(location.locations) && location.locations.length > 0 && <p className="admin-debug-segment-places">{location.locations.map((place, index) => `第 ${(place.segmentIndex ?? index) + 1} 段：${[place.province, place.city].filter(Boolean).join(' · ') || '地点未识别'}`).join('；')}</p>}<small>活动日期：{row.payload.dateStart || row.payload.date || '未填写'}{location.source ? ` · 来源：${location.source}` : ''}</small></div>{onEditActivity && <button type="button" className="admin-btn" disabled={busy} onClick={() => onEditActivity(row)} aria-label={`编辑活动${row.payload.title}`}><Pencil size={14} />编辑活动</button>}</article>)}</div> : <p className="admin-debug-location-empty">{loading ? '正在读取轨迹地点信息…' : '目前没有待核实的轨迹地点记录。'}</p>}</section><section className="admin-debug-locations" aria-labelledby="debug-metrics-title"><header><div><h3 id="debug-metrics-title">路线参数待补</h3><p>请管理员前往路线管理补充缺失指标；补充前公开显示“暂不提供数据”。</p></div><span>{metricIssues.length} 条</span></header>{metricIssues.length?metricIssues.map(({row,missing})=><article key={row.id}><div><h4>{row.payload.title}</h4><p>待补：{missing.join('、')}</p></div><Link className="admin-btn" to={`/admin/routes?${local?'preview=1&':''}edit=${encodeURIComponent(row.id)}`}>编辑路线</Link></article>):<p className="admin-debug-location-empty">目前没有待补路线参数。</p>}</section><aside className="admin-debug-footprint-note"><ShieldCheck size={19} aria-hidden="true" /><div><h3>足迹由活动轨迹生成</h3><p>{local ? '在路线管理中上传轨迹，再由活动选择路线、填写活动时间，自动显示在本地足迹预览。草稿仍只保留在此浏览器。' : '公开足迹只收录已发布、已结束且有有效轨迹的川衡活动。请在活动管理中维护记录。'}</p><Link to={local ? '/admin/activities?preview=1' : '/admin/activities'}>前往活动管理<ArrowRight size={14} /></Link></div></aside>{history.length > 0 && <details className="admin-debug-history"><summary>路线整理记录 <span>{history.length}</span></summary><div>{history.slice().reverse().map(entry => <article key={entry.id}><strong>{entry.routeTitle}</strong><p>保留 {entry.winnerId} · 原组 {Array.isArray(entry.originalIds) ? entry.originalIds.length : '—'} 条</p><small>{dateLabel(entry.at)} · {entry.actorId || '未记录操作者'}</small></article>)}</div></details>}</section>;
-}
-
 export function ContentEditor({ editor, rows = [], onRefreshRoutes = () => {}, routesLoading = false, routesError = '', local, busy, error, onSave, onClose }) {
   const dialog = useRef(null);
   const closeRef = useRef(onClose);
@@ -496,6 +459,12 @@ export function ContentEditor({ editor, rows = [], onRefreshRoutes = () => {}, r
   const [routeId, setRouteId] = useState(editor.payload.routeId || '');
   const [selectedRoute, setSelectedRoute] = useState(() => rows.find(row => row.kind === 'route' && row.id === editor.payload.routeId));
   const availableRoutes = rows.filter(row => row.kind === 'route' && !row.payload?.archived && !row.payload?.isDemo && !row.isDemo);
+  const [routeTitle, setRouteTitle] = useState(editor.payload.title || '');
+  const normalizedTitle = normalizeRouteTitle(routeTitle);
+  const matchingRoutes = editor.kind === 'route' && normalizedTitle
+    ? availableRoutes.filter(row => row.id !== editor.id && normalizeRouteTitle(row.payload?.title) === normalizedTitle)
+    : [];
+  const nameCheckUnavailable = editor.kind === 'route' && (routesLoading || Boolean(routesError));
   const snapshot = routeId === (editor.payload.routeId || '') ? editor.payload.routeSnapshot : null;
   const keepsLegacyTrack = !editor.payload.routeSnapshot && Boolean(editor.payload.track || editor.payload.trackLocalId) && routeId === (editor.payload.routeId || '');
   const routeData = snapshot || (keepsLegacyTrack ? editor.payload : routeId ? selectedRoute?.payload : null);
@@ -565,7 +534,9 @@ export function ContentEditor({ editor, rows = [], onRefreshRoutes = () => {}, r
       <div className="admin-modal-heading"><div><span className="admin-eyebrow">CONTENT EDITOR</span><h2 id="content-editor-title">{editor.id ? '编辑' : '新建'}{KIND_NAMES[editor.kind]}</h2></div><button aria-label="关闭编辑器" onClick={onClose} disabled={busy}><X size={22} /></button></div>
       <p>{local ? '保存后成为本地草稿，尚未发布。' : '内容由云端 RLS 权限保护。请核实后发布。'}</p>
       <form onSubmit={submit}>
-        <label>内容标题<span>*</span><input name="title" defaultValue={editor.payload.title || ''} maxLength={120} required placeholder="给这次出发起一个名字" /></label>
+        <label>内容标题<span>*</span><input name="title" defaultValue={editor.payload.title || ''} onInput={event => setRouteTitle(event.currentTarget.value)} aria-describedby={nameCheckUnavailable || matchingRoutes.length ? 'route-name-feedback' : undefined} maxLength={120} required placeholder={editor.kind === 'route' ? '输入路线名称' : '给这次出发起一个名字'} /></label>
+        {nameCheckUnavailable ? <div className="admin-route-name-feedback" id="route-name-feedback" role="status"><p>{routesLoading ? '正在读取已有路线，暂无法核对重名。' : '路线列表读取失败，暂无法核对重名。'}</p><button type="button" className="admin-btn" disabled={routesLoading || busy} onClick={onRefreshRoutes}>{routesLoading ? '正在读取…' : '重新读取路线'}</button></div> : matchingRoutes.length > 0 && <section className="admin-route-name-feedback" id="route-name-feedback" role="status" aria-live="polite" aria-atomic="true"><h3>已有 {matchingRoutes.length} 条同名路线</h3><p>请核对已有路线，或修改名称以便区分。同名不代表相同路线，保存不会合并、覆盖或归档已有记录。</p><ul>{matchingRoutes.slice(0, 3).map(row => <li key={row.id}><strong>{row.payload.title}</strong><span>{row.payload.location || '地点未填写'} · {row.payload.source || '来源未注明'} · {row.published ? '已发布' : '草稿'}</span></li>)}</ul>{matchingRoutes.length > 3 && <p>另有 {matchingRoutes.length - 3} 条同名路线，可在路线管理搜索核对。</p>}</section>}
+        {editor.kind === 'route' && !nameCheckUnavailable && <div className="admin-route-tools"><small>按当前已加载的路线核对名称。</small><button type="button" className="admin-btn" disabled={busy} onClick={onRefreshRoutes}>刷新已有路线</button></div>}
         <label>内容类别<input name="type" defaultValue={editor.payload.type || ''} maxLength={40} placeholder="例如：山地徒步" /></label>
         <ContentFields editor={editor} track={track} routeData={routeData} trackBlocked={trackBlocked} activityStatus={activityStatus} onStatusChange={setActivityStatus} />
         {editor.kind === 'activity' && <section className="admin-activity-route" aria-label="活动关联路线">

@@ -122,7 +122,7 @@ test('all current admin routes render a local preview without requiring cloud ac
   const sections = [
     ['', /欢迎回来/], ['activities', /活动管理/],
     ['routes', /路线管理/], ['gallery', /影像管理/], ['news', /资讯管理/],
-    ['debug', /Debug/], ['backgrounds', /背景管理/],
+    ['devices', /设备检测/], ['backgrounds', /背景管理/],
     ['accounts', /账号管理/], ['services', /服务配置/], ['password', /修改密码/],
   ];
   for (const [section, expected] of sections) {
@@ -136,12 +136,13 @@ test('all current admin routes render a local preview without requiring cloud ac
 });
 
 test('retired admin URLs retain their intended destination and no longer appear in navigation', async t => {
-  for (const [location, expected] of [['/admin/footprints?preview=1', /活动管理/], ['/admin/settings?preview=1', /服务配置/]]) {
+  for (const [location, expected] of [['/admin/footprints?preview=1', /活动管理/], ['/admin/settings?preview=1', /服务配置/], ['/admin/debug?preview=1', /路线管理/]]) {
     await t.test(location, () => {
       const html = assertUsablePage(location, expected);
-      assert.match(html, location.includes('/footprints') ? /<h1>活动管理<\/h1>/ : /<h1>服务配置<\/h1>/, 'the retired URL must render its actual destination heading');
-      assert.doesNotMatch(html, /href="\/admin\/(?:footprints|settings)(?:\?|"|\/)/, 'retired management screens must not remain in the sidebar');
-      assert.match(html, /href="\/admin\/debug\?preview=1"/, 'Debug must be available from the current navigation');
+      assert.match(html, location.includes('/footprints') ? /<h1>活动管理<\/h1>/ : location.includes('/debug') ? /<h1>路线管理<\/h1>/ : /<h1>服务配置<\/h1>/, 'the retired URL must render its actual destination heading');
+      assert.doesNotMatch(html, /href="\/admin\/(?:footprints|settings|debug)(?:\?|"|\/)/, 'retired management screens must not remain in the sidebar');
+      assert.match(html, /href="\/admin\/devices\?preview=1"/, 'maintenance must be independently reachable from navigation');
+      assert.doesNotMatch(textContent(html), /Debug|快速开始/);
     });
   }
 });
