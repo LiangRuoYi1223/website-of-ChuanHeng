@@ -1,6 +1,28 @@
 # 川衡 V1 生产交接与回滚
 
-## 当前发布：注册验证码长度修正（北京时间2026-11-02）
+## 当前发布：设备检测、维护计划与趋势图（北京时间2026-11-04）
+
+后台新增独立「设备检测」，检测值与任务管理器式趋势图左右展示，维护计划独立放在下方，分为每场活动、每月、不定期。网络观察范围支持7天、30天和自定义正整数天数。硬件按拟购小电脑标称配置规划，尚未接入真实检测接口；没有实时读数时显示空网格与「暂无数据」，不生成示例曲线。本次移除控制台快速开始与Debug，路线重名改为新建/编辑时提醒，保留已有内容与活动关联。
+
+| 项目 | 本次确认结果 |
+| --- | --- |
+| 功能提交 | `895207a098e9425b5404f24a809a49691cb45346`，已推送GitHub `main` |
+| 正式发布 | 2026-11-04 21:35（北京时间），Worker `960d7bac-426a-44b4-a6aa-03c9ae745b8c`，100%流量；部署ID `66a91a39-94bb-4665-8ddf-a58dc65598ad` |
+| 管理入口 | https://chuanheng-website.vulhusky.workers.dev/admin/devices；仍需受信管理员登录，生产模式不会因`preview=1`开放本地预览 |
+| 自动验证 | 提交前全套586/586通过，包含真实workerd、图片处理与本地预览依赖回归；本次重新执行生产构建并发布成功，独立检查无阻碍发布的问题 |
+| 上传与绑定 | 仅3个静态文件发生变化并上传：`index.html`、`index-DoAjbhYF.js`、`index-CNG-dGZW.css`；保留既有IMAGES、HYPERDRIVE、ASSETS及公开Supabase配置 |
+| 线上页面 | 21:41（北京时间）核验完成；首页、活动、个人设置、登录、设备检测及带`preview=1`的设备入口共6个页面HTTP200，均引用本次入口脚本与样式；SPA返回200不等于管理员身份通过 |
+| 线上资源 | 全部8个正式JS/CSS均HTTP200，下载后的SHA-256与本地生产构建逐个一致 |
+| 线上接口 | `/api/tracks/status`为HTTP200、`configured:true`、`localPreview:false`；匿名POST`/api/tracks/convert`为HTTP401，无上传文件或业务写入 |
+| 数据与迁移 | 无Supabase迁移、Auth/Storage/Cron/Edge变更，不读取或改写真实会员、报名、缴费资料；保留既有报名与到期清理规则 |
+| 回退版本 | 发布前实际承担100%流量的`e40417e0-2985-42ec-ae79-1adb1c1384fb`；仅回退应用，不回退数据库，不重跑初始化SQL |
+| 验收边界 | 管理权限与界面交互有自动组件覆盖；本轮未登录真实管理员进行桌面/手机截图验收，设备接口和故障通知仍待后续接入 |
+
+发布及核验证据保存在ignored `artifacts/device-maintenance-deploy.log`、`artifacts/device-maintenance-before-deploy.json`、`artifacts/device-maintenance-after-deploy.json`、`artifacts/device-maintenance-live-verification.json`；提交前测试记录为`artifacts/pre-sync-tests.log`。初次Node网络请求失败，未记为通过；随后使用系统网络完成上述16项线上检查并逐个比对资源哈希。原失败记录保留为`artifacts/device-maintenance-node-verification.json`。
+
+后续完全迁离Supabase/Cloudflare、本地承接身份认证、数据库、文件、图片处理和受信清理调度是独立迁移目标；本次发布仅更新既有平台上的界面与本地开发启动方式。
+
+## 上一发布：注册验证码长度修正（北京时间2026-11-02）
 
 用户实际收到8位验证码，而首次前端实现将输入长度和正则固定为6位，导致输入被截断、无法验证。现允许输入6–10位完整数字验证码，与Supabase支持的邮件验证码长度范围一致；保留前导零，提示不再写死“六位”。码是否正确、实际长度及有效期仍由Auth服务器核验。本次不调整Supabase验证码设置、邮件模板或身份权限。
 
