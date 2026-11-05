@@ -22,6 +22,9 @@ import { parseRegistrationCapacity } from '../applications/settings.js';
 import { parseRegistrationFee, registrationFeeInputValue } from '../activities/registration-fee.js';
 import ActivityRegistrationAdmin from '../applications/ActivityRegistrationAdmin.jsx';
 import SignupVerification from '../auth/SignupVerification.jsx';
+import SiteImagesAdmin from '../site-images/SiteImagesAdmin.jsx';
+import ImageUpload from '../site-images/ImageUpload.jsx';
+import SiteImage, {SiteImageCredit} from '../site-images/SiteImage.jsx';
 
 const DRAFT_KEY = 'chuanheng-drafts';
 const NAV = [
@@ -156,26 +159,41 @@ function useVerifiedAuth(preview) {
     let alive = true;
     let version = 0;
     let timer;
-    const verify = async () => {
+    let verifiedAdminId = null;
+    const verify = async (preserveAdminId = null) => {
       const current = ++version;
-      const update = value => { if (alive && current === version) setAuth(value); };
-      update({ status: 'checking', user: null, error: '' });
+      const update = value => {
+        if (alive && current === version) {
+          verifiedAdminId = value.status === 'admin' ? value.user?.id : null;
+          setAuth(value);
+        }
+      };
+      const retainingEditor = preserveAdminId && preserveAdminId === verifiedAdminId;
+      if (!retainingEditor) update({ status: 'checking', user: null, error: '' });
       try {
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
         if (!sessionData.session) return update({ status: 'anonymous', user: null, error: '' });
+        if (retainingEditor && sessionData.session.user?.id !== preserveAdminId) update({ status: 'checking', user: null, error: '' });
         // Session storage is not proof of identity. Always verify with the Auth server.
         const { data: { user }, error } = await supabase.auth.getUser();
         if (error) throw error;
+        if (retainingEditor && user?.id !== preserveAdminId) return update({ status: 'error', user: null, error: '登录身份已变化，请重新登录管理账号。' });
         update({ status: user?.app_metadata?.role === 'admin' ? 'admin' : 'forbidden', user, error: '' });
       } catch {
         update({ status: 'error', user: null, error: '无法向服务器确认登录身份，请检查连接后重新登录。' });
       }
     };
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // Keep this callback synchronous. Auth requests run after the callback releases its lock.
       clearTimeout(timer);
-      timer = setTimeout(verify, 0);
+      const preserveAdminId = event === 'TOKEN_REFRESHED' && verifiedAdminId && session?.user?.id === verifiedAdminId ? verifiedAdminId : null;
+      version++;
+      if (!preserveAdminId) {
+        verifiedAdminId = null;
+        setAuth({ status: 'checking', user: null, error: '' });
+      }
+      timer = setTimeout(() => verify(preserveAdminId), 0);
     });
     verify();
     return () => { alive = false; version++; clearTimeout(timer); subscription.unsubscribe(); };
@@ -307,7 +325,7 @@ export function AdminPage() {
       let payload = { ...editor.payload, title: String(form.get('title')).trim(), type: String(form.get('type') || '').trim(), description: String(form.get('description')).trim(), image: String(form.get('image')).trim(), isDemo: false };
       if (!payload.title) throw new Error('请填写内容标题。');
       if (editor.kind === 'photo' && !payload.image) throw new Error('请先上传照片，再保存影像内容。');
-      if (!publicImageUrl(payload.image, { local: local && ['activity', 'photo'].includes(editor.kind) })) throw new Error('图片请使用 HTTPS 地址或以 / 开头的站内路径。');
+      if (!publicImageUrl(payload.image, { local })) throw new Error('图片请使用 HTTPS 地址或以 / 开头的站内路径。');
       if (editor.kind === 'route') {
         for (const field of ['location', 'difficulty']) payload[field] = String(form.get(field) || '').trim();
         if (track === undefined && (editor.payload.track || editor.payload.trackLocalId)) throw new Error('原有轨迹尚未读取完成，请重试读取或明确移除后保存。');
@@ -428,7 +446,7 @@ export function AdminPage() {
 
   return <div className="admin-shell">
     {mobileOpen && <button className="admin-nav-backdrop" aria-label="关闭后台菜单" onClick={() => setMobileOpen(false)} />}
-    <aside className={`admin-sidebar ${mobileOpen ? 'open' : ''}`}><Link className="admin-brand" to={adminPath("/admin")}><AdminMark /><span>川衡<span>管理后台</span></span></Link><div className="admin-nav-label">工作空间</div><nav aria-label="后台导航">{NAV.map(([id, label, Icon, path]) => <div key={id}>{id === 'backgrounds' && <div className="admin-nav-label admin-system-label">系统设置</div>}<Link className={section === id ? 'active' : ''} to={adminPath(path)}><Icon size={17} /><span>{label}</span>{section === id && <span className="admin-active-dot" />}</Link></div>)}</nav><div className="admin-sidebar-bottom"><Link to="/" target="_blank" rel="noopener noreferrer" title="在新标签页打开网站，保留当前后台"><ArrowRight size={16} />打开网站</Link><button onClick={signOut}><LogOut size={16} />{local ? '离开预览' : '退出登录'}</button></div></aside>
+    <aside className={`admin-sidebar ${mobileOpen ? 'open' : ''}`}><Link className="admin-brand" to={adminPath("/admin")}><AdminMark /><span>川衡<span>管理后台</span></span></Link><div className="admin-nav-label">工作空间</div><nav aria-label="后台导航">{NAV.map(([id, label, Icon, path]) => <div key={id}>{id === 'backgrounds' && <div className="admin-nav-label admin-system-label">系统设置</div>}<Link className={section === id ? 'active' : ''} to={adminPath(path)}><Icon size={17} /><span>{label}</span>{section === id && <span className="admin-active-dot" />}</Link></div>)}</nav><div className="admin-sidebar-bottom"><Link to={local && section === "backgrounds" ? "/?preview=1" : "/"} target="_blank" rel="noopener noreferrer" title="在新标签页打开网站，保留当前后台"><ArrowRight size={16} />打开网站</Link><button onClick={signOut}><LogOut size={16} />{local ? '离开预览' : '退出登录'}</button></div></aside>
     <div className="admin-main"><header className="admin-toolbar"><div className="admin-toolbar-left"><button className="admin-menu-toggle" aria-label="打开后台菜单" onClick={() => setMobileOpen(true)}><Menu size={21} /></button><span>管理后台</span><ChevronRight size={14} /><strong>{title}</strong></div><div className="admin-toolbar-right"><span className="admin-environment"><i />{local ? '本地设计预览' : '云端服务'}</span><span className="admin-toolbar-separator" /><ShieldCheck size={18} /><span className="admin-user">{auth.status === 'admin' ? '管理员' : local ? '设计预览' : '访客'}</span><span className="admin-avatar">川</span></div></header>
     <section className="admin-workspace">
       <div className="admin-heading"><div><div className="admin-eyebrow">CHUANHENG · WORKSPACE</div><h1>{section === 'overview' ? '欢迎回来，探索继续。' : title}</h1><p>{section === 'overview' ? '让每一次热爱，都有迹可循。' : section === 'devices' ? '查看本地服务器状态与日常维护事项。' : `在这里管理川衡的${title.replace('管理', '')}。`}</p></div><div className="admin-heading-actions">{section === 'routes' && <Link className="admin-btn" to="/routes/import"><MountainSnow size={16} />导入轨迹</Link>}{allowed && (kind || section === 'overview') && !showSamples && editButton}</div></div>
@@ -439,7 +457,7 @@ export function AdminPage() {
       {section === 'overview' && <><div className="admin-stats">{stats.map(({ name, value, icon: Icon, hint, color }) => <article key={name} className="admin-stat"><div><span>{name}</span><span className={`admin-stat-icon ${color}`}><Icon size={19} /></span></div><strong>{value}<small>条</small></strong><p>{hint}</p></article>)}</div><div className="admin-overview-grid"><div>{contentTable(true)}</div><aside className="admin-side-panels"><section className="admin-panel admin-status-panel"><span className="admin-small-label">工作空间状态</span><h2>准备好下一次出发</h2><div className="admin-state-line"><span><i className={local ? 'orange' : 'green'} />内容存储</span><strong>{local ? '此浏览器' : 'Supabase'}</strong></div><div className="admin-state-line"><span>正式发布</span><strong>{local ? '尚未连接' : '由 RLS 管理'}</strong></div><div className="admin-state-line"><span>示例统计</span><strong>已排除</strong></div><Link to={adminPath("/admin/services")}>查看服务配置<ArrowRight size={14} /></Link></section><section className="admin-panel admin-reminder"><Bell size={21} /><h2>出发前，准备充分。</h2><p>活动正式发布前，请核实时间、路线、带队安排与安全计划。</p><Link to={adminPath("/admin/activities")}>前往活动管理<ArrowRight size={14} /></Link></section></aside></div></>}
       {kind && <><div className="admin-list-toolbar"><label className="admin-search"><Search size={17} /><input aria-label="搜索内容" value={query} onChange={event => setQuery(event.target.value)} placeholder={`搜索${KIND_NAMES[kind]}名称、类别…`} /></label><span>{local ? '本地草稿工作区' : '云端内容工作区'}</span></div>{contentTable()}</>}
       {section === 'devices' && <DeviceDetection />}
-      {section === 'backgrounds' && <section className="admin-panel admin-background-panel"><div><h2>网站主视觉</h2><p>当前主视觉为 AI 生成的山岳示意图。图片上传、背景轮换与云端保存待接入。</p><span className="admin-status">当前使用</span></div><img src="/images/redesign-v2/home-summit.webp" alt="AI 生成的夕阳雪山主视觉" /><div className="admin-background-meta"><span>首页主视觉</span><span>/images/redesign-v2/home-summit.webp</span></div></section>}
+      {section === 'backgrounds' && <SiteImagesAdmin local={local} />}
       {section === 'password' && <PasswordPanel connected={!local} onNotice={setNotice} />}
       {section === 'services' && <PaymentSettingsAdmin local={local}/> }
       {['accounts', 'services'].includes(section) && <section className="admin-panel admin-pending"><div className="admin-pending-icon">{section === 'accounts' ? <Users size={32} /> : <SlidersHorizontal size={32} />}</div><h2>{section === 'services' ? '服务连接与配置' : `${title}待接入`}</h2><p>{section === 'accounts' ? '真实成员账号需要受保护的服务端管理接口。这里不会展示虚构账号，也不会在浏览器存放管理员密钥。' : isBackendConfigured ? '内容、图片上传及报名管理使用已连接服务；微信收款码通过上方设置统一维护，到账由管理员人工核实。' : '当前运行本地设计预览。接入真实服务后，可使用账号登录、云端内容与发布能力。'}</p>{section === 'services' && <div className="admin-config-summary"><span>内容存储<strong>{local ? '浏览器本地草稿' : 'Supabase · RLS 权限'}</strong></span><span>文件上传<strong>影像照片 · 活动封面</strong></span><span>报名管理<strong>活动名单 · 凭证核验 · 操作日志</strong></span><span>账号管理<strong>待接入</strong></span></div>}<Link className="admin-text-link" to={section === 'services' ? '/' : adminPath('/admin/activities')}>{section === 'services' ? '返回网站' : '前往活动管理'}<ArrowRight size={15} /></Link></section>}
@@ -547,7 +565,7 @@ export function ContentEditor({ editor, rows = [], onRefreshRoutes = () => {}, r
         </section>}
         {supportsTrack && <div className="admin-route-track"><div className="admin-route-track-heading"><h3>{editor.kind === 'activity' ? '历史轨迹（只读）' : '路线轨迹'}</h3>{editor.kind === 'route' && <span>GPX / KML</span>}</div>{trackLoading ? <p className="admin-track-loading" role="status">正在读取原有轨迹，完成前暂不可保存……</p> : trackLoadError ? <div className="admin-track-load-error" role="alert"><p>{trackLoadError}</p><div><button type="button" className="admin-btn" disabled={busy} onClick={() => { setTrackLoading(true); setTrackLoadError(''); setTrackRetry(value => value + 1); }}>重试读取</button>{editor.kind === 'route' && <button type="button" className="admin-btn danger" disabled={busy} onClick={() => changeTrack(null)}>移除旧轨迹引用</button>}</div></div> : editor.kind === 'route' ? <TrackUpload value={track ?? null} onChange={changeTrack} onBusyChange={setTrackConverting} disabled={busy} local={local} /> : <p className="admin-legacy-track">{track?.name || '历史活动轨迹'} · 保留原有轨迹，不支持在活动中上传或移除。</p>}</div>}
         <label>内容简介<textarea name="description" defaultValue={editor.payload.description || ''} rows={4} maxLength={3000} placeholder="写下内容介绍与需要知道的信息…" /></label>
-        {editor.kind === 'activity' ? <ActivityCoverUpload initialValue={editor.payload.image || ''} onBusyChange={setImageBusy} disabled={busy} local={local} /> : editor.kind === 'photo' ? <GalleryPhotoUpload initialValue={editor.payload.image || ''} onBusyChange={setImageBusy} disabled={busy} local={local} /> : <label>封面图片地址<input name="image" defaultValue={editor.payload.image || ''} placeholder="https://… 或 /images/redesign-v2/home-summit.webp" /><small>图片上传服务待接入，请使用已有图片地址。</small></label>}
+        {editor.kind === 'activity' ? <ActivityCoverUpload initialValue={editor.payload.image || ''} onBusyChange={setImageBusy} disabled={busy} local={local} /> : editor.kind === 'photo' ? <GalleryPhotoUpload initialValue={editor.payload.image || ''} onBusyChange={setImageBusy} disabled={busy} local={local} /> : <ImageUpload allowUrl initialValue={editor.payload.image || ''} onBusyChange={setImageBusy} disabled={busy} local={local} label={editor.kind === 'route' ? '路线封面' : '资讯封面'} />}
         {!local && <label className="admin-checkbox"><input type="checkbox" name="published" defaultChecked={editor.published} />发布到云端内容表</label>}
         {error && <div className="admin-message error" role="alert">{error}</div>}
         <div className="admin-form-actions"><button className="admin-btn" type="button" onClick={onClose} disabled={busy}>取消</button><button className="admin-btn primary" disabled={busy || trackBlocked || imageBusy}><Check size={16} />{imageBusy ? editor.kind === 'photo' ? '正在处理照片…' : '正在处理封面…' : busy ? '正在保存…' : local ? '保存本地草稿' : '保存内容'}</button></div>
@@ -669,5 +687,5 @@ export function LoginPage() {
     } catch (caught) { if (active()) setError(caught.message || '暂时无法连接认证服务。'); }
     finally { if (active()) { submitting.current = false; setBusy(false); } }
   }
-  return <section className="login-page"><img className="login-background" src="/images/redesign-v2/join-hiker.webp" alt="" /><div className="login-shade" /><header className="login-header"><Link className="login-brand" to="/"><img className="login-official-badge" src={OFFICIAL_BADGE} alt="川衡社官方徽章" width="46" height="46"/><span>川衡<span>CHUANHENG</span></span></Link><Link to="/"><ArrowLeft size={15} />返回网站</Link></header><div className="login-layout"><div className="login-story"><span>THE MOUNTAINS ARE CALLING</span><h1>山野很远，<br />我们一起。</h1><p>每一次出发，都是和更辽阔的自己相遇。</p><div><i /><span>以山为伴 · 一路同行</span></div></div><section className="login-card"><span className="login-card-eyebrow">CHUANHENG COMMUNITY</span><h2>{pendingEmail ? '验证邮箱，继续启程' : register ? '开启你的山野之旅' : '欢迎回来'}</h2><p>{pendingEmail ? '完成邮箱验证，即可加入川衡。' : register ? '加入川衡，遇见一起出发的人。' : '登录川衡，继续你的探索。'}</p><div className="login-tabs"><Link className={!register ? 'active' : ''} to={loginPath}>登录</Link><Link className={register ? 'active' : ''} to={registerPath}>注册</Link></div>{!isBackendConfigured && <div className="login-preview-label"><span />{runtimeMode.allowLocalPreview ? '本地设计预览 · 认证服务尚未连接' : '登录服务暂时不可用，请稍后重试。'}</div>}{pendingEmail ? <SignupVerification key={`${pendingEmail}:${location.search}`} email={pendingEmail} emailRedirectTo={emailRedirectTo} onVerified={() => navigate(next || '/', { replace: true })} onChangeEmail={() => { setPendingEmail(''); setError(''); setNotice(''); }} /> : <form key={register ? 'register' : 'login'} onSubmit={submit}><label>邮箱地址<input type="email" name="email" autoComplete="email" placeholder="输入你的邮箱" maxLength={254} required /></label><label>登录密码<div className="login-password-field"><input type={showPassword ? 'text' : 'password'} name="password" autoComplete={register ? 'new-password' : 'current-password'} placeholder={register ? '设置至少 8 位密码' : '输入你的密码'} minLength={register ? 8 : 1} maxLength={128} required /><button type="button" aria-label={showPassword ? '隐藏密码' : '显示密码'} onClick={() => setShowPassword(value => !value)}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></label>{register && <label>确认密码<input type={showPassword ? 'text' : 'password'} name="confirmation" autoComplete="new-password" placeholder="再次输入密码" minLength={8} maxLength={128} required /></label>}{!register && <div className="login-form-note"><ShieldCheck size={14} /><span>你的密码由认证服务安全管理</span></div>}{error && <div className="login-feedback error" role="alert">{error}</div>}{notice && <div className="login-feedback success" role="status">{notice}</div>}<button className="login-submit" disabled={busy || !supabase}>{busy ? '正在连接…' : register ? '创建账号' : '登录'}<ArrowRight size={18} /></button></form>}<div className="login-visitor"><Link to="/">以访客身份，继续探索<ArrowRight size={15} /></Link>{runtimeMode.allowLocalPreview && !isBackendConfigured && <Link className="login-preview-entry" to="/admin">进入本地设计预览</Link>}</div><p className="login-bottom-note">{register ? '注册后为普通会员，后台管理需额外授权。' : '山野相逢，从这里开始。'}</p></section></div><footer className="login-footer"><span>© {new Date().getFullYear()} 川衡登山协会</span><span>背景为 AI 生成的山岳视觉示意</span></footer></section>;
+  return <section className="login-page"><SiteImage className="login-background" slot="loginBackground" alt="" /><div className="login-shade" /><header className="login-header"><Link className="login-brand" to="/"><img className="login-official-badge" src={OFFICIAL_BADGE} alt="川衡社官方徽章" width="46" height="46"/><span>川衡<span>CHUANHENG</span></span></Link><Link to="/"><ArrowLeft size={15} />返回网站</Link></header><div className="login-layout"><div className="login-story"><span>THE MOUNTAINS ARE CALLING</span><h1>山野很远，<br />我们一起。</h1><p>每一次出发，都是和更辽阔的自己相遇。</p><div><i /><span>以山为伴 · 一路同行</span></div></div><section className="login-card"><span className="login-card-eyebrow">CHUANHENG COMMUNITY</span><h2>{pendingEmail ? '验证邮箱，继续启程' : register ? '开启你的山野之旅' : '欢迎回来'}</h2><p>{pendingEmail ? '完成邮箱验证，即可加入川衡。' : register ? '加入川衡，遇见一起出发的人。' : '登录川衡，继续你的探索。'}</p><div className="login-tabs"><Link className={!register ? 'active' : ''} to={loginPath}>登录</Link><Link className={register ? 'active' : ''} to={registerPath}>注册</Link></div>{!isBackendConfigured && <div className="login-preview-label"><span />{runtimeMode.allowLocalPreview ? '本地设计预览 · 认证服务尚未连接' : '登录服务暂时不可用，请稍后重试。'}</div>}{pendingEmail ? <SignupVerification key={`${pendingEmail}:${location.search}`} email={pendingEmail} emailRedirectTo={emailRedirectTo} onVerified={() => navigate(next || '/', { replace: true })} onChangeEmail={() => { setPendingEmail(''); setError(''); setNotice(''); }} /> : <form key={register ? 'register' : 'login'} onSubmit={submit}><label>邮箱地址<input type="email" name="email" autoComplete="email" placeholder="输入你的邮箱" maxLength={254} required /></label><label>登录密码<div className="login-password-field"><input type={showPassword ? 'text' : 'password'} name="password" autoComplete={register ? 'new-password' : 'current-password'} placeholder={register ? '设置至少 8 位密码' : '输入你的密码'} minLength={register ? 8 : 1} maxLength={128} required /><button type="button" aria-label={showPassword ? '隐藏密码' : '显示密码'} onClick={() => setShowPassword(value => !value)}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></label>{register && <label>确认密码<input type={showPassword ? 'text' : 'password'} name="confirmation" autoComplete="new-password" placeholder="再次输入密码" minLength={8} maxLength={128} required /></label>}{!register && <div className="login-form-note"><ShieldCheck size={14} /><span>你的密码由认证服务安全管理</span></div>}{error && <div className="login-feedback error" role="alert">{error}</div>}{notice && <div className="login-feedback success" role="status">{notice}</div>}<button className="login-submit" disabled={busy || !supabase}>{busy ? '正在连接…' : register ? '创建账号' : '登录'}<ArrowRight size={18} /></button></form>}<div className="login-visitor"><Link to="/">以访客身份，继续探索<ArrowRight size={15} /></Link>{runtimeMode.allowLocalPreview && !isBackendConfigured && <Link className="login-preview-entry" to="/admin">进入本地设计预览</Link>}</div><p className="login-bottom-note">{register ? '注册后为普通会员，后台管理需额外授权。' : '山野相逢，从这里开始。'}</p></section></div><footer className="login-footer"><span>© {new Date().getFullYear()} 川衡登山协会</span><SiteImageCredit slot="loginBackground" as="span" className="" /></footer></section>;
 }

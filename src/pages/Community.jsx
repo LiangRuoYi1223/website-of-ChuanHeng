@@ -9,6 +9,7 @@ import { PageHero, SectionHeading, EmptyState, ButtonLink } from '../ui.jsx';
 import './community.css';
 import FootprintExplorer from '../map/FootprintMap.jsx';
 import { OFFICIAL_BADGE } from '../Brand.jsx';
+import SiteImage,{SiteImageCredit} from '../site-images/SiteImage.jsx';
 
 const roleGroups = [
   { name: '组织与协调', description: '让一次出发从想法成为可以执行的安排。' },
@@ -21,12 +22,12 @@ export function AboutPage() {
 
   return (
     <div className="community-page c-about-page">
-      <PageHero title="山野之间，彼此同行。" description="川衡登山协会 · 从一次出发开始，认识山野，也认识同行的人。" image="/images/redesign-v2/team-ridge.webp">
+      <PageHero title="山野之间，彼此同行。" description="川衡登山协会 · 从一次出发开始，认识山野，也认识同行的人。" imageSlot="aboutHero">
         <a className="btn btn-outline" href="#about-story">认识川衡 <ArrowDown size={17} aria-hidden="true" /></a>
       </PageHero>
 
       <section className="section container c-about-intro" id="about-story">
-        <div className="c-intro-photo"><img src="/images/redesign-v2/team-ridge.webp" alt="高山山脊同行的户外氛围示意影像" loading="lazy" /><span className="c-image-label">AI 示意影像</span></div>
+        <div className="c-intro-photo"><SiteImage slot="aboutStory" loading="lazy"/><SiteImageCredit slot="aboutStory" className="c-image-label" as="span"/></div>
         <div className="c-intro-copy">
           <h2>走进山野，<br />找到自己的节奏。</h2>
           <div className="c-official-identity"><img src={OFFICIAL_BADGE} alt="南方科技大学川衡社官方完整徽章" width="150" height="150" loading="lazy"/><div><strong>南方科技大学川衡社</strong><span>川衡 CHUANHENG</span></div></div><p className="c-lead">川衡，是一群愿意一起出发的人。</p>
@@ -75,7 +76,7 @@ export function AboutPage() {
 export function FootprintsPage() {
   return (
     <div className="community-page c-footprints-page">
-      <PageHero compact title="每一次出发，都有来路。" description="只记录真实发生的川衡活动。让地点、时间和同行的故事，在这里相连。" image="/images/redesign-v2/activities-snow.webp" />
+      <PageHero compact title="每一次出发，都有来路。" description="只记录真实发生的川衡活动。让地点、时间和同行的故事，在这里相连。" imageSlot="footprintsHero" />
       <section className="section container c-full-map-section">
         <FootprintExplorer expanded />
         <div className="c-footprints-bottom"><div><h2>从一次出发，走向下一次。</h2><p>想成为下一段故事的一部分，先看看如何加入。</p></div><ButtonLink to="/join">了解加入方式</ButtonLink></div>
@@ -97,7 +98,7 @@ export function JoinPage() {
 
   return (
     <div className="community-page c-join-page">
-      <PageHero title={<>下一座山，<br />一起去。</>} description="不必独自找到所有答案。从一次出发开始，和川衡一起看见更大的世界。" image="/images/redesign-v2/join-hiker.webp">
+      <PageHero title={<>下一座山，<br />一起去。</>} description="不必独自找到所有答案。从一次出发开始，和川衡一起看见更大的世界。" imageSlot="joinHero">
         <ButtonLink to="/login?mode=register">开启你的山野故事</ButtonLink>
         <a className="c-hero-secondary" href="#join-reasons">先了解一下 <ArrowDown size={16} aria-hidden="true" /></a>
       </PageHero>
@@ -108,7 +109,7 @@ export function JoinPage() {
           <article><Users size={23} strokeWidth={1.5} aria-hidden="true" /><div><h3>找到愿意同行的伙伴</h3><p>在一段共同走过的山路上，让陌生变成熟悉。</p></div></article>
           <article><Compass size={23} strokeWidth={1.5} aria-hidden="true" /><div><h3>在每次实践里多会一点</h3><p>从装备准备、节奏管理，到风险意识与团队协作。</p></div></article>
         </div></div>
-        <div className="c-join-reasons-photo"><img src="/images/redesign-v2/routes-coast.webp" alt="海岸山脊与深蓝海湾的户外氛围示意影像" loading="lazy" /><span className="c-image-label">AI 示意影像</span><p>把脚步放慢，<br />让世界变大。</p></div>
+        <div className="c-join-reasons-photo"><SiteImage slot="joinStory" loading="lazy"/><SiteImageCredit slot="joinStory" className="c-image-label" as="span"/><p>把脚步放慢，<br />让世界变大。</p></div>
       </section>
 
       <section className="section c-growth-section"><div className="container">
@@ -139,7 +140,7 @@ export function JoinPage() {
         <div className="c-faq-list">{faqs.map((faq, index) => <article className={openFaq === index ? 'is-open' : ''} key={faq.question}><h3><button type="button" aria-expanded={openFaq === index} aria-controls={`join-faq-${index}`} onClick={() => setOpenFaq(openFaq === index ? null : index)}>{faq.question}<Plus size={19} aria-hidden="true" /></button></h3><div className="c-faq-answer" id={`join-faq-${index}`} hidden={openFaq !== index}><p>{faq.answer}</p></div></article>)}</div>
       </div></section>
 
-      <section className="c-join-close"><img src="/images/redesign-v2/activities-snow.webp" alt="" loading="lazy" /><div className="container"><h2>新的风景，<br />从这一步开始。</h2><p>带上好奇心。我们山野见。</p><ButtonLink to="/login?mode=register">加入川衡</ButtonLink><span className="c-close-image-label">AI 示意影像</span></div></section>
+      <section className="c-join-close"><SiteImage slot="joinClosing" loading="lazy"/><div className="container"><h2>新的风景，<br />从这一步开始。</h2><p>带上好奇心。我们山野见。</p><ButtonLink to="/login?mode=register">加入川衡</ButtonLink><SiteImageCredit slot="joinClosing" className="c-close-image-label" as="span"/></div></section>
     </div>
   );
 }
