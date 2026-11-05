@@ -1,6 +1,25 @@
 # 川衡 V1 生产交接与回滚
 
-## 当前发布：个人设置展示注册邮箱（北京时间2026-11-05）
+## 当前发布：全站图片与可变首页轮播（北京时间2026-11-05）
+
+后台「背景管理」现在维护首页 Hero 图片列表及 18 处栏目背景、页面配图和默认封面。首页图片可增删排序，至少保留一张，不再固定三张；路线、资讯封面新增直接上传并保留原图片地址编辑。图片说明、来源和内置 AI 标识随配置显示，内容记录自己的封面优先；官方徽章保留原图。修复同账号自动续期丢失未保存编辑、本地 live 图片预览模式不一致，保留个人设置注册邮箱及既有业务功能。
+
+| 项目 | 本次确认结果 |
+| --- | --- |
+| 功能提交 | `d105012c7e6afdd11fade6b0398686002036b731`，已推送 GitHub `main` |
+| 正式发布 | 2026-11-05 13:48（北京时间），Worker `63c09424-6ed5-43db-a0e0-031422cd8dc9`，100% 流量；部署 ID `5c6450b8-6ba9-474c-9526-501fb312cd66` |
+| 管理入口 | https://chuanheng-website.vulhusky.workers.dev/admin/backgrounds；需要受信管理员登录，正式构建不因 `preview=1` 开放本地预览 |
+| 数据库迁移 | 已应用 `20261105054246_site_image_settings`，本地文件编号与云端历史一致；仅新增图片配置单例、受控保存函数和私有审计，不改业务表、旧 `chuanheng` 或 Storage 对象 |
+| 配置与权限 | 公共读取 HTTP200，初始配置 `{}` 继续显示原图；匿名保存 HTTP401 / `42501`。直接更新及网站读取审计均无权限；保存校验可信管理员 UUID、版本及图片配置，不允许并发覆盖 |
+| 自动验证 | 上线前全套 608/608、隔离数据库 19/19 通过，正式构建通过，独立审查完成；包含可变图片数量、上传失败/迟到响应、来源标识、会话变化及 CAS 冲突 |
+| 线上验收 | 13:49（北京时间）完成；11 个入口 HTTP200 并引用新入口 `index-ChFbvc54.js` 和样式 `index-SVzJzi2s.css`；全部 8 个 JS/CSS 的 SHA-256 与本地正式构建一致 |
+| 上传与运行 | `/api/tracks/status` 为 `configured:true`、`localPreview:false`；匿名轨迹/封面 POST 均 HTTP401；保留 IMAGES、HYPERDRIVE、ASSETS 及公开配置，换图继续通过既有同源压缩服务，不覆盖或删除历史文件 |
+| 回退版本 | `f3e26441-8244-4072-9e6b-9f3e5e6f4151`；仅回退 Worker，保留增量配置表与已保存数据，不删除表或审计，不重跑初始化 SQL |
+| 验收边界 | 未登录真实管理员更换图片，未读取真实会员、报名或缴费资料；当前无可用浏览器连接，未执行桌面/手机视觉验收，HTTP200 不代替身份与视觉验收 |
+
+证据保存在 ignored `artifacts/site-images-release-tests.log`、`artifacts/site-images-release-sql.log`、`artifacts/site-images-before-deploy.json`、`artifacts/site-images-deploy.log`、`artifacts/site-images-after-deploy.json`、`artifacts/site-images-live-verification.json`、`artifacts/site-images-rpc-verification.json`。运行日志、资源下载文件和真实用户数据均不提交。使用说明见 [全站图片管理](site-images-management.md)。
+
+## 上一发布：个人设置展示注册邮箱（北京时间2026-11-05）
 
 个人设置 `/settings` 的账户资料新增「注册邮箱」，仅展示当前经Auth服务器校验的账号邮箱，置于资料保存表单之外，不提供修改入口。邮箱缺失时显示「暂未提供邮箱」，不回退到缓存邮箱、待变更邮箱或自填metadata；保存用户名、姓名与个人手机号时不携带邮箱，也不额外持久化邮箱副本。
 
