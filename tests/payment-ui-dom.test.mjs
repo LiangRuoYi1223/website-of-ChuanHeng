@@ -95,6 +95,21 @@ test('a late private image response after account change is discarded',async()=>
  await click('查看缴费记录');await act(async()=>{for(const fn of model.listeners)fn('SIGNED_OUT');release(new Blob(['late'],{type:'image/webp'}));});
  assert.equal(container.querySelector('img'),null);
 });
+test('same member events retain an open private image and a different account revokes it',async()=>{
+ const member={id:'member',is_anonymous:false};model.load=async()=>new Blob(['private'],{type:'image/webp'});
+ await mount(Proof,{proof:{id:'retained-proof',objectPath:'private/path.webp'},expectedUserId:'member'});await click('查看缴费记录');const image=container.querySelector('img');const src=image.getAttribute('src');
+ for(const event of ['INITIAL_SESSION','SIGNED_IN','TOKEN_REFRESHED']){
+  await act(async()=>{for(const fn of model.listeners)fn(event,{user:member});});assert.equal(container.querySelector('img'),image);assert.equal(revoked.includes(src),false);
+ }
+ await act(async()=>{for(const fn of model.listeners)fn('SIGNED_IN',{user:{id:'other-member'}});});assert.equal(container.querySelector('img'),null);assert.ok(revoked.includes(src));
+});
+test('admin proof viewing revokes an open image and ignores a late response after same-user downgrade',async()=>{
+ const admin={id:'admin',app_metadata:{role:'admin'}};model.load=async()=>new Blob(['private'],{type:'image/webp'});
+ const props={proof:{id:'admin-proof',objectPath:'private/path.webp'},expectedUserId:admin.id,requireAdmin:true};await mount(Proof,props);await click('查看缴费记录');const src=container.querySelector('img').getAttribute('src');
+ await act(async()=>{for(const fn of model.listeners)fn('TOKEN_REFRESHED',{user:{...admin,app_metadata:{role:'member'}}});});assert.equal(container.querySelector('img'),null);assert.ok(revoked.includes(src));
+ let finish;model.load=()=>new Promise(resolve=>{finish=resolve;});await mount(Proof,props);await click('查看缴费记录');
+ await act(async()=>{for(const fn of model.listeners)fn('SIGNED_IN',{user:{...admin,app_metadata:{role:'member'}}});finish(new Blob(['late'],{type:'image/webp'}));});assert.equal(container.querySelector('img'),null);
+});
 
 
 test('closing the payment popup revokes the selected local receipt preview immediately',async()=>{

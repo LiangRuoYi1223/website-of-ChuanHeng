@@ -1,20 +1,21 @@
 import {useEffect,useRef,useState} from 'react';
 import {supabase} from '../backend.js';
+import {shouldInvalidateAuthEvent} from '../session/auth-events.js';
 import {downloadPaymentProof} from './payment-proof.js';
 import './payment.css';
 
-export default function PaymentProofImage({proof,expectedUserId}){
+export default function PaymentProofImage({proof,expectedUserId,requireAdmin=false}){
   const [url,setUrl]=useState(''),[loading,setLoading]=useState(false),[error,setError]=useState('');
   const revision=useRef(0),objectUrl=useRef(''),request=useRef(null);
   function clearImage(){revision.current++;request.current?.abort();if(objectUrl.current){URL.revokeObjectURL(objectUrl.current);objectUrl.current='';}}
   useEffect(()=>{
     clearImage();setUrl('');setLoading(false);setError('');
-    const subscription=supabase?.auth?.onAuthStateChange?.(event=>{
-      if(event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED')return;
+    const subscription=supabase?.auth?.onAuthStateChange?.((event,session)=>{
+      if(!shouldInvalidateAuthEvent(event,session,expectedUserId,{requireAdmin}))return;
       clearImage();setUrl('');setLoading(false);setError('登录状态已变化，请重新加载报名记录。');
     })?.data?.subscription;
     return()=>{clearImage();subscription?.unsubscribe();};
-  },[proof?.id,proof?.objectPath,expectedUserId]);
+  },[proof?.id,proof?.objectPath,expectedUserId,requireAdmin]);
   async function show(){
     if(loading||!proof)return;
     if(url){clearImage();setUrl('');return;}

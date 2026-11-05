@@ -1,21 +1,22 @@
 import {useEffect,useRef,useState} from 'react';
 import {supabase} from '../backend.js';
+import {shouldInvalidateAuthEvent} from '../session/auth-events.js';
 import PaymentQrUpload from '../media/PaymentQrUpload.jsx';
 import {readPaymentSettings,savePaymentSettings} from './settings.js';
 import './payment-settings.css';
 
-export default function PaymentSettingsAdmin({local=false}) {
+export default function PaymentSettingsAdmin({local=false,expectedUserId}) {
   const [state,setState]=useState(null),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[uploading,setUploading]=useState(false),[dirty,setDirty]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[revision,setRevision]=useState(0);
-  const generation=useRef(0),pending=useRef(false);
+  const generation=useRef(0),pending=useRef(false),viewerId=useRef(expectedUserId||null);
   useEffect(()=>{
-    const current=++generation.current;let alive=true;
+    const current=++generation.current;let alive=true;viewerId.current=expectedUserId||null;
     setState(null);setDirty(false);setNotice('');setError('');setUploading(false);setSaving(false);pending.current=false;
     if(local || !supabase){setLoading(false);return()=>{alive=false;generation.current++;};}
     setLoading(true);
-    readPaymentSettings(supabase).then(value=>{if(alive&&generation.current===current)setState(value);}).catch(caught=>{if(alive&&generation.current===current)setError(caught.message);}).finally(()=>{if(alive&&generation.current===current)setLoading(false);});
-    const subscription=supabase.auth?.onAuthStateChange?.(event=>{if(event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED')return;generation.current++;setState(null);setDirty(false);setSaving(false);setUploading(false);setLoading(false);setNotice('');setError('登录状态已变化，请重新加载全站收款码设置。');})?.data?.subscription;
+    readPaymentSettings(supabase).then(value=>{if(alive&&generation.current===current){if(expectedUserId&&value.viewerId!==expectedUserId)throw new Error('登录身份已变化，请重新加载全站收款码设置。');viewerId.current=value.viewerId;setState(value);}}).catch(caught=>{if(alive&&generation.current===current)setError(caught.message);}).finally(()=>{if(alive&&generation.current===current)setLoading(false);});
+    const subscription=supabase.auth?.onAuthStateChange?.((event,session)=>{if(!shouldInvalidateAuthEvent(event,session,viewerId.current,{requireAdmin:true}))return;generation.current++;pending.current=false;setState(null);setDirty(false);setSaving(false);setUploading(false);setLoading(false);setNotice('');setError('登录状态已变化，请重新加载全站收款码设置。');})?.data?.subscription;
     return()=>{alive=false;generation.current++;subscription?.unsubscribe();};
-  },[local,revision]);
+  },[local,revision,expectedUserId]);
   async function submit(event){
     event.preventDefault();if(!state||loading||uploading||pending.current||!dirty)return;
     const current=generation.current;const wechatQrUrl=String(new FormData(event.currentTarget).get('paymentQrUrl')||'');

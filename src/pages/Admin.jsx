@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Activity, ArrowLeft, ArrowRight, Bell, Check, ChevronRight, Eye, EyeOff, FileText, Image, KeyRound, LayoutDashboard, LogOut, Menu, Monitor, MountainSnow, Pencil, Plus, Search, ShieldCheck, SlidersHorizontal, Trash2, Users, X } from 'lucide-react';
 import { activities, routes as sampleRoutes, photos, articles } from '../data.js';
@@ -25,6 +25,7 @@ import SignupVerification from '../auth/SignupVerification.jsx';
 import SiteImagesAdmin from '../site-images/SiteImagesAdmin.jsx';
 import ImageUpload from '../site-images/ImageUpload.jsx';
 import SiteImage, {SiteImageCredit} from '../site-images/SiteImage.jsx';
+import {getAdminSession} from '../session/admin-session.js';
 
 const DRAFT_KEY = 'chuanheng-drafts';
 const NAV = [
@@ -152,59 +153,29 @@ export async function prepareActivityTrackPayload(source, track, options = {}) {
 }
 
 function useVerifiedAuth(preview) {
-  const [auth, setAuth] = useState({ status: preview ? 'preview' : supabase ? 'checking' : 'unavailable', user: null, error: !preview && !supabase ? '认证服务尚未配置，请稍后重试。' : '' });
+  const [auth, setAuth] = useState(() => preview ? {status: 'preview', user: null, error: ''} : supabase ? getAdminSession(supabase).getSnapshot() : {status: 'unavailable', user: null, error: '认证服务尚未配置，请稍后重试。'});
   useEffect(() => {
     if (preview) { setAuth({ status: 'preview', user: null, error: '' }); return; }
     if (!supabase) { setAuth({ status: 'unavailable', user: null, error: '认证服务尚未配置，请稍后重试。' }); return; }
-    let alive = true;
-    let version = 0;
-    let timer;
-    let verifiedAdminId = null;
-    const verify = async (preserveAdminId = null) => {
-      const current = ++version;
-      const update = value => {
-        if (alive && current === version) {
-          verifiedAdminId = value.status === 'admin' ? value.user?.id : null;
-          setAuth(value);
-        }
-      };
-      const retainingEditor = preserveAdminId && preserveAdminId === verifiedAdminId;
-      if (!retainingEditor) update({ status: 'checking', user: null, error: '' });
-      try {
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
-        if (!sessionData.session) return update({ status: 'anonymous', user: null, error: '' });
-        if (retainingEditor && sessionData.session.user?.id !== preserveAdminId) update({ status: 'checking', user: null, error: '' });
-        // Session storage is not proof of identity. Always verify with the Auth server.
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (error) throw error;
-        if (retainingEditor && user?.id !== preserveAdminId) return update({ status: 'error', user: null, error: '登录身份已变化，请重新登录管理账号。' });
-        update({ status: user?.app_metadata?.role === 'admin' ? 'admin' : 'forbidden', user, error: '' });
-      } catch {
-        update({ status: 'error', user: null, error: '无法向服务器确认登录身份，请检查连接后重新登录。' });
-      }
-    };
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Keep this callback synchronous. Auth requests run after the callback releases its lock.
-      clearTimeout(timer);
-      const preserveAdminId = event === 'TOKEN_REFRESHED' && verifiedAdminId && session?.user?.id === verifiedAdminId ? verifiedAdminId : null;
-      version++;
-      if (!preserveAdminId) {
-        verifiedAdminId = null;
-        setAuth({ status: 'checking', user: null, error: '' });
-      }
-      timer = setTimeout(() => verify(preserveAdminId), 0);
-    });
-    verify();
-    return () => { alive = false; version++; clearTimeout(timer); subscription.unsubscribe(); };
+    const session = getAdminSession(supabase);
+    const update = () => setAuth(session.getSnapshot());
+    const unsubscribe = session.subscribe(update);
+    update();
+    return unsubscribe;
   }, [preview]);
   return auth;
 }
 
-async function requireVerifiedAdmin() {
+async function requireVerifiedAdmin(expectedUserId, expectedEpoch) {
   if (!supabase) throw new Error('尚未连接云端服务。');
   const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || user?.app_metadata?.role !== 'admin') throw new Error('管理员身份校验未通过，请重新登录。');
+  if (error || !user?.id || user.is_anonymous || user.app_metadata?.role !== 'admin' || expectedUserId && user.id !== expectedUserId) {
+    const current = getAdminSession(supabase);
+    // A response for a previous account must not revoke the replacement account.
+    const snapshot = current.getSnapshot();
+    if (snapshot.user?.id === expectedUserId && snapshot.epoch === expectedEpoch) current.invalidate();
+    throw new Error('管理员身份校验未通过，请重新登录。');
+  }
   return user;
 }
 
@@ -225,6 +196,17 @@ export function AdminPage() {
   const title = nav?.[1] || '页面未找到';
   const kind = KINDS[section];
   const allowed = local ? auth.status === 'preview' : auth.status === 'admin';
+  const mounted = useRef(false);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const identity = useRef({key: null, epoch: auth.epoch});
+  const identityKey = allowed ? local ? 'preview' : auth.user?.id : null;
+  if (identity.current.key !== identityKey || identity.current.epoch !== auth.epoch) identity.current = {key: identityKey, epoch: auth.epoch};
+  const isCurrentIdentity = started => {
+    if (!mounted.current || identity.current !== started) return false;
+    if (local) return true;
+    const current = getAdminSession(supabase).getSnapshot();
+    return current.status === 'admin' && current.user?.id === started.key && current.epoch === started.epoch;
+  };
   const [drafts, setDrafts] = useState(readDrafts);
   const [cloudRows, setCloudRows] = useState([]);
   const [loadedCloudVersion,setLoadedCloudVersion]=useState(null);
@@ -249,7 +231,10 @@ export function AdminPage() {
   }, [requestedSection, previewRequested, navigate]);
 
   useEffect(() => { setQuery(''); setShowSamples(false); setEditor(null); setRegistrationActivity(null); setMobileOpen(false); setNotice(''); setError(''); }, [section]);
-  useEffect(() => { if (!allowed) setRegistrationActivity(null); }, [allowed, auth.user?.id]);
+  useLayoutEffect(() => {
+    setEditor(null); setRegistrationActivity(null); setCloudRows([]); setLoadedCloudVersion(null);
+    setNotice(''); setError(''); setBusy(false);
+  }, [identityKey, auth.epoch]);
 
   useEffect(() => {
     if (!local) return undefined;
@@ -281,7 +266,7 @@ export function AdminPage() {
       else {setCloudRows(data || []);setLoadedCloudVersion(`${auth.user?.id || ''}:${refresh}`);}
     }).catch(() => { if (alive) { setLoading(false); setLoadError('无法连接内容服务，请稍后重试。'); } });
     return () => { alive = false; };
-  }, [auth.status, refresh, local]);
+  }, [auth.status, auth.user?.id, auth.epoch, refresh, local]);
 
   const rows = local ? drafts : cloudRows;
   const requestedRouteId=new URLSearchParams(location.search).get('edit');
@@ -314,6 +299,8 @@ export function AdminPage() {
 
   async function saveContent(event, track, selectedRoute) {
     event.preventDefault();
+    const startedIdentity = identity.current;
+    const active = () => isCurrentIdentity(startedIdentity);
     setError(''); setBusy(true);
     try {
       if (!allowed || showSamples) throw new Error('当前内容只可浏览。');
@@ -371,6 +358,7 @@ export function AdminPage() {
       if (editor.kind === 'route') {
         payload.source = String(form.get('source') || '').trim();
         payload = await prepareRouteTrackPayload(payload, track, { local });
+        if (!active()) return;
       }
       if (['photo', 'article'].includes(editor.kind)) payload.category = String(form.get('category') || '').trim();
       if (editor.kind === 'article') {
@@ -390,22 +378,26 @@ export function AdminPage() {
         persistDrafts(next);
         setNotice('草稿已保存到此浏览器，尚未发布。');
       } else {
-        await requireVerifiedAdmin();
+        await requireVerifiedAdmin(startedIdentity.key, startedIdentity.epoch);
+        if (!active()) return;
         const request = editor.kind === 'activity' ? supabase.rpc('save_activity_with_route', { activity_record: { ...record, expected: editor.id ? { payload: editor.payload, published: editor.published } : null } }) : (editor.id ? supabase.from('content_items').update(record).eq('id', editor.id) : supabase.from('content_items').insert(record)).select('id').single();
         const { data, error: writeError } = await request;
+        if (!active()) return;
         if (writeError || !data || editor.kind === 'activity' && !data.activity?.id) throw new Error('云端保存未完成，请检查事务接口、权限、数据表和网络后重试。');
         setRefresh(value => value + 1);
         window.dispatchEvent(new Event('chuanheng-content-updated'));
         setNotice(record.published ? '内容已保存并发布到云端内容表。' : '云端草稿已保存。');
       }
       setEditor(null);
-    } catch (caught) { if (local && caught.code === 'DRAFT_CONFLICT') setDrafts(readDrafts()); setError(caught.message || '保存失败，请重试。'); }
-    finally { setBusy(false); }
+    } catch (caught) { if (active()) { if (local && caught.code === 'DRAFT_CONFLICT') setDrafts(readDrafts()); setError(caught.message || '保存失败，请重试。'); } }
+    finally { if (active()) setBusy(false); }
   }
 
   async function deleteContent(row) {
     if (!allowed || showSamples || row.kind === 'route' && row.payload.archived || !window.confirm(`确认删除“${row.payload.title}”？`)) return;
     setError(''); setBusy(true);
+    const startedIdentity = identity.current;
+    const active = () => isCurrentIdentity(startedIdentity);
     try {
       if (local) {
         const current = readDrafts();
@@ -413,15 +405,17 @@ export function AdminPage() {
         persistDrafts(deleteContentWithLinks(current, row.id));
       }
       else {
-        await requireVerifiedAdmin();
+        await requireVerifiedAdmin(startedIdentity.key, startedIdentity.epoch);
+        if (!active()) return;
         const { data, error: deleteError } = await supabase.rpc('delete_content_with_links', { content_id: row.id });
+        if (!active()) return;
         if (deleteError || data?.deletedId !== row.id) throw new Error('删除未完成，请检查内容关联、事务接口及管理员权限后重试。');
         setRefresh(value => value + 1);
         window.dispatchEvent(new Event('chuanheng-content-updated'));
       }
       setNotice(local ? '本地草稿已删除。' : '云端内容已删除。');
-    } catch (caught) { if (local && caught.code === 'DRAFT_CONFLICT') setDrafts(readDrafts()); setError(caught.message || '删除失败，请重试。'); }
-    finally { setBusy(false); }
+    } catch (caught) { if (active()) { if (local && caught.code === 'DRAFT_CONFLICT') setDrafts(readDrafts()); setError(caught.message || '删除失败，请重试。'); } }
+    finally { if (active()) setBusy(false); }
   }
 
   async function signOut() {
@@ -457,15 +451,15 @@ export function AdminPage() {
       {section === 'overview' && <><div className="admin-stats">{stats.map(({ name, value, icon: Icon, hint, color }) => <article key={name} className="admin-stat"><div><span>{name}</span><span className={`admin-stat-icon ${color}`}><Icon size={19} /></span></div><strong>{value}<small>条</small></strong><p>{hint}</p></article>)}</div><div className="admin-overview-grid"><div>{contentTable(true)}</div><aside className="admin-side-panels"><section className="admin-panel admin-status-panel"><span className="admin-small-label">工作空间状态</span><h2>准备好下一次出发</h2><div className="admin-state-line"><span><i className={local ? 'orange' : 'green'} />内容存储</span><strong>{local ? '此浏览器' : 'Supabase'}</strong></div><div className="admin-state-line"><span>正式发布</span><strong>{local ? '尚未连接' : '由 RLS 管理'}</strong></div><div className="admin-state-line"><span>示例统计</span><strong>已排除</strong></div><Link to={adminPath("/admin/services")}>查看服务配置<ArrowRight size={14} /></Link></section><section className="admin-panel admin-reminder"><Bell size={21} /><h2>出发前，准备充分。</h2><p>活动正式发布前，请核实时间、路线、带队安排与安全计划。</p><Link to={adminPath("/admin/activities")}>前往活动管理<ArrowRight size={14} /></Link></section></aside></div></>}
       {kind && <><div className="admin-list-toolbar"><label className="admin-search"><Search size={17} /><input aria-label="搜索内容" value={query} onChange={event => setQuery(event.target.value)} placeholder={`搜索${KIND_NAMES[kind]}名称、类别…`} /></label><span>{local ? '本地草稿工作区' : '云端内容工作区'}</span></div>{contentTable()}</>}
       {section === 'devices' && <DeviceDetection />}
-      {section === 'backgrounds' && <SiteImagesAdmin local={local} />}
-      {section === 'password' && <PasswordPanel connected={!local} onNotice={setNotice} />}
-      {section === 'services' && <PaymentSettingsAdmin local={local}/> }
+      {section === 'backgrounds' && <SiteImagesAdmin key={auth.epoch} local={local} expectedUserId={auth.user?.id} />}
+      {section === 'password' && <PasswordPanel key={auth.epoch} connected={!local} expectedUserId={auth.user?.id} expectedEpoch={auth.epoch} onNotice={setNotice} />}
+      {section === 'services' && <PaymentSettingsAdmin key={auth.epoch} local={local} expectedUserId={auth.user?.id}/> }
       {['accounts', 'services'].includes(section) && <section className="admin-panel admin-pending"><div className="admin-pending-icon">{section === 'accounts' ? <Users size={32} /> : <SlidersHorizontal size={32} />}</div><h2>{section === 'services' ? '服务连接与配置' : `${title}待接入`}</h2><p>{section === 'accounts' ? '真实成员账号需要受保护的服务端管理接口。这里不会展示虚构账号，也不会在浏览器存放管理员密钥。' : isBackendConfigured ? '内容、图片上传及报名管理使用已连接服务；微信收款码通过上方设置统一维护，到账由管理员人工核实。' : '当前运行本地设计预览。接入真实服务后，可使用账号登录、云端内容与发布能力。'}</p>{section === 'services' && <div className="admin-config-summary"><span>内容存储<strong>{local ? '浏览器本地草稿' : 'Supabase · RLS 权限'}</strong></span><span>文件上传<strong>影像照片 · 活动封面</strong></span><span>报名管理<strong>活动名单 · 凭证核验 · 操作日志</strong></span><span>账号管理<strong>待接入</strong></span></div>}<Link className="admin-text-link" to={section === 'services' ? '/' : adminPath('/admin/activities')}>{section === 'services' ? '返回网站' : '前往活动管理'}<ArrowRight size={15} /></Link></section>}
       {!nav && <section className="admin-panel"><EmptyState title="没有找到这个后台页面" description="请选择左侧的管理模块继续。" /></section>}
       </>}
       <footer className="admin-footer"><span>川衡登山协会 · 管理工作空间</span><span>以山为伴，一路同行。</span></footer>
     </section></div>
-    {registrationActivity && allowed && <ActivityRegistrationAdmin key={`${registrationActivity.id}:${auth.user?.id || 'preview'}`} activity={registrationActivity} local={local} onClose={() => setRegistrationActivity(null)} />}
+    {registrationActivity && allowed && <ActivityRegistrationAdmin key={`${registrationActivity.id}:${auth.user?.id || 'preview'}:${auth.epoch}`} activity={registrationActivity} local={local} expectedUserId={auth.user?.id} onClose={() => setRegistrationActivity(null)} />}
     {editor && allowed && <ContentEditor editor={editor} rows={rows} onRefreshRoutes={() => { if (local) setDrafts(readDrafts()); else setRefresh(value => value + 1); }} routesLoading={loading} routesError={loadError} local={local} busy={busy} error={error} onSave={saveContent} onClose={() => { if (!busy) { setEditor(null); setError(''); } }} />}
   </div>;
 }
@@ -606,10 +600,16 @@ function ContentFields({ editor, track, routeData, trackBlocked = false, activit
   </>;
 }
 
-function PasswordPanel({ connected, onNotice }) {
+function PasswordPanel({ connected, expectedUserId, expectedEpoch, onNotice }) {
   const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const alive = useRef(false);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  const active = () => {
+    const current = getAdminSession(supabase).getSnapshot();
+    return alive.current && current.status === 'admin' && current.user?.id === expectedUserId && current.epoch === expectedEpoch;
+  };
   async function submit(event) {
     event.preventDefault(); if (!supabase || !connected) return;
     const form = event.currentTarget;
@@ -619,12 +619,14 @@ function PasswordPanel({ connected, onNotice }) {
     if (password.length < 8) return setError('密码至少需要 8 个字符。');
     setBusy(true); setError('');
     try {
-      await requireVerifiedAdmin();
+      await requireVerifiedAdmin(expectedUserId, expectedEpoch);
+      if (!active()) return;
       const { error: updateError } = await supabase.auth.updateUser({ password });
+      if (!active()) return;
       if (updateError) throw new Error('密码修改未完成，可能需要重新验证身份。请按项目认证设置重新登录后重试。');
       form.reset(); onNotice('密码已通过认证服务更新。');
-    } catch (caught) { setError(caught.message); }
-    finally { setBusy(false); }
+    } catch (caught) { if (active()) setError(caught.message); }
+    finally { if (active()) setBusy(false); }
   }
   return <section className="admin-panel admin-form-panel"><h2>更新登录密码</h2><p>{connected ? '为当前已验证的管理账号设置新的登录密码。' : '本地预览没有账号。连接认证服务后才能更新真实密码。'}</p><form onSubmit={submit}><label>新密码<div className="admin-password-field"><input name="password" type={visible ? 'text' : 'password'} minLength={8} maxLength={128} autoComplete="new-password" required disabled={!connected} placeholder="至少 8 位字符" /><button type="button" onClick={() => setVisible(value => !value)} aria-label={visible ? '隐藏密码' : '显示密码'}>{visible ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></label><label>确认新密码<input name="confirmation" type={visible ? 'text' : 'password'} minLength={8} maxLength={128} autoComplete="new-password" required disabled={!connected} placeholder="再次输入新密码" /></label>{error && <p role="alert" className="admin-inline-error">{error}</p>}<button className="admin-btn primary" disabled={!connected || busy}><KeyRound size={16} />{busy ? '正在更新…' : '更新密码'}</button></form></section>;
 }

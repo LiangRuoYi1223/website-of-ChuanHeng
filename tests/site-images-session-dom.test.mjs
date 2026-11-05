@@ -56,7 +56,11 @@ let root;
 const slideCount = () => container.querySelectorAll('[data-hero-id]').length;
 const addButton = () => [...container.querySelectorAll('button')].find(node => node.textContent === '添加首页图片');
 async function mount() {
-  if (root) await act(async () => root.unmount());
+  if (root) {
+    sessionUser = null;
+    await emit('SIGNED_OUT', null);
+    await act(async () => root.unmount());
+  }
   sessionUser = admin;
   getUser = async () => ({data: {user: admin}, error: null});
   root = createRoot(container);
@@ -83,24 +87,46 @@ after(async () => {
   delete globalThis.__SITE_SESSION_BACKEND;
 });
 
-test('same administrator token refresh retains unsaved image edits while server verification is pending', async () => {
+test('same administrator returning to the tab retains unsaved image edits without another identity request', async () => {
+  await mount();
+  const form = container.querySelector('.site-images-admin form');
+  let calls = 0;
+  getUser = async () => { calls++; return {data: {user: admin}, error: null}; };
+  await emit('SIGNED_IN');
+  await emit('TOKEN_REFRESHED');
+  assert.equal(slideCount(), 4, 'returning to the same account must not unmount the edited image manager');
+  assert.equal(container.querySelector('.site-images-admin form'), form);
+  assert.equal(calls, 0, 'a verified tab must reuse its identity within twelve hours');
+  assert.doesNotMatch(container.textContent, /正在验证登录身份/);
+  assert.match(container.textContent, /有修改尚未保存/);
+});
+
+test('twelve-hour expiry verifies in the background and preserves the same edited form', async () => {
   await mount();
   const form = container.querySelector('.site-images-admin form');
   const pending = deferredUser();
-  getUser = () => pending.promise;
-  await emit('TOKEN_REFRESHED');
-  assert.equal(slideCount(), 4, 'a background token refresh must not unmount the edited image manager');
-  assert.equal(container.querySelector('.site-images-admin form'), form);
-  await act(async () => pending.release(admin));
-  assert.equal(slideCount(), 4);
-  assert.match(container.textContent, /有修改尚未保存/);
+  let calls = 0;
+  getUser = () => { calls++; return pending.promise; };
+  const realNow = Date.now;
+  try {
+    const later = realNow() + 12 * 60 * 60 * 1000;
+    Date.now = () => later;
+    await emit('SIGNED_IN');
+    assert.equal(calls, 1);
+    assert.equal(container.querySelector('.site-images-admin form'), form);
+    assert.equal(slideCount(), 4);
+    assert.doesNotMatch(container.textContent, /正在验证登录身份/);
+    await act(async () => pending.release(admin));
+    assert.equal(container.querySelector('.site-images-admin form'), form);
+    assert.equal(slideCount(), 4);
+  } finally { Date.now = realNow; }
 });
 
 test('signing out during token revalidation clears edits and rejects the late verified identity', async () => {
   await mount();
   const pending = deferredUser();
   getUser = () => pending.promise;
-  await emit('TOKEN_REFRESHED');
+  await emit('USER_UPDATED');
   sessionUser = null;
   await emit('SIGNED_OUT', null);
   assert.equal(container.querySelector('.site-images-admin form'), null);
@@ -113,7 +139,7 @@ test('switching administrators discards old drafts and a late refresh cannot rep
   await mount();
   const pending = deferredUser();
   getUser = () => pending.promise;
-  await emit('TOKEN_REFRESHED');
+  await emit('USER_UPDATED');
   sessionUser = otherAdmin;
   const nextIdentity = deferredUser();
   getUser = () => nextIdentity.promise;
@@ -131,10 +157,8 @@ test('switching administrators discards old drafts and a late refresh cannot rep
 
 test('a server-confirmed role downgrade hides the retained image editor after token refresh', async () => {
   await mount();
-  const pending = deferredUser();
-  getUser = () => pending.promise;
-  await emit('TOKEN_REFRESHED');
-  await act(async () => pending.release({...admin, app_metadata: {role: 'member'}}));
+  sessionUser = {...admin, app_metadata: {role: 'member'}};
+  await emit('TOKEN_REFRESHED', sessionUser);
   assert.equal(container.querySelector('.site-images-admin form'), null);
   assert.match(container.textContent, /当前账号没有管理权限/);
 });

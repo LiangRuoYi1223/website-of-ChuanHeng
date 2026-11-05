@@ -55,6 +55,7 @@ await writeFile(bundlePath, output.outputFiles[0].text, 'utf8');
 const { default: App } = await import(pathToFileURL(bundlePath).href);
 const containers = { admin: document.getElementById('admin'), public: document.getElementById('public') };
 const roots = new Map();
+let tabAuthSubscription;
 const text = node => node?.textContent.replace(/\s+/g, ' ').trim() || '';
 const header = () => containers.public.querySelector('.site-header');
 const findLink = (node, label) => [...node.querySelectorAll('a')].find(link => text(link) === label);
@@ -76,8 +77,10 @@ function emit(event, user) {
 }
 async function reset(user = null) {
   for (const root of roots.values()) await act(async () => root.unmount()); roots.clear();
+  assert.equal(controller.subscribers.size, tabAuthSubscription ? 1 : 0, 'only the tab identity cache may outlive its mounted pages');
+  if (tabAuthSubscription) assert.ok(controller.subscribers.has(tabAuthSubscription));
+  emit('SIGNED_OUT', null);
   controller.session = user; controller.verified = user; controller.calls = []; controller.nextVerification = null; controller.verificationError = null; controller.username='';controller.nextProfile=null;
-  assert.equal(controller.subscribers.size, 0, 'all auth subscriptions must be released');
   localStorage.clear();
 }
 after(async () => {
@@ -96,6 +99,8 @@ test('administrator and public pages share verified login state', async t => {
       containers.admin.querySelector('form').dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true }));
     });
     await waitFor(() => containers.admin.querySelector('.admin-shell'), 'administration after login');
+    assert.equal(controller.subscribers.size, 1);
+    tabAuthSubscription = [...controller.subscribers][0];
     const website = findLink(containers.admin.querySelector('.admin-sidebar-bottom'), '打开网站');
     assert.ok(website, 'administrator must be able to open the website while keeping the workspace');
     assert.equal(website.getAttribute('href'), '/'); assert.equal(website.target, '_blank'); assert.match(website.rel, /noopener/);
@@ -234,7 +239,8 @@ test('unmounting both navigation instances removes recovery listeners and pendin
   await act(async () => header().querySelector('[aria-controls="mobile-menu"]').click());
   await waitFor(() => findLink(containers.public.querySelector('#mobile-menu'), '山野同行'), 'mobile navigation');
   await act(async () => roots.get('public').unmount()); roots.delete('public');
-  assert.equal(controller.subscribers.size, 0);
+  assert.equal(controller.subscribers.size, 1, 'only the tab cache remains; public navigation unsubscribed');
+  assert.ok(controller.subscribers.has(tabAuthSubscription));
   const before = controller.calls.length;
   await act(async () => {
     for (const type of ['focus', 'pageshow', 'member-profile-updated']) window.dispatchEvent(new Event(type));

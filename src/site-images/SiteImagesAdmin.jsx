@@ -1,23 +1,24 @@
 import {useEffect,useRef,useState} from 'react';
 import {ArrowDown,ArrowUp,Plus,Trash2} from 'lucide-react';
 import {supabase} from '../backend.js';
+import {shouldInvalidateAuthEvent} from '../session/auth-events.js';
 import ImageUpload from './ImageUpload.jsx';
 import {defaultSiteImages,getSlotImage,IMAGE_SLOTS,imageCredit,readLocalSiteImages,readSiteImages,saveLocalSiteImages,saveSiteImages} from './config.js';
 import './site-images-admin.css';
 
-export default function SiteImagesAdmin({local=false}){
+export default function SiteImagesAdmin({local=false,expectedUserId}){
   const [state,setState]=useState(null),[config,setConfig]=useState(null),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[uploading,setUploading]=useState(false),[dirty,setDirty]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[revision,setRevision]=useState(0);
-  const generation=useRef(0),pending=useRef(false);
+  const generation=useRef(0),pending=useRef(false),viewerId=useRef(expectedUserId||null);
   useEffect(()=>{
-    const current=++generation.current;let alive=true;
+    const current=++generation.current;let alive=true;viewerId.current=expectedUserId||null;
     setState(null);setConfig(null);setDirty(false);setNotice('');setError('');setLoading(true);setSaving(false);setUploading(false);pending.current=false;
-    Promise.resolve().then(()=>local?readLocalSiteImages():readSiteImages(supabase,{admin:true})).then(next=>{if(alive&&current===generation.current){setState(next);setConfig(next.config);}}).catch(caught=>{if(alive&&current===generation.current)setError(caught.message||'无法读取图片配置，请重试。');}).finally(()=>{if(alive&&current===generation.current)setLoading(false);});
-    const subscription=!local&&supabase?.auth?.onAuthStateChange?.(event=>{
-      if(event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED')return;
+    Promise.resolve().then(()=>local?readLocalSiteImages():readSiteImages(supabase,{admin:true})).then(next=>{if(alive&&current===generation.current){if(!local&&expectedUserId&&next.viewerId!==expectedUserId)throw new Error('登录身份已变化，请重新加载图片设置。');viewerId.current=next.viewerId||null;setState(next);setConfig(next.config);}}).catch(caught=>{if(alive&&current===generation.current)setError(caught.message||'无法读取图片配置，请重试。');}).finally(()=>{if(alive&&current===generation.current)setLoading(false);});
+    const subscription=!local&&supabase?.auth?.onAuthStateChange?.((event,session)=>{
+      if(!shouldInvalidateAuthEvent(event,session,viewerId.current,{requireAdmin:true}))return;
       generation.current++;pending.current=false;setState(null);setConfig(null);setDirty(false);setSaving(false);setUploading(false);setLoading(false);setNotice('');setError('登录状态已变化，请重新加载图片设置。');
     })?.data?.subscription;
     return()=>{alive=false;generation.current++;subscription?.unsubscribe?.();};
-  },[local,revision]);
+  },[local,revision,expectedUserId]);
   useEffect(()=>{if(!dirty)return;const guard=event=>{event.preventDefault();event.returnValue='';};window.addEventListener('beforeunload',guard);return()=>window.removeEventListener('beforeunload',guard);},[dirty]);
   function edit(update){setConfig(current=>update(current));setDirty(true);setNotice('');}
   function updateImage(target,patch){edit(current=>target.kind==='hero'?{...current,heroSlides:current.heroSlides.map(item=>item.id===target.id?{...item,...patch}:item)}:{...current,slots:{...current.slots,[target.id]:{...getSlotImage(current,target.id),...patch}}});}

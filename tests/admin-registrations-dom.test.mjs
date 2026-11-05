@@ -35,11 +35,27 @@ test('load failure offers retry and an empty roster does not invent records', as
 
 test('initial auth subscription does not clear roster, while sign-out clears private data', async () => {
   rpc = async () => ({ data: state() }); await mount();
-  await act(async () => authCallback('INITIAL_SESSION'));
+  await act(async () => authCallback('INITIAL_SESSION', { user: admin }));
   assert.match(container.textContent, /first@example.invalid/);
   await act(async () => authCallback('SIGNED_OUT'));
   assert.doesNotMatch(container.textContent, /first@example.invalid/);
   assert.match(container.querySelector('[role=alert]').textContent, /登录状态/);
+});
+test('same administrator auth events preserve the roster and open confirmation while downgrade clears both',async()=>{
+ const data=state();data.applications[1]={...data.applications[1],detailsComplete:true,insuranceStatus:'uninsured'};
+ rpc=async()=>({data});await mount({expectedUserId:'admin-a'});
+ const select=container.querySelector('select[aria-label="先报名者的保险状态"]');
+ await act(async()=>{select.value='insured';select.dispatchEvent(new dom.window.Event('change',{bubbles:true}));});
+ const confirmation=document.querySelector('dialog');assert.ok(confirmation);
+ for(const event of ['INITIAL_SESSION','SIGNED_IN','TOKEN_REFRESHED']){
+  await act(async()=>authCallback(event,{user:admin}));assert.match(container.textContent,/first@example.invalid/);assert.equal(document.querySelector('dialog'),confirmation);
+ }
+ await act(async()=>authCallback('TOKEN_REFRESHED',{user:{...admin,app_metadata:{role:'member'}}}));assert.doesNotMatch(container.textContent,/first@example.invalid/);assert.equal(document.querySelector('dialog'),null);
+});
+test('an account switch cancels an in-flight roster read and cannot restore its private rows',async()=>{
+ let finish;rpc=()=>new Promise(resolve=>{finish=resolve;});await mount({expectedUserId:'admin-a'});
+ await act(async()=>authCallback('SIGNED_IN',{user:{...admin,id:'admin-b'}}));
+ await act(async()=>finish({data:state()}));assert.doesNotMatch(container.textContent,/first@example.invalid/);assert.match(container.textContent,/登录状态/);
 });
 
 test('pending payment does not claim success and disables other payment edits', async () => {

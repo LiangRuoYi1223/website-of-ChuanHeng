@@ -38,3 +38,24 @@ test('cloud conflict retains edits and authentication changes discard late saves
  await mount();await click('添加首页图片');await submit();await act(async()=>authCallback('SIGNED_OUT'));assert.equal(container.querySelector('form'),null);
  await act(async()=>resolveSave());assert.equal(container.querySelector('form'),null);assert.doesNotMatch(container.textContent,/全站图片已保存/);
 });
+test('same administrator auth events retain unsaved image edits, but a role downgrade clears them',async()=>{
+ rpc=async()=>({data:{config:{},updatedAt:null}});await mount({expectedUserId:'admin'});await click('添加首页图片');
+ const form=container.querySelector('form');
+ for(const event of ['INITIAL_SESSION','SIGNED_IN','TOKEN_REFRESHED']){
+  await act(async()=>authCallback(event,{user:{id:'admin',app_metadata:{role:'admin'}}}));
+  assert.equal(container.querySelector('form'),form);assert.equal(container.querySelectorAll('[data-hero-id]').length,4);assert.equal(button('保存全站图片').disabled,false);
+ }
+ await act(async()=>authCallback('TOKEN_REFRESHED',{user:{id:'admin',app_metadata:{role:'member'}}}));
+ assert.equal(container.querySelector('form'),null);assert.match(container.textContent,/登录状态已变化/);
+});
+test('initial subscription during the first image read preserves the authoritative response',async()=>{
+ let finish;rpc=()=>new Promise(resolve=>{finish=resolve;});await mount();
+ await act(async()=>authCallback('INITIAL_SESSION',null));
+ await act(async()=>authCallback('SIGNED_IN',{user:{id:'admin',app_metadata:{role:'admin'}}}));
+ await act(async()=>finish({data:{config:{},updatedAt:null}}));assert.ok(container.querySelector('form'));
+});
+test('image settings discard a late read after an explicit account switch',async()=>{
+ let finish;rpc=()=>new Promise(resolve=>{finish=resolve;});await mount({expectedUserId:'admin'});
+ await act(async()=>authCallback('SIGNED_IN',{user:{id:'other-admin',app_metadata:{role:'admin'}}}));
+ await act(async()=>finish({data:{config:{},updatedAt:null}}));assert.equal(container.querySelector('form'),null);
+});

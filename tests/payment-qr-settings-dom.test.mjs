@@ -34,3 +34,12 @@ test('global settings clear private administration state on auth change and neve
  let calls=0;rpc=async()=>{calls++;return{data:initial}};await mount();await act(async()=>authCallback('SIGNED_OUT'));assert.equal(container.querySelector('form'),null);assert.match(container.textContent,/登录状态已变化/);
  calls=0;await mount({local:true});assert.equal(calls,0);assert.equal(container.querySelector('form'),null);assert.match(container.textContent,/本地预览不会修改/);
 });
+test('same administrator auth events preserve the unsaved QR and downgrade discards a late save',async()=>{
+ let finish;rpc=async(name,args)=>name==='get_payment_settings'?{data:initial}:new Promise(resolve=>{finish=()=>resolve({data:{wechatQrUrl:args.p_wechat_qr_url,updatedAt:'2026-11-05T02:00:00Z',updatedBy:'admin'}});});
+ await mount({expectedUserId:'admin'});await click('选择测试收款码');const form=container.querySelector('form');
+ for(const event of ['INITIAL_SESSION','SIGNED_IN','TOKEN_REFRESHED']){
+  await act(async()=>authCallback(event,{user}));assert.equal(container.querySelector('form'),form);assert.equal(container.querySelector('input').value,url);assert.equal(button('保存全站收款码').disabled,false);
+ }
+ await submit();await act(async()=>authCallback('TOKEN_REFRESHED',{user:{...user,app_metadata:{role:'member'}}}));
+ assert.equal(container.querySelector('form'),null);await act(async()=>finish());assert.equal(container.querySelector('form'),null);assert.doesNotMatch(container.textContent,/全站微信收款码已保存/);
+});

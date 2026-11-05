@@ -72,9 +72,9 @@ VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_YOUR_PUBLIC_KEY
 
 Supabase/Cloudflare 平台账户不是网站会员账户；旧 `chuanheng.users` 记录也不是新站 Auth 身份。管理员由受信后台给确认后的 Auth UUID 赋角色；不复制旧密码，不因旧表存在“admin”就自动授权。2026-10-31 已按用户授权创建独立测试账号，用户完成邮件确认后赋权；真实登录、Auth `getUser` 的 admin 角色及内容读取均已核实，凭据不进入仓库。
 
-后台先读取会话，再向 Auth 服务器调用 `getUser` 核实用户。只有服务器返回的 `user.app_metadata.role === 'admin'` 才能进入云端管理。注册表单不会也不能授予管理员角色。管理员应由受信任的后台管理流程赋予 `app_metadata.role`；不能使用用户可编辑的 `user_metadata` 作为权限依据。
+后台首次进入先读取会话，再向 Auth 服务器调用 `getUser` 核实用户。只有服务器返回的 `user.app_metadata.role === 'admin'` 才能进入云端管理。成功后在当前 JavaScript 标签页内存缓存页面核验结果，固定有效期 12 小时；同账号切回页面及令牌续期不重复页面核验、不重置未保存编辑，也不延长期限。到期在后台核验并保留同账号界面；核验失败或 15 秒超时会拦截后台。硬刷新及新标签页重新核验，不把缓存写入 localStorage/sessionStorage。注册表单不会也不能授予管理员角色。管理员应由受信任的后台管理流程赋予 `app_metadata.role`；不能使用用户可编辑的 `user_metadata` 作为权限依据。
 
-`onAuthStateChange` 回调只安排后续验证，不在同步回调中等待其他 Auth 方法，避免 Auth 锁死。离开页面会退订。密码修改调用真实的 `updateUser({ password })`，无云端配置时不能修改账号密码。
+`onAuthStateChange` 回调只同步失效或安排后续验证，不在同步回调中等待其他 Auth 方法，避免 Auth 锁死。页面显示订阅离开即退订；每个客户端保留一个标签页生命周期身份监听，即使暂离后台也会清除退出、换号或角色降级后的缓存。身份更新事件会后台核验；退出、缺失会话、换号、同 ID 匿名化/管理员角色失效立即隐藏旧编辑与敏感显示，迟到请求不得恢复旧账号内容。保存、删除、上传、名单等实际操作仍执行各自的服务器身份及权限检查，12 小时缓存只影响页面呈现。密码修改调用真实的 `updateUser({ password })`，无云端配置时不能修改账号密码。
 
 `app_metadata` 的 JWT 声明可能滞后于后台角色变更。赋权、撤权后刷新/撤销相应会话；生产环境需按组织要求设计即时撤权机制。界面权限仅用于展示，数据权限始终由数据库 RLS 判定。
 
