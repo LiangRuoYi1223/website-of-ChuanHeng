@@ -1,6 +1,23 @@
 # 川衡 V1 生产交接与回滚
 
-## 当前发布：全站图片与可变首页轮播（北京时间2026-11-05）
+## 当前发布：后台标签页 12 小时核验与编辑保留（北京时间2026-11-05）
+
+同一账号切回后台时保留当前页面及未保存编辑。标签页首次经 Auth 服务器确认管理员身份后，在当前 JavaScript 页面内存缓存核验结果，固定有效期 12 小时；切回或续期不延长期限，到期后台核验。退出、换号、角色降级或核验失败立即拦截，旧核验、列表、保存及改密响应不能影响新会话。新标签页、硬刷新重新核验；保存、删除、上传及敏感资料仍执行服务端鉴权。远端撤权通过登录事件、令牌续期后的角色变化及操作核验发现，不将 12 小时页面缓存视为业务授权。
+
+| 项目 | 本次确认结果 |
+| --- | --- |
+| 功能提交 | `afc29a5371fc4ce2a3f10ec2542a3c7f6f12a75e`，已推送 GitHub `main` |
+| 正式发布 | 2026-11-05 22:36（北京时间），Worker `09a17938-ca6f-4c05-9b34-d0ea199f5165`，100% 流量；部署 ID `127394ee-11de-48df-82bc-1d3f56fe92ec` |
+| 管理入口 | https://chuanheng-website.vulhusky.workers.dev/admin/backgrounds；现有标签页需刷新以加载新代码，刷新前先保存旧页面未提交的编辑 |
+| 自动验证 | 发布前全套 642/642 通过，正式构建通过，独立审查完成；包含 12 小时固定期限、后台核验、同账号编辑保留、退出/换号/降级、同 UUID 重新登录及迟到请求隔离 |
+| 线上验收 | 22:39（北京时间）完成；11 个入口 HTTP200 并引用 `index-CJarqNke.js`；全部 8 个 JS/CSS 的 SHA-256 与本地正式构建一致 |
+| 运行与权限 | `/api/tracks/status` 为 `configured:true`、`localPreview:false`；匿名轨迹/封面 POST 均 HTTP401；保留 IMAGES、HYPERDRIVE、ASSETS 和既有公开配置 |
+| 数据与回退 | 无 Worker 源码、数据库、Storage、Edge 或 Cron 变更。回退版本 `63c09424-6ed5-43db-a0e0-031422cd8dc9`；只回退 Worker，不操作真实数据 |
+| 验收边界 | 未登录真实管理员操作或读取真实会员、报名、缴费资料，未做桌面/手机浏览器交互验收；编辑保留与身份竞态由合成账号的真实组件集成测试验证，HTTP200 不代替真实账号联调 |
+
+证据保存在 ignored `artifacts/admin-session-release-tests.log`、`artifacts/admin-session-release-build.log`、`artifacts/admin-session-before-deploy.json`、`artifacts/admin-session-deploy.log`、`artifacts/admin-session-after-deploy.json`、`artifacts/admin-session-live-verification.json`。公网核验使用系统网络代理，直接 Node 连接超时没有计入验收成功；不提交代理地址、凭据或运行日志。
+
+## 上一发布：全站图片与可变首页轮播（北京时间2026-11-05）
 
 后台「背景管理」现在维护首页 Hero 图片列表及 18 处栏目背景、页面配图和默认封面。首页图片可增删排序，至少保留一张，不再固定三张；路线、资讯封面新增直接上传并保留原图片地址编辑。图片说明、来源和内置 AI 标识随配置显示，内容记录自己的封面优先；官方徽章保留原图。修复同账号自动续期丢失未保存编辑、本地 live 图片预览模式不一致，保留个人设置注册邮箱及既有业务功能。
 
