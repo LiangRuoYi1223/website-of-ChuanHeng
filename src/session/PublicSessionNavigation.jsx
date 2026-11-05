@@ -3,60 +3,34 @@ import { Link, useLocation } from 'react-router-dom';
 import { ArrowUpRight, UserRound } from 'lucide-react';
 import { supabase } from '../backend.js';
 import './public-session-navigation.css';
-import {readMemberProfile} from '../members/profile.js';
+import {getPublicSession} from './public-session.js';
 
 // Display the existing site session; protected operations still verify on the server.
 export default function PublicSessionNavigation({ mobile = false }) {
   const { pathname } = useLocation();
-  const [auth, setAuth] = useState({ status: supabase ? 'checking' : 'anonymous', user: null });
+  const [auth, setAuth] = useState(() => supabase ? getPublicSession(supabase).getSnapshot() : {status: 'anonymous', user: null});
   useEffect(() => {
     if (!supabase) return;
-    let alive = true;
-    let version = 0;
-    let timer;
-    const verify = async current => {
-      const update = value => { if (alive && current === version) setAuth(value); };
-      try {
-        const { data, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        if (!data?.session) return update({ status: 'anonymous', user: null });
-        const { data: verified, error: verificationError } = await supabase.auth.getUser();
-        if (verificationError || !verified?.user) throw verificationError || new Error('Missing verified user');
-        if(verified.user.is_anonymous) return update({status:'anonymous',user:null});
-        update({ status: 'authenticated', user: verified.user, username: '' });
-        try { const profile=await readMemberProfile(supabase,verified.user.id); update({status:'authenticated',user:verified.user,username:profile.username}); } catch { /* Profile failure does not invalidate a verified session. */ }
-      } catch {
-        update({ status: 'error', user: null });
-      }
-    };
-    const recheck = () => {
-      if (!alive) return;
-      const current = ++version;
-      clearTimeout(timer);
-      setAuth({ status: 'checking', user: null });
-      // Auth callbacks run under a lock: defer all further Auth requests.
-      timer = setTimeout(() => verify(current), 0);
-    };
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(event => {
-      if (event !== 'SIGNED_OUT') return recheck();
-      version++;
-      clearTimeout(timer);
-      setAuth({ status: 'anonymous', user: null });
-    });
+    const session = getPublicSession(supabase);
+    const update = () => setAuth(session.getSnapshot());
+    const unsubscribe = session.subscribe(update);
+    update();
+    const recheck = () => session.recover();
+    const profileUpdated = () => session.refreshProfile();
     const visible = () => { if (document.visibilityState === 'visible') recheck(); };
-    window.addEventListener('member-profile-updated', recheck);
+    window.addEventListener('member-profile-updated', profileUpdated);
     window.addEventListener('pageshow', recheck);
     window.addEventListener('focus', recheck);
     document.addEventListener('visibilitychange', visible);
-    recheck();
     return () => {
-      alive = false; version++; clearTimeout(timer); subscription.unsubscribe();
-      window.removeEventListener('member-profile-updated', recheck);
+      unsubscribe();
+      window.removeEventListener('member-profile-updated', profileUpdated);
       window.removeEventListener('pageshow', recheck);
       window.removeEventListener('focus', recheck);
       document.removeEventListener('visibilitychange', visible);
     };
-  }, [pathname]);
+  }, []);
+  useEffect(() => { if (supabase) getPublicSession(supabase).recover(); }, [pathname]);
 
   const className = mobile ? 'public-session-status' : 'login-link';
   const arrow = mobile ? <ArrowUpRight /> : null;

@@ -56,6 +56,7 @@ const { default: App } = await import(pathToFileURL(bundlePath).href);
 const containers = { admin: document.getElementById('admin'), public: document.getElementById('public') };
 const roots = new Map();
 let tabAuthSubscription;
+let publicAuthSubscription;
 const text = node => node?.textContent.replace(/\s+/g, ' ').trim() || '';
 const header = () => containers.public.querySelector('.site-header');
 const findLink = (node, label) => [...node.querySelectorAll('a')].find(link => text(link) === label);
@@ -77,8 +78,9 @@ function emit(event, user) {
 }
 async function reset(user = null) {
   for (const root of roots.values()) await act(async () => root.unmount()); roots.clear();
-  assert.equal(controller.subscribers.size, tabAuthSubscription ? 1 : 0, 'only the tab identity cache may outlive its mounted pages');
+  assert.equal(controller.subscribers.size, Number(Boolean(tabAuthSubscription)) + Number(Boolean(publicAuthSubscription)), 'only the two tab identity caches may outlive mounted pages');
   if (tabAuthSubscription) assert.ok(controller.subscribers.has(tabAuthSubscription));
+  if (publicAuthSubscription) assert.ok(controller.subscribers.has(publicAuthSubscription));
   emit('SIGNED_OUT', null);
   controller.session = user; controller.verified = user; controller.calls = []; controller.nextVerification = null; controller.verificationError = null; controller.username='';controller.nextProfile=null;
   localStorage.clear();
@@ -106,6 +108,8 @@ test('administrator and public pages share verified login state', async t => {
     assert.equal(website.getAttribute('href'), '/'); assert.equal(website.target, '_blank'); assert.match(website.rel, /noopener/);
     await mount('public', '/');
     await waitFor(() => findLink(header(), '管理后台'), 'public administrator navigation');
+    assert.equal(controller.subscribers.size, 2);
+    publicAuthSubscription = [...controller.subscribers].find(callback => callback !== tabAuthSubscription);
     assert.equal(findLink(header(), '登录 / 注册'), undefined);
     const management = findLink(header(), '管理后台');
     assert.equal(management.getAttribute('href'), '/admin'); assert.equal(management.target, '_blank'); assert.match(management.rel, /noopener/);
@@ -132,7 +136,7 @@ test('administrator and public pages share verified login state', async t => {
   });
 
   await t.test('cached administrator claims never replace server-verified membership', async () => {
-    await reset(member); controller.session = admin;
+    await reset(member); controller.session = {...member, app_metadata: {role: 'admin'}};
     await mount('public', '/');
     await waitFor(() => Boolean(findLink(header(), '已登录')), 'verified member despite cached admin');
     assert.equal(header().querySelector('a[href="/admin"]'), null);
@@ -239,8 +243,9 @@ test('unmounting both navigation instances removes recovery listeners and pendin
   await act(async () => header().querySelector('[aria-controls="mobile-menu"]').click());
   await waitFor(() => findLink(containers.public.querySelector('#mobile-menu'), '山野同行'), 'mobile navigation');
   await act(async () => roots.get('public').unmount()); roots.delete('public');
-  assert.equal(controller.subscribers.size, 1, 'only the tab cache remains; public navigation unsubscribed');
+  assert.equal(controller.subscribers.size, 2, 'only the two tab caches remain; public navigation released its view listeners');
   assert.ok(controller.subscribers.has(tabAuthSubscription));
+  assert.ok(controller.subscribers.has(publicAuthSubscription));
   const before = controller.calls.length;
   await act(async () => {
     for (const type of ['focus', 'pageshow', 'member-profile-updated']) window.dispatchEvent(new Event(type));
@@ -248,4 +253,64 @@ test('unmounting both navigation instances removes recovery listeners and pendin
     await new Promise(resolve => setTimeout(resolve, 10));
   });
   assert.equal(controller.calls.length, before, 'unmounted navigation must not keep making Auth requests');
+});
+
+test('returning to the same public tab and navigating keeps the username without re-confirmation', async () => {
+  await reset(member); controller.username = '山野同行'; await mount('public', '/');
+  await waitFor(() => findLink(header(), '山野同行'), 'initial member name');
+  const nameLink = findLink(header(), '山野同行');
+  const before = controller.calls.filter(call => call === 'getUser').length;
+  await act(async () => {
+    emit('SIGNED_IN', member);
+    emit('TOKEN_REFRESHED', member);
+    window.dispatchEvent(new Event('focus'));
+    window.dispatchEvent(new Event('pageshow'));
+    document.dispatchEvent(new Event('visibilitychange'));
+    await new Promise(resolve => setTimeout(resolve, 10));
+  });
+  assert.ok(findLink(header(), '山野同行') === nameLink, 'the confirmed username must remain mounted on return');
+  assert.equal(controller.calls.filter(call => call === 'getUser').length, before);
+  assert.doesNotMatch(text(header()), /正在确认登录|登录状态待确认/);
+  await act(async () => findLink(header(), '活动').click());
+  await act(async () => header().querySelector('[aria-controls="mobile-menu"]').click());
+  await waitFor(() => findLink(containers.public.querySelector('#mobile-menu'), '山野同行'), 'cached mobile username');
+  assert.ok(findLink(header(), '山野同行') === nameLink);
+  assert.equal(controller.calls.filter(call => call === 'getUser').length, before, 'routes and mobile navigation share the same verified tab');
+});
+
+test('public username remains visible while the twelve-hour identity confirmation runs in the background', async () => {
+  await reset(admin); controller.username = '管理员用户名'; await mount('public', '/');
+  await waitFor(() => findLink(header(), '管理员用户名'), 'initial administrator username');
+  const link = findLink(header(), '管理员用户名');
+  const before = controller.calls.filter(call => call === 'getUser').length;
+  let finish;
+  controller.nextVerification = new Promise(resolve => { finish = resolve; });
+  const realNow = Date.now;
+  try {
+    const later = realNow() + 12 * 60 * 60 * 1000;
+    Date.now = () => later;
+    await act(async () => { emit('SIGNED_IN', admin); await new Promise(resolve => setTimeout(resolve, 10)); });
+    assert.equal(controller.calls.filter(call => call === 'getUser').length, before + 1);
+    assert.ok(findLink(header(), '管理员用户名') === link);
+    assert.ok(findLink(header(), '管理后台'));
+    assert.doesNotMatch(text(header()), /正在确认登录|登录状态待确认/);
+  } finally {
+    Date.now = realNow;
+    await act(async () => finish({ data: { user: admin }, error: null }));
+  }
+});
+
+test('profile name refresh preserves the old verified label until the new name is ready', async () => {
+  await reset(member); controller.username = '原用户名'; await mount('public', '/');
+  await waitFor(() => findLink(header(), '原用户名'), 'initial profile name');
+  let finish;
+  controller.nextProfile = new Promise(resolve => { finish = resolve; });
+  await act(async () => { window.dispatchEvent(new Event('member-profile-updated')); await new Promise(resolve => setTimeout(resolve, 10)); });
+  try {
+    assert.ok(findLink(header(), '原用户名'));
+    assert.doesNotMatch(text(header()), /正在确认登录/);
+  } finally {
+    await act(async () => finish({data:{userId:member.id,username:'新用户名',realName:'',phone:'',updatedAt:null}}));
+  }
+  await waitFor(() => findLink(header(), '新用户名'), 'new profile name');
 });

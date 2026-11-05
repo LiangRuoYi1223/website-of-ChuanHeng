@@ -78,6 +78,10 @@ Supabase/Cloudflare 平台账户不是网站会员账户；旧 `chuanheng.users`
 
 `app_metadata` 的 JWT 声明可能滞后于后台角色变更。赋权、撤权后刷新/撤销相应会话；生产环境需按组织要求设计即时撤权机制。界面权限仅用于展示，数据权限始终由数据库 RLS 判定。
 
+网站前台桌面导航和移动菜单共用独立的标签页内存登录缓存。首次 `getUser` 核验后固定 12 小时内，切回标签页、站内导航和打开移动菜单不会反复显示“正在确认登录…”；到期后台核验并保留原账号与用户名。focus/pageshow/visibility 仅做轻量 `getSession` 恢复，同账号有效期内不追加 `getUser`；临时恢复失败不清空仍有效的显示。退出、换号、匿名化立即清除旧账号；管理员降级立即移除管理入口并后台核实，新增管理入口必须服务器确认。身份核验及恢复请求有 15 秒超时，迟到结果按账号与登录代次丢弃。
+
+导航只缓存 `get_member_profile` 返回且已核对 `userId` 的用户名字符串，不保存真实姓名、手机号或完整 profile。资料更新独立刷新显示名，读取期间保留旧名，乱序结果不覆盖新名；资料失败不撤销已确认的登录。个人设置、报名、上传及其他业务仍使用原有实时服务端鉴权。前台与后台的核验缓存均不写 localStorage/sessionStorage，新标签页和硬刷新重新核验。
+
 参考：[signInWithPassword](https://supabase.com/docs/reference/javascript/auth-signinwithpassword)、[signUp](https://supabase.com/docs/reference/javascript/auth-signup)、[getSession](https://supabase.com/docs/reference/javascript/auth-getsession)、[getUser](https://supabase.com/docs/reference/javascript/auth-getuser)、[onAuthStateChange](https://supabase.com/docs/reference/javascript/auth-onauthstatechange)、[updateUser](https://supabase.com/docs/reference/javascript/auth-updateuser)。
 
 ## 已应用的生产数据库迁移
