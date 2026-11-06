@@ -40,6 +40,19 @@
 .c-history-empty > svg { color: #777; flex-shrink: 0; }
 .c-history-empty h3 { margin: 0 0 9px; font-size: 18px; }
 .c-history-empty p { margin: 0; font-size: 14px; }
+.c-history-feedback { padding: 30px 0; border-top: 1px solid #303030; color: #a4a4a4; }
+.c-history-feedback p { margin: 0 0 18px; }
+.c-history-timeline { list-style: none; margin: 0; padding: 0; border-top: 1px solid #303030; }
+.c-history-timeline > li { display: grid; grid-template-columns: minmax(180px, 230px) minmax(0, 1fr); gap: 42px; padding: 32px 0; border-bottom: 1px solid #303030; }
+.c-history-meta { display: flex; flex-direction: column; align-items: flex-start; gap: 9px; padding-top: 3px; min-width: 0; }
+.c-history-date { color: #c8c8c8; font-size: 14px; line-height: 1.7; font-variant-numeric: tabular-nums; }
+.c-history-type { color: #f07827; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.c-history-story { min-width: 0; }
+.c-history-story h3 { margin: 0; font-size: clamp(20px, 2vw, 25px); font-weight: 600; line-height: 1.5; }
+.c-history-story h3 a { display: inline; color: #f5f5f5; text-decoration: none; overflow-wrap: anywhere; }
+.c-history-story h3 a:hover { color: #f07827; }
+.c-history-story h3 svg { display: inline-block; margin-left: 10px; vertical-align: -.08em; color: #f07827; }
+.c-history-story p { max-width: 70ch; margin: 12px 0 0; font-size: 15px; overflow-wrap: anywhere; }
 .c-about-footprints { padding-top: 20px; }
 .c-community-close { background: #171717; padding: 66px 0; }
 .c-community-close > .container { display: flex; align-items: center; justify-content: space-between; gap: 32px; }
@@ -125,6 +138,10 @@
   .c-history-empty { padding: 25px 23px; align-items: flex-start; gap: 16px; }
   .c-history-empty h3 { font-size: 16px; }
   .c-history-empty p { font-size: 13px; }
+  .c-history-timeline > li { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 25px 0; }
+  .c-history-meta { flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; padding-top: 0; }
+  .c-history-date { font-size: 13px; }
+  .c-history-story p { margin-top: 9px; font-size: 14px; }
   .c-community-close { padding: 45px 0; }
   .c-community-close > .container { flex-direction: column; align-items: flex-start; gap: 25px; }
   .c-community-close h2 { font-size: 29px; }

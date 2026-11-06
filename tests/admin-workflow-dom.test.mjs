@@ -8,6 +8,7 @@ import { mkdir, mkdtemp, realpath, rmdir, unlink, writeFile } from 'node:fs/prom
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { convertTrack } from '../server/tracks/parse.mjs';
+import { createRouteBasemap } from '../server/basemaps/create-route-basemap.mjs';
 import { getLocalTrack, putLocalTrack } from '../src/tracks/track-store.js';
 import { getFootprints } from '../src/map/footprints.js';
 import { applyActivityTrack, resolveDuplicateRoutes } from '../src/tracks/activity-workflow.js';
@@ -62,12 +63,13 @@ const fixtures = new Map([
 ]);
 for (const [filename, fixture] of fixtures) {
   fixture.track = convertTrack(fixture.xml, { filename });
+  fixture.track.basemap = await createRouteBasemap(fixture.track.geojson,{fetchImpl:async()=>Response.json({elements:fixture.track.geojson.geometry.coordinates.map(segment=>({type:'way',tags:{highway:'path'},geometry:segment.map(([lon,lat])=>({lon,lat}))}))})});
   fixture.track.location = { coordinates: fixture.track.geojson.geometry.coordinates[0][0].slice(0, 2), province: '四川省', city: fixture.status === 'matched' ? '成都市' : null, adcode: null, locations: [{ province: '四川省', city: fixture.status === 'matched' ? '成都市' : null, segmentIndex: 0 }], locationStatus: fixture.status, source: 'synthetic-test-location' };
 }
 const requests = [];
 const pending = [];
 installGlobal('fetch', async (url, options) => {
-  assert.equal(url, '/api/tracks/convert', 'the component must not fetch tiles or other services in this offline test');
+  assert.equal(url, '/api/tracks/convert?basemap=1', 'route imports prepare their saved map on the server and never fetch tiles from the browser');
   assert.equal(options.method, 'POST');
   assert.ok(options.body instanceof dom.window.FormData, 'the actual file input must reach the conversion client');
   const file = options.body.get('file');
@@ -149,6 +151,7 @@ test('route uploads are reused by activity selection, with frozen history and re
     await saveEditor();
     route = drafts().find(row => row.kind === 'route');
     assert.ok(route.payload.trackLocalId);
+    assert.deepEqual((await getLocalTrack(route.payload.trackLocalId)).basemap,fixtures.get('manual.gpx').track.basemap,'the saved static map persists with the complete local route');
     assert.equal(route.payload.track, undefined);
     assert.deepEqual(route.payload.trackSummary.stats, fixtures.get('manual.gpx').track.stats);
     assert.equal(route.payload.locationStatus, 'matched');

@@ -1,11 +1,12 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { AlertCircle, ArrowDownToLine, Check, ChevronDown, Compass, LocateFixed, Map, Mountain, Route, WifiOff } from 'lucide-react';
-import { buildElevationModel, buildTrackMapModel, formatKilometers, formatMeters, nearestProfileIndex, terrainTileConfiguration, unwrapLongitude } from './visualization-helpers.js';
+import { useEffect, useId, useMemo, useState } from 'react';
+import { AlertCircle, ArrowDownToLine, Check, Compass, LocateFixed, Map, Mountain, Route } from 'lucide-react';
+import { buildElevationModel, buildTrackMapModel, formatKilometers, formatMeters, nearestProfileIndex } from './visualization-helpers.js';
+import { buildCachedTrackMapModel } from './cached-basemap.js';
+import CachedTrackMap from './CachedTrackMap.jsx';
 import './track-visualization.css';
 
 import { resolvedTrackMetrics } from './metrics.js';
 
-const tileConfiguration = terrainTileConfiguration(import.meta.env || {});
 const finite = Number.isFinite;
 
 function TrackStatistics({ stats = {}, compact = false }) {
@@ -23,7 +24,7 @@ function coordinateLabel(value, latitude = false) {
   return `${Math.abs(normalized).toFixed(4)}°${latitude ? normalized >= 0 ? 'N' : 'S' : normalized >= 0 ? 'E' : 'W'}`;
 }
 
-function CoordinateTrack({ geometry, selectedSegment, selectedPoint, onChooseSegment }) {
+export function CoordinateTrack({ geometry, selectedSegment, selectedPoint, onChooseSegment = () => {} }) {
   const titleId = useId();
   const highlight = selectedPoint ? geometry.project(selectedPoint.lon, selectedPoint.lat) : null;
   return <div className="tv-coordinate-map"><svg viewBox={`0 0 ${geometry.width} ${geometry.height}`} role="img" aria-labelledby={titleId}><title id={titleId}>导入轨迹的经纬度坐标图，无地图底图，各段保持断开</title><rect width={geometry.width} height={geometry.height} fill="#10181c" />{[.2, .4, .6, .8].map(ratio => <g key={ratio} className="tv-coordinate-grid" aria-hidden="true"><line x1={geometry.width * ratio} x2={geometry.width * ratio} y1="0" y2={geometry.height} /><line x1="0" x2={geometry.width} y1={geometry.height * ratio} y2={geometry.height * ratio} /></g>)}{geometry.segments.map(segment => <g key={segment.index} className={selectedSegment !== null && selectedSegment !== segment.index ? 'tv-coordinate-segment is-dimmed' : 'tv-coordinate-segment'}><path d={segment.path} onClick={() => onChooseSegment(segment.index)} />{segment.points.length === 1 && <circle cx={segment.points[0].x} cy={segment.points[0].y} r="4" />}</g>)}{geometry.start && <circle className="tv-coordinate-start" cx={geometry.start.x} cy={geometry.start.y} r="6" />}{geometry.end && <circle className="tv-coordinate-end" cx={geometry.end.x} cy={geometry.end.y} r="8" />}{highlight && <circle className="tv-coordinate-highlight" cx={highlight.x} cy={highlight.y} r="7" />}</svg><div className="tv-coordinate-corner"><Compass size={20} aria-hidden="true" /><span>N</span></div><div className="tv-coordinate-labels"><span>{coordinateLabel(geometry.bounds?.[0])} — {coordinateLabel(geometry.bounds?.[2])}</span><span>{coordinateLabel(geometry.bounds?.[1], true)} — {coordinateLabel(geometry.bounds?.[3], true)}</span></div><span className="tv-coordinate-caption">经纬度坐标投影 · 无地形背景</span></div>;
@@ -75,111 +76,33 @@ function ElevationSection({ section, active, onSelectPoint, onChooseSegment }) {
 
 export default function TrackVisualization({ track }) {
   const geometry = useMemo(() => buildTrackMapModel(track), [track]);
+  const cached = useMemo(() => buildCachedTrackMapModel(track), [track]);
   const sections = useMemo(() => prepareSections(track, geometry), [track, geometry]);
-  const [mode, setMode] = useState(tileConfiguration.offline ? 'coordinate' : 'terrain');
-  const [mapStatus, setMapStatus] = useState('loading');
-  const [tileError, setTileError] = useState(false);
-  const [offlineReason, setOfflineReason] = useState(tileConfiguration.reason || '');
-  const [retry, setRetry] = useState(0);
+  const [mode, setMode] = useState('saved');
+  const [failedImage, setFailedImage] = useState(null);
   const [selectedSegment, setSelectedSegment] = useState(null);
   const [selectedPoint, setSelectedPoint] = useState(null);
-  const container = useRef(null);
-  const liveMap = useRef(null);
   const componentId = useId();
-  const hasGeometry = geometry.segments.length > 0;
-
-  useEffect(() => { setSelectedSegment(null); setSelectedPoint(null); }, [track]);
-
-  useEffect(() => {
-    if (!hasGeometry || mode !== 'terrain' || tileConfiguration.offline) return undefined;
-    if (geometry.bounds[1] < -85.05112878 || geometry.bounds[3] > 85.05112878) {
-      setOfflineReason('部分轨迹超出地图底图的纬度覆盖范围，已显示完整的本地坐标轨迹。'); setMode('coordinate'); return undefined;
-    }
-    let cancelled = false;
-    let map, observer, timeout;
-    setMapStatus('loading'); setTileError(false);
-    async function initialize() {
-      try {
-        const [module] = await Promise.all([import('leaflet'), import('leaflet/dist/leaflet.css')]);
-        if (cancelled || !container.current) return;
-        const L = module.default || module;
-        const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-        map = L.map(container.current, { zoomControl: false, keyboard: true, scrollWheelZoom: false, zoomAnimation: !reduceMotion, fadeAnimation: !reduceMotion, markerZoomAnimation: !reduceMotion, minZoom: 1, maxZoom: tileConfiguration.maxZoom });
-        L.control.zoom({ position: 'topright', zoomInTitle: '放大轨迹地图', zoomOutTitle: '缩小轨迹地图' }).addTo(map);
-        L.control.scale({ position: 'bottomleft', imperial: false }).addTo(map);
-        const layers = geometry.segments.map(segment => L.polyline(segment.coordinates.map(([longitude, latitude]) => [latitude, longitude]), { color: '#f07827', weight: 4, opacity: .95, lineCap: 'round' }).addTo(map).on('click', () => { if (!cancelled) { setSelectedSegment(segment.index); setSelectedPoint(null); } }));
-        const first = geometry.start, last = geometry.end;
-        for (const [point, label, type] of [[first, '轨迹起点', 'start'], [last, '轨迹终点', 'end']]) {
-          const marker = L.marker([point.lat, point.lon], { title: label, alt: label, keyboard: true, icon: L.divIcon({ className: `tv-map-endpoint is-${type}`, html: `<span aria-hidden="true">${type === 'start' ? '起' : '终'}</span>`, iconSize: [27, 27], iconAnchor: [13.5, 13.5] }) }).addTo(map);
-          marker.bindTooltip(label, { direction: 'top' });
-        }
-        const bounds = L.latLngBounds([[geometry.bounds[1], geometry.bounds[0]], [geometry.bounds[3], geometry.bounds[2]]]);
-        const fit = () => map.fitBounds(bounds, { padding: [30, 30], maxZoom: Math.min(15, tileConfiguration.maxZoom), animate: false });
-        fit();
-        liveMap.current = { map, L, layers, fit, highlight: null };
-        const loadedTiles = new globalThis.Map(), failedTiles = new globalThis.Map();
-        function fallback(message) { if (!cancelled) { setOfflineReason(message); setMode('coordinate'); } }
-        const tileKey = coords => `${coords.z}:${coords.x}:${coords.y}`;
-        function visible(coords) {
-          const bounds = map.getPixelBounds(), size = tiles.getTileSize();
-          const scale = map.getZoomScale(map.getZoom(), coords.z);
-          const left = coords.x * size.x * scale, top = coords.y * size.y * scale;
-          return left < bounds.max.x && left + size.x * scale > bounds.min.x && top < bounds.max.y && top + size.y * scale > bounds.min.y;
-        }
-        const hasVisible = collection => [...collection.values()].some(visible);
-        function startViewport() {
-          if (cancelled) return;
-          setTileError(hasVisible(failedTiles));
-          window.clearTimeout(timeout);
-          timeout = window.setTimeout(() => {
-            if (cancelled) return;
-            if (!hasVisible(loadedTiles)) fallback('地图底图暂时无法连接，已切换为本地坐标轨迹。');
-            else if (tiles.isLoading()) setTileError(true);
-          }, 12000);
-        }
-        const tiles = L.tileLayer(tileConfiguration.url, { attribution: tileConfiguration.attribution, minZoom: 0, maxZoom: tileConfiguration.maxZoom, maxNativeZoom: tileConfiguration.maxZoom, subdomains: 'abc', updateWhenIdle: true, keepBuffer: 1, referrerPolicy: 'strict-origin-when-cross-origin' });
-        tiles.on('loading', startViewport);
-        tiles.on('tileload', ({coords}) => { if (!cancelled) { loadedTiles.set(tileKey(coords), coords); failedTiles.delete(tileKey(coords)); if (visible(coords)) setMapStatus('ready'); } });
-        tiles.on('tileerror', ({coords}) => { if (!cancelled) { failedTiles.set(tileKey(coords), coords); loadedTiles.delete(tileKey(coords)); if (visible(coords)) setTileError(true); } });
-        tiles.on('tileunload', ({coords}) => { loadedTiles.delete(tileKey(coords)); failedTiles.delete(tileKey(coords)); });
-        tiles.on('load', () => { if (!cancelled) { window.clearTimeout(timeout); if (!hasVisible(loadedTiles)) fallback('地图底图加载失败，已切换为本地坐标轨迹。'); else setMapStatus('ready'); } });
-        startViewport();
-        tiles.addTo(map);
-        // Leaflet can remain in one loading batch across a pan. Count only the current viewport.
-        map.on('moveend', startViewport);
-        if (typeof ResizeObserver !== 'undefined') { observer = new ResizeObserver(() => { if (!cancelled) map.invalidateSize({ pan: false }); }); observer.observe(container.current); }
-      } catch {
-        if (!cancelled) { setOfflineReason('地图底图暂时不可用，已显示本地坐标轨迹。'); setMode('coordinate'); }
-      }
-    }
-    initialize();
-    return () => { cancelled = true; if (timeout) window.clearTimeout(timeout); observer?.disconnect(); if (map) map.remove(); if (liveMap.current?.map === map) liveMap.current = null; };
-  }, [geometry, hasGeometry, mode, retry]);
-
-  useEffect(() => {
-    const live = liveMap.current;
-    if (!live) return;
-    live.layers.forEach((layer, index) => {
-      const active = selectedSegment === null || geometry.segments[index]?.index === selectedSegment;
-      layer.setStyle({ opacity: active ? .95 : .28, weight: active ? 4 : 3 });
-      if (active) layer.bringToFront();
-    });
-    if (selectedPoint && finite(selectedPoint.lon) && finite(selectedPoint.lat)) {
-      const center = (geometry.bounds[0] + geometry.bounds[2]) / 2;
-      const position = [selectedPoint.lat, unwrapLongitude(selectedPoint.lon, center)];
-      if (!live.highlight) live.highlight = live.L.circleMarker(position, { radius: 6, fillColor: '#f5f5f5', fillOpacity: 1, color: '#f07827', weight: 3, interactive: false }).addTo(live.map);
-      else live.highlight.setLatLng(position);
-      live.highlight.bringToFront();
-    } else if (live.highlight) { live.highlight.remove(); live.highlight = null; }
-  }, [selectedPoint, selectedSegment, geometry, mapStatus]);
-
+  const savedAvailable = cached && cached.basemap.image !== failedImage;
+  const showSaved = mode === 'saved' && savedAvailable;
+  useEffect(() => { setSelectedSegment(null); setSelectedPoint(null); setFailedImage(null); setMode('saved'); }, [track]);
   function chooseSegment(index) { setSelectedSegment(index); setSelectedPoint(null); }
   function choosePoint(point, index) { setSelectedSegment(index); setSelectedPoint(point); }
-  function openTerrain() { if (!tileConfiguration.offline) { setOfflineReason(''); setRetry(value => value + 1); setMode('terrain'); } }
-
-  if (!hasGeometry) return <section className="track-visualization tv-empty" aria-label="轨迹可视化"><Route size={30} strokeWidth={1.3} aria-hidden="true" /><h3>尚未载入可显示的轨迹</h3><p>导入有效的 GPX 或 KML 文件后，在这里查看真实路线与各段海拔。</p></section>;
-
+  if (!geometry.segments.length) return <section className="track-visualization tv-empty" aria-label="轨迹可视化"><Route size={30} strokeWidth={1.3} aria-hidden="true" /><h3>尚未载入可显示的轨迹</h3><p>导入有效的 GPX 或 KML 文件后，在这里查看真实路线与各段海拔。</p></section>;
   const sourceFile = typeof track.sourceFile === 'string' ? track.sourceFile.split(/[\\/]/).at(-1) : '';
-  const coordinateVisible = mode === 'coordinate' || mapStatus === 'loading';
-  return <section className="track-visualization" aria-label="真实轨迹地图与分段海拔"><header className="tv-heading"><div><span className="tv-file-type"><Check size={13} aria-hidden="true" />已解析 {String(track.format || 'GPS').toUpperCase()}</span><h2>{track.name || '已导入轨迹'}</h2><p>{sourceFile && <span>{sourceFile} · </span>}{finite(track.pointCount) ? track.pointCount.toLocaleString('zh-CN') : geometry.segments.reduce((sum, segment) => sum + segment.points.length, 0)} 个轨迹点 · {geometry.segments.length} 段独立轨迹</p></div><span className="tv-real-data">来自导入文件</span></header><TrackStatistics stats={{...track.stats,...resolvedTrackMetrics(track)}} />{Object.values(resolvedTrackMetrics(track).sources).includes('administrator')&&<p className="track-import-hint">缺失的路线指标由管理员补充；分段统计与海拔曲线仍使用原始轨迹。</p>}<div className="tv-map-toolbar"><div className="tv-map-switch" role="group" aria-label="轨迹底图选择"><button type="button" aria-pressed={mode === 'terrain'} onClick={openTerrain} disabled={tileConfiguration.offline}><Map size={15} aria-hidden="true" />地图底图</button><button type="button" aria-pressed={mode === 'coordinate'} onClick={() => { setMode('coordinate'); setOfflineReason(''); }}><Compass size={15} aria-hidden="true" />坐标轨迹</button></div>{mode === 'terrain' && mapStatus === 'ready' && <button type="button" className="tv-fit-button" onClick={() => liveMap.current?.fit()}><LocateFixed size={15} aria-hidden="true" />显示完整轨迹</button>}</div>{(offlineReason || tileError && mode === 'terrain') && <div className="tv-map-notice" role="status"><WifiOff size={16} aria-hidden="true" /><span>{offlineReason || '部分地图瓦片未能加载。轨迹坐标保持显示，可切换坐标轨迹查看完整路线。'}</span>{!tileConfiguration.offline && (mode === 'coordinate' || tileError) && <button type="button" onClick={openTerrain}>重试底图</button>}</div>}<div className="tv-map-frame"><div ref={container} className={`tv-leaflet-map ${coordinateVisible ? 'is-pending' : ''}`} tabIndex={mode === 'terrain' && !coordinateVisible ? 0 : -1} role="region" aria-label="真实轨迹地图，方向键平移，加减键缩放" aria-hidden={coordinateVisible ? true : undefined} />{coordinateVisible && <CoordinateTrack geometry={geometry} selectedSegment={selectedSegment} selectedPoint={selectedPoint} onChooseSegment={chooseSegment} />}{mode === 'terrain' && mapStatus === 'loading' && <span className="tv-map-loading" role="status">正在连接地图底图 · 当前显示真实坐标轨迹</span>}</div><div className="tv-map-footer"><div className="tv-map-legend"><span><i className="is-start" />起点</span><span><i className="is-end" />终点</span><span><i className="is-route" />实际轨迹</span></div><span>{mode === 'terrain' && !coordinateVisible ? '方向键移动 · + / − 缩放' : '本地坐标图，不含地图底图'}</span></div>{mode === 'terrain' && <p className="tv-basemap-credit">{tileConfiguration.custom ? tileConfiguration.plainAttribution : <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a>}</p>}<div className="tv-segment-selector" role="group" aria-label="高亮轨迹段"><button type="button" aria-pressed={selectedSegment === null} onClick={() => chooseSegment(null)}>全部轨迹 <span>{sections.length}</span></button>{sections.map(section => <button type="button" key={section.index} aria-pressed={selectedSegment === section.index} onClick={() => chooseSegment(section.index)}>{section.name}</button>)}</div><div className="tv-profiles-heading"><div><h2>分段海拔</h2><p>每段从 0 km 开始，分别显示海拔与统计；地图保留所有段及其断点。</p></div><Mountain size={24} strokeWidth={1.3} aria-hidden="true" /></div><div className="tv-elevation-list" id={`${componentId}-profiles`}>{sections.map(section => <ElevationSection key={`${track.sourceFile || track.name || ''}-${section.index}`} section={section} active={selectedSegment === section.index} onSelectPoint={choosePoint} onChooseSegment={chooseSegment} />)}</div>{Array.isArray(track.warnings) && track.warnings.length > 0 && <aside className="tv-import-warnings" aria-label="轨迹文件提示"><AlertCircle size={18} aria-hidden="true" /><div><h3>源文件提示</h3><ul>{track.warnings.filter(warning => typeof warning === 'string').map((warning, index) => <li key={index}>{warning}</li>)}</ul></div></aside>}<p className="tv-data-note">里程、爬升与下降采用导入器计算结果。底图用于位置参考；路线是否可通行需结合现场情况核实。</p></section>;
+  return <section className="track-visualization" aria-label="真实轨迹地图与分段海拔">
+    <header className="tv-heading"><div><span className="tv-file-type"><Check size={13} aria-hidden="true" />已解析 {String(track.format || 'GPS').toUpperCase()}</span><h2>{track.name || '已导入轨迹'}</h2><p>{sourceFile && <span>{sourceFile} · </span>}{finite(track.pointCount) ? track.pointCount.toLocaleString('zh-CN') : geometry.segments.reduce((sum, segment) => sum + segment.points.length, 0)} 个轨迹点 · {geometry.segments.length} 段独立轨迹</p></div><span className="tv-real-data">来自导入文件</span></header>
+    <TrackStatistics stats={{ ...track.stats, ...resolvedTrackMetrics(track) }} />
+    {Object.values(resolvedTrackMetrics(track).sources).includes('administrator') && <p className="track-import-hint">缺失的路线指标由管理员补充；分段统计与海拔曲线仍使用原始轨迹。</p>}
+    <div className="tv-map-toolbar"><div className="tv-map-switch" role="group" aria-label="轨迹底图选择"><button type="button" aria-pressed={Boolean(showSaved)} onClick={() => setMode('saved')} disabled={!savedAvailable}><Map size={15} aria-hidden="true" />已保存底图</button><button type="button" aria-pressed={!showSaved} onClick={() => setMode('coordinate')}><Compass size={15} aria-hidden="true" />坐标轨迹</button></div></div>
+    {!savedAvailable && <div className="tv-map-notice" role="status"><AlertCircle size={16} aria-hidden="true" /><span>{failedImage ? '已保存底图暂时无法显示，当前展示真实坐标轨迹。' : track.basemap ? '已保存底图与轨迹不匹配或数据无效，当前展示真实坐标轨迹。' : '此轨迹尚未保存地图底图，当前仅显示本地坐标。'}</span></div>}
+    <div className="tv-map-frame">{showSaved ? <CachedTrackMap model={cached} selectedSegment={selectedSegment} selectedPoint={selectedPoint} onChooseSegment={chooseSegment} onError={() => setFailedImage(cached.basemap.image)} /> : <CoordinateTrack geometry={geometry} selectedSegment={selectedSegment} selectedPoint={selectedPoint} onChooseSegment={chooseSegment} />}</div>
+    <div className="tv-map-footer"><div className="tv-map-legend"><span><i className="is-start" />起点</span><span><i className="is-end" />终点</span><span><i className="is-route" />实际轨迹</span></div><span>{showSaved ? '已保存的单张地图 · 完整路线' : '本地坐标图，不含地图底图'}</span></div>
+    {showSaved && <p className="tv-basemap-credit"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a> · OpenStreetMap / Overpass API · ODbL</p>}
+    <div className="tv-segment-selector" role="group" aria-label="高亮轨迹段"><button type="button" aria-pressed={selectedSegment === null} onClick={() => chooseSegment(null)}>全部轨迹 <span>{sections.length}</span></button>{sections.map(section => <button type="button" key={section.index} aria-pressed={selectedSegment === section.index} onClick={() => chooseSegment(section.index)}>{section.name}</button>)}</div>
+    <div className="tv-profiles-heading"><div><h2>分段海拔</h2><p>每段从 0 km 开始，分别显示海拔与统计；地图保留所有段及其断点。</p></div><Mountain size={24} strokeWidth={1.3} aria-hidden="true" /></div>
+    <div className="tv-elevation-list" id={`${componentId}-profiles`}>{sections.map(section => <ElevationSection key={`${track.sourceFile || track.name || ''}-${section.index}`} section={section} active={selectedSegment === section.index} onSelectPoint={choosePoint} onChooseSegment={chooseSegment} />)}</div>
+    {Array.isArray(track.warnings) && track.warnings.length > 0 && <aside className="tv-import-warnings" aria-label="轨迹文件提示"><AlertCircle size={18} aria-hidden="true" /><div><h3>源文件提示</h3><ul>{track.warnings.filter(warning => typeof warning === 'string').map((warning, index) => <li key={index}>{warning}</li>)}</ul></div></aside>}
+    <p className="tv-data-note">里程、爬升与下降采用导入器计算结果。底图用于位置参考；路线是否可通行需结合现场情况核实。</p>
+  </section>;
 }

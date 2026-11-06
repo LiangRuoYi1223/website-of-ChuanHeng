@@ -60,8 +60,18 @@ test('dev startup from the workspace serves real optimized browser dependencies'
     assert.match(response.headers.get('content-type') || '', /javascript/, `dependency must be JavaScript\n${output}`);
     assert.ok((await response.text()).length > 0, 'dependency must have a nonempty JavaScript body');
   } catch (error) {
-    error.message += `\nVite output:\n${output}`;
-    throw error;
+    const message = error?.message || String(error);
+    const diagnosticPath = path.join(artifacts, `${path.basename(scratch)}-failure.log`);
+    let diagnostic;
+    try {
+      await writeFile(diagnosticPath, `Node: ${process.version}\nTest process options: ${JSON.stringify(process.execArgv)}\n${error?.stack || message}\nVite output:\n${output}`, 'utf8');
+      diagnostic = `\nFailure diagnostic: ${diagnosticPath}`;
+    } catch (writeError) {
+      diagnostic = `\nCould not save startup diagnostic: ${writeError?.message || String(writeError)}`;
+    }
+    // Fetch timeouts can be DOMExceptions whose message property is read-only.
+    // Preserve the original cause and keep diagnostics outside cleaned scratch.
+    throw new Error(`${message}\nVite output:\n${output}${diagnostic}`, { cause: error });
   } finally {
     clearTimeout(startupTimer);
     if (child) {

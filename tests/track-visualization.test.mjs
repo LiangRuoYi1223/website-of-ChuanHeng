@@ -264,7 +264,8 @@ test('SSR renders authoritative statistics and a separate elevation chart for ev
   assert.match(html, /无地形背景/);
   assert.match(html, /地图底图/);
   assert.doesNotMatch(html, /OpenTopoMap|SRTM/);
-  assert.match(html, /OpenStreetMap/);
+  assert.match(html, /尚未保存地图底图/);
+  assert.doesNotMatch(html, /OpenStreetMap/, 'a track without a saved map must not claim to show its cartography');
   assert.doesNotMatch(html, /undefined|NaN/);
 });
 

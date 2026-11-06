@@ -3,56 +3,17 @@ import { after, test } from 'node:test';
 import { act, createElement } from 'react';
 import { JSDOM } from 'jsdom';
 import { build } from 'esbuild';
-import { mkdir, mkdtemp, realpath, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, realpath, rmdir, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-// No jsdom resource loading is enabled. Tiles receive manual image load/error
-// events, so these tests exercise real Leaflet without contacting a tile server.
-const dom = new JSDOM('<div id="app"></div>', { url: 'https://frontend.invalid/routes/test', pretendToBeVisual: true });
-for (const key of ['window', 'document', 'navigator', 'Element', 'HTMLElement', 'SVGElement']) {
-  Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom.window : key === 'document' ? dom.window.document : dom.window[key] });
+const dom = new JSDOM('<div id="app"></div>', { url: 'https://frontend.invalid/routes/test' });
+const originals = new Map();
+for (const [key, value] of Object.entries({ window: dom.window, document: dom.window.document, navigator: dom.window.navigator, IS_REACT_ACT_ENVIRONMENT: true })) {
+  originals.set(key, Object.getOwnPropertyDescriptor(globalThis, key));
+  Object.defineProperty(globalThis, key, { configurable: true, writable: true, value });
 }
-globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-window.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} });
-// jsdom does not implement layout or SVG feature detection. The real map gets
-// one ordinary viewport and Leaflet's genuine SVG renderer remains enabled.
-dom.window.SVGSVGElement.prototype.createSVGRect = () => ({});
-for (const property of ['clientWidth', 'offsetWidth', 'clientHeight', 'offsetHeight']) {
-  Object.defineProperty(dom.window.HTMLElement.prototype, property, {
-    configurable: true,
-    get() { return this.classList.contains('tv-leaflet-map') ? property.endsWith('Width') ? 900 : 420 : 0; },
-  });
-}
-
-// Control only the product's connection deadline, leaving Leaflet timers real.
-const originalSetTimeout = window.setTimeout.bind(window);
-const originalClearTimeout = window.clearTimeout.bind(window);
-const deadlines = new Map();
-let clock = 0, nextDeadline = -1;
-window.setTimeout = (callback, delay, ...args) => {
-  if (Number(delay) !== 12000) return originalSetTimeout(callback, delay, ...args);
-  const id = nextDeadline--;
-  deadlines.set(id, { due: clock + Number(delay), callback: () => callback(...args) });
-  return id;
-};
-window.clearTimeout = id => deadlines.delete(id) || originalClearTimeout(id);
-async function advanceDeadline(milliseconds) {
-  clock += milliseconds;
-  await act(async () => {
-    for (const [id, deadline] of [...deadlines]) if (deadline.due <= clock) {
-      deadlines.delete(id);
-      deadline.callback();
-    }
-  });
-}
-
 const { createRoot } = await import('react-dom/client');
-const L = (await import('leaflet')).default;
-const originalMap = L.map, originalTileLayer = L.tileLayer;
-const maps = [], tileLayers = [];
-L.map = (...args) => { const map = originalMap(...args); maps.push(map); return map; };
-L.tileLayer = (...args) => { const layer = originalTileLayer(...args); tileLayers.push(layer); return layer; };
 const project = await realpath(fileURLToPath(new URL('../', import.meta.url)));
 const artifacts = path.join(project, 'artifacts');
 await mkdir(artifacts, { recursive: true });
@@ -61,145 +22,99 @@ const bundle = path.join(scratch, 'component.mjs');
 await build({
   stdin: { contents: "export {default} from './src/tracks/TrackVisualization.jsx';", resolveDir: project, loader: 'jsx' },
   absWorkingDir: project, bundle: true, platform: 'node', format: 'esm', packages: 'external', jsx: 'automatic',
-  loader: { '.css': 'empty' }, define: { 'import.meta.env': '{}' }, outfile: bundle,
-  plugins: [{ name: 'no-dom-stylesheets', setup(builder) {
-    builder.onResolve({ filter: /\.css$/ }, args => ({ path: args.path, namespace: 'empty-style' }));
-    builder.onLoad({ filter: /.*/, namespace: 'empty-style' }, () => ({ contents: '', loader: 'js' }));
-  } }],
+  loader: { '.css': 'empty' }, define: { 'import.meta.env': '{}' }, outfile: bundle, logLevel: 'silent',
 });
 const Component = (await import(pathToFileURL(bundle).href)).default;
 const container = document.getElementById('app');
-// Synthetic fixture, never a real association route or a tile image.
-const track = {
-  version: 1, name: '底图加载测试', format: 'gpx', sourceFile: 'synthetic-test.gpx', pointCount: 2, segmentCount: 1,
-  geojson: { type: 'Feature', properties: {}, geometry: { type: 'MultiLineString', coordinates: [[[114.88, 22.91, 100], [114.89, 22.92, 120]]] } },
-  stats: { distanceM: 1500, ascentM: 20, descentM: 0 }, profile: [], warnings: [],
-};
+const image = `data:image/svg+xml;base64,${Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="600" viewBox="0 0 1000 600"><rect width="1000" height="600" fill="#1b2423"/><path d="M0,600L1000,0" stroke="#fff"/></svg>').toString('base64')}`;
+const basemap = { version: 1, format: 'svg', image, bounds: [0, 0, 10, 60], projection: 'EPSG:3857', width: 1000, height: 600, attribution: '© OpenStreetMap contributors', source: 'OpenStreetMap / Overpass API', generatedAt: '2026-11-06T00:00:00.000Z' };
+const track = () => ({
+  version: 1, name: '合成静态地图测试', format: 'gpx', sourceFile: 'synthetic-test.gpx', pointCount: 4, segmentCount: 2, basemap,
+  geojson: { type: 'Feature', properties: {}, geometry: { type: 'MultiLineString', coordinates: [[[0, 0, 100], [5, 30, 120]], [[6, 40, 130], [10, 60, 150]]] } },
+  segments: [{ index: 0, name: '合成第一段' }, { index: 1, name: '合成第二段' }],
+  stats: { distanceM: 1500, ascentM: 50, descentM: 0 },
+  profile: [{ segment: 0, lon: 0, lat: 0, distanceM: 0, elevationM: 100 }, { segment: 0, lon: 5, lat: 30, distanceM: 1000, elevationM: 120 }], warnings: [],
+});
 let root;
-async function mount() {
+async function mount(value = track()) {
   if (root) await act(async () => root.unmount());
-  deadlines.clear(); clock = 0; maps.length = 0; tileLayers.length = 0;
   root = createRoot(container);
-  await act(async () => {
-    root.render(createElement(Component, { track }));
-  });
-  // The production component imports Leaflet asynchronously in its effect.
-  for (let attempt = 0; attempt < 20 && !tileLayers.length; attempt++) {
-    await act(async () => { await new Promise(resolve => setImmediate(resolve)); });
-  }
-  assert.equal(tileLayers.length, 1, 'the genuine Leaflet tile layer must initialize');
-  assert.ok(tileLayers[0] instanceof L.TileLayer);
-  assert.ok(maps[0] instanceof L.Map);
-  assert.ok(images().length > 0, 'Leaflet must create actual viewport tile images');
-  return { map: maps[0], layer: tileLayers[0] };
+  await act(async () => { root.render(createElement(Component, { track: value })); await new Promise(resolve => setImmediate(resolve)); });
 }
-const images = () => [...container.querySelectorAll('img.leaflet-tile')];
 const button = label => [...container.querySelectorAll('button')].find(node => node.textContent.trim() === label);
-const coordinateMap = () => container.querySelector('.tv-coordinate-map');
-const liveRegion = () => container.querySelector('.tv-leaflet-map');
-async function settleImages(event, tiles = images()) {
-  assert.ok(tiles.length > 0);
-  await act(async () => { for (const tile of tiles) tile.dispatchEvent(new dom.window.Event(event)); });
-}
-async function retry() {
-  const previousLayers = tileLayers.length;
-  assert.ok(button('重试底图'));
-  await act(async () => button('重试底图').click());
-  for (let attempt = 0; attempt < 20 && tileLayers.length === previousLayers; attempt++) {
-    await act(async () => { await new Promise(resolve => setImmediate(resolve)); });
-  }
-  assert.equal(tileLayers.length, previousLayers + 1, 'retry must initialize a fresh genuine layer');
-}
+const mapSvg = () => container.querySelector('svg[data-cached-track-map]');
 after(async () => {
   if (root) await act(async () => root.unmount());
-  L.map = originalMap; L.tileLayer = originalTileLayer;
-  window.setTimeout = originalSetTimeout; window.clearTimeout = originalClearTimeout;
   dom.window.close();
-  assert.equal(path.dirname(scratch), artifacts);
-  await rm(scratch, { recursive: true });
+  for (const [key, descriptor] of originals) if (descriptor) Object.defineProperty(globalThis, key, descriptor); else delete globalThis[key];
+  await unlink(bundle); await rmdir(scratch);
 });
 
-test('default OSM viewport tiles retain a valid referrer policy and reveal an interactive real map after loading', async () => {
-  const { map, layer } = await mount();
-  assert.ok(coordinateMap(), 'coordinates remain visible while the first tiles load');
-  assert.equal(liveRegion().getAttribute('aria-hidden'), 'true');
-  for (const image of images()) {
-    assert.match(image.src, /^https:\/\/tile\.openstreetmap\.org\/\d+\/\d+\/\d+\.png$/);
-    assert.equal(image.referrerPolicy, 'strict-origin-when-cross-origin');
-  }
-  assert.equal(layer.options.maxNativeZoom, 19);
-  assert.ok(container.querySelector('.leaflet-control-attribution a[href="https://www.openstreetmap.org/copyright"]'));
-  await settleImages('load');
-  assert.equal(coordinateMap(), null);
-  assert.equal(liveRegion().hasAttribute('aria-hidden'), false);
-  assert.equal(liveRegion().tabIndex, 0);
-  assert.equal(map.keyboard.enabled(), true);
-  const previousZoom = map.getZoom();
-  await act(async () => container.querySelector('.leaflet-control-zoom-in').click());
-  assert.equal(map.getZoom(), previousZoom + 1, 'the real zoom control must remain interactive');
-});
-
-test('failed viewport tiles preserve coordinates and a retry can recover the real map', async () => {
+test('saved map and independent real track segments share the exact Mercator image frame', async () => {
   await mount();
-  await settleImages('error');
-  assert.ok(coordinateMap());
-  assert.match(container.querySelector('.tv-map-notice').textContent, /底图.*(?:失败|无法|不可用)/);
-  assert.ok(button('重试底图'));
-  assert.equal(liveRegion().getAttribute('aria-hidden'), 'true');
-  await retry();
-  assert.ok(coordinateMap());
-  await settleImages('load');
-  assert.equal(coordinateMap(), null);
-  assert.equal(container.querySelector('.tv-map-notice'), null);
-  assert.equal(liveRegion().tabIndex, 0);
+  const svg = mapSvg(); assert.ok(svg, 'the saved map is immediately available');
+  assert.equal(svg.getAttribute('viewBox'), '0 0 1000 600');
+  assert.equal(svg.querySelector('image').getAttribute('href'), image);
+  const paths = [...svg.querySelectorAll('path[data-track-segment]')];
+  assert.equal(paths.length, 2);
+  const mercator = latitude => Math.log(Math.tan(Math.PI / 4 + latitude * Math.PI / 360));
+  const y30 = 600 * (mercator(60) - mercator(30)) / (mercator(60) - mercator(0));
+  assert.match(paths[0].getAttribute('d'), new RegExp(`^M0(?:\\.00)?,600(?:\\.00)? L500(?:\\.00)?,${y30.toFixed(2)}$`));
+  assert.match(paths[1].getAttribute('d'), / L1000(?:\.00)?,0(?:\.00)?$/);
+  for (const path of paths) assert.equal((path.getAttribute('d').match(/M/g) || []).length, 1, 'a disconnected segment starts its own path');
+  assert.match(container.textContent, /已保存.*底图/);
+  assert.ok(container.querySelector('a[href="https://www.openstreetmap.org/copyright"]'));
+  assert.equal(container.querySelector('.leaflet-container'), null);
+  assert.equal(container.querySelector('[aria-label*="缩放"]'), null);
 });
 
-test('a new stalled viewport has its own 12 second fallback after a previous viewport loaded successfully', async () => {
-  const { map, layer } = await mount();
-  await settleImages('load');
-  assert.equal(coordinateMap(), null);
-  // Expire any first-viewport deadline before moving: its successful tiles must
-  // neither disable nor substitute the next viewport's deadline.
-  await advanceDeadline(12000);
-  assert.equal(coordinateMap(), null);
-  const previousImages = new Set(images());
-  let loadingEvents = 0;
-  layer.on('loading', () => { loadingEvents++; });
-  await act(async () => map.panBy([1800, 0], { animate: false }));
-  assert.equal(loadingEvents, 1, 'a real map movement must begin a new Leaflet tile batch');
-  assert.ok(images().some(image => !previousImages.has(image)), 'the new viewport must contain unresolved real tile images');
-  await advanceDeadline(11999);
-  assert.equal(button('重试底图'), undefined, 'the new viewport must receive its whole connection deadline');
-  await advanceDeadline(1);
-  assert.ok(coordinateMap(), 'stalled new tiles must restore the complete coordinate track');
-  assert.ok(button('重试底图'), 'timeout must offer a visible way to recover the basemap');
-  assert.match(container.querySelector('.tv-map-notice').textContent, /底图.*(?:失败|无法|不可用|超时)/);
+test('viewing either a saved map or a legacy track does not fetch online tiles or other external images', async () => {
+  const originalFetch = globalThis.fetch;
+  let requests = 0;
+  globalThis.fetch = async () => { requests += 1; throw new Error('Viewing a track must not request a basemap'); };
+  try {
+    for (const value of [track(), { ...track(), basemap: undefined }]) {
+      await mount(value);
+      for (const element of container.querySelectorAll('img[src], image[href]')) assert.match(element.getAttribute('src') || element.getAttribute('href'), /^data:image\/svg\+xml;base64,/);
+    }
+    assert.equal(requests, 0);
+  } finally { globalThis.fetch = originalFetch; }
 });
 
-test('an unfinished old batch cannot keep a wholly new stalled viewport blank after one old tile succeeded', async () => {
-  const { map, layer } = await mount();
-  const successfulTile = images()[0];
-  const tileSize = layer.getTileSize();
-  const [, , x, y] = new URL(successfulTile.src).pathname.match(/^\/(\d+)\/(\d+)\/(\d+)\.png$/).map(Number);
-  await settleImages('load', [successfulTile]);
-  assert.equal(coordinateMap(), null, 'one successful tile may reveal the initial viewport');
-  const oldImages = new Set(images());
-  assert.ok(oldImages.size > 1, 'other first-viewport tiles must remain unresolved');
-  let loadingEvents = 0;
-  layer.on('loading', () => { loadingEvents++; });
-  await advanceDeadline(6000);
-  await act(async () => map.panBy([1800, 0], { animate: false }));
-  assert.equal(loadingEvents, 0, 'real Leaflet keeps an unfinished batch loading across the movement');
-  assert.ok(images().some(image => !oldImages.has(image)), 'the moved viewport must request new unresolved images');
-  const bounds = map.getPixelBounds();
-  const oldTileInViewport = x * tileSize.x < bounds.max.x && (x + 1) * tileSize.x > bounds.min.x
-    && y * tileSize.y < bounds.max.y && (y + 1) * tileSize.y > bounds.min.y;
-  assert.equal(oldTileInViewport, false, 'the only successful tile must be outside the current viewport');
-  await advanceDeadline(11999);
-  assert.equal(button('重试底图'), undefined, 'movement must reset the deadline instead of using the old viewport timeout');
-  await advanceDeadline(1);
-  assert.ok(coordinateMap(), 'an offscreen successful tile must not leave the new viewport blank');
-  assert.ok(button('重试底图'));
-  assert.equal(liveRegion().getAttribute('aria-hidden'), 'true');
-  assert.match(container.querySelector('.tv-map-notice').textContent, /底图.*(?:失败|无法|不可用|超时)/);
+test('legacy tracks without a saved map retain local coordinates and clearly explain the missing map', async () => {
+  await mount({ ...track(), basemap: undefined });
+  assert.equal(mapSvg(), null);
+  assert.ok(container.querySelector('.tv-coordinate-map'));
+  assert.match(container.textContent, /尚未保存地图底图/);
+  assert.equal(button('重试底图'), undefined);
+  assert.equal(container.querySelector('[role="alert"]'), null);
+  assert.ok(container.querySelector('svg[aria-label="合成第一段海拔剖面"]'));
+});
+
+test('saved map segment selection and profile point focus retain aligned highlights', async () => {
+  await mount();
+  await act(async () => button('合成第二段').click());
+  const paths = [...mapSvg().querySelectorAll('path[data-track-segment]')];
+  assert.equal(paths[0].getAttribute('opacity'), '0.25');
+  assert.equal(paths[1].getAttribute('opacity'), '1');
+  const slider = container.querySelector('input[aria-label="合成第一段轨迹采样点"]');
+  await act(async () => slider.focus());
+  const highlight = mapSvg().querySelector('[data-selected-track-point]'); assert.ok(highlight);
+  assert.equal(Number(highlight.getAttribute('cx')), 0);
+  assert.equal(Number(highlight.getAttribute('cy')), 600);
+  await act(async () => button('坐标轨迹').click());
+  assert.ok(container.querySelector('.tv-coordinate-map'));
+  await act(async () => button('已保存底图').click());
+  assert.ok(mapSvg());
+});
+
+test('invalid or failed saved images fall back to real coordinates without an online retry', async () => {
+  await mount({ ...track(), basemap: { ...basemap, image: 'https://example.invalid/map.svg' } });
+  assert.equal(mapSvg(), null);
+  assert.ok(container.querySelector('.tv-coordinate-map'));
+  await mount();
+  await act(async () => mapSvg().querySelector('image').dispatchEvent(new dom.window.Event('error')));
+  assert.equal(mapSvg(), null);
+  assert.ok(container.querySelector('.tv-coordinate-map'));
+  assert.match(container.textContent, /已保存底图.*无法显示/);
 });

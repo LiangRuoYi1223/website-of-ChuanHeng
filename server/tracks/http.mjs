@@ -6,6 +6,7 @@ export const MAX_REQUEST_BYTES = MAX_FILE_BYTES + 64 * 1024;
 const MAX_AUTH_BYTES = 64 * 1024;
 const AUTH_TIMEOUT_MS = 5000;
 const BODY_TIMEOUT_MS = 30000;
+export const MAX_BASEMAP_REQUEST_BYTES = 5 * 1024 * 1024;
 
 export function jsonResponse(value, status = 200, headers = {}) {
   return new Response(JSON.stringify(value), { status, headers: {
@@ -193,6 +194,41 @@ async function readUpload(request) {
   return { fileBytes, filename: file.name };
 }
 
+async function readBasemapGeojson(request) {
+  if (!/^application\/json\s*(?:;|$)/i.test(request.headers.get('content-type') || '')) throw new TrackError('UNSUPPORTED_MEDIA_TYPE', '请以 JSON 提交路线坐标。', 415);
+  const length = request.headers.get('content-length');
+  if (length !== null && (!/^\d+$/.test(length) || Number(length) > MAX_BASEMAP_REQUEST_BYTES)) throw new TrackError('REQUEST_TOO_LARGE', '底图生成请求不能超过 5 MiB。', 413);
+  const controller = new AbortController();
+  let timer;
+  const deadline = new Promise((_, reject) => { timer = setTimeout(() => {
+    reject(new TrackError('REQUEST_TIMEOUT', '路线坐标读取超时，请重试。', 408)); controller.abort();
+  }, BODY_TIMEOUT_MS); });
+  let bytes;
+  try { bytes = await Promise.race([readBounded(request.body, MAX_BASEMAP_REQUEST_BYTES, 'REQUEST_TOO_LARGE', '底图生成请求不能超过 5 MiB。', 413, controller.signal), deadline]); }
+  finally { clearTimeout(timer); }
+  let body;
+  try { body = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); }
+  catch { throw new TrackError('INVALID_BASEMAP_REQUEST', '路线坐标 JSON 无效，请重新读取路线后重试。'); }
+  const geometry = body?.geojson?.type === 'Feature' ? body.geojson.geometry : body?.geojson;
+  if (!body || typeof body !== 'object' || Array.isArray(body) || Object.keys(body).length !== 1
+    || !['LineString', 'MultiLineString'].includes(geometry?.type) || !Array.isArray(geometry.coordinates)) {
+    throw new TrackError('INVALID_BASEMAP_REQUEST', '请仅提交包含真实路线 GeoJSON 的 geojson 字段。');
+  }
+  return body.geojson;
+}
+
+async function prepareBasemap(geojson, request, options) {
+  if (typeof options.createBasemap !== 'function') throw new TrackError('BASEMAP_UNAVAILABLE', '底图生成服务尚未配置，请稍后重试。', 503);
+  try {
+    const basemap = await options.createBasemap(geojson, { signal: request.signal });
+    if (!basemap || basemap.version !== 1 || typeof basemap.image !== 'string' || !basemap.image.startsWith('data:image/svg+xml;base64,')) throw new Error('Invalid basemap result');
+    return basemap;
+  } catch (error) {
+    if (error instanceof TrackError) throw error;
+    throw new TrackError('BASEMAP_UNAVAILABLE', '真实底图生成失败，原路线未替换，请稍后重试。', 502);
+  }
+}
+
 /** Local-preview permission is a trusted adapter option, never a query/env flag.
  * The Node adapter also checks actual socket addresses before enabling it.
  * The production worker always passes localPreview:false.
@@ -206,7 +242,7 @@ export async function handleTrackRequest(request, env = {}, options = {}) {
     if (request.method !== 'GET') return jsonResponse({ error: { code: 'METHOD_NOT_ALLOWED', message: '此接口仅支持 GET。' } }, 405, { allow: 'GET' });
     return jsonResponse({ localPreview, configured: Boolean(config) });
   }
-  if (url.pathname !== '/api/tracks/convert') return jsonResponse({ error: { code: 'NOT_FOUND', message: '没有找到这个接口。' } }, 404);
+  if (!['/api/tracks/convert', '/api/tracks/basemap'].includes(url.pathname)) return jsonResponse({ error: { code: 'NOT_FOUND', message: '没有找到这个接口。' } }, 404);
   if (request.method !== 'POST') return jsonResponse({ error: { code: 'METHOD_NOT_ALLOWED', message: '此接口仅支持 POST。' } }, 405, { allow: 'POST' });
   try {
     requireSameOrigin(request, url);
@@ -214,9 +250,14 @@ export async function handleTrackRequest(request, env = {}, options = {}) {
       if (!config) throw new TrackError('SERVICE_UNAVAILABLE', '轨迹服务尚未完成身份配置，请稍后再试。', 503);
       await verifyUser(request, config, options);
     }
+    if (url.pathname === '/api/tracks/basemap') {
+      const geojson = await readBasemapGeojson(request);
+      return jsonResponse({ basemap: await prepareBasemap(geojson, request, options) });
+    }
     const { fileBytes, filename } = await readUpload(request);
     const track = convertTrack(fileBytes, { filename });
     track.location = locateTrack(track);
+    if (url.searchParams.get('basemap') === '1') track.basemap = await prepareBasemap(track.geojson, request, options);
     return jsonResponse({ track });
   } catch (error) { return trackErrorResponse(error); }
 }

@@ -1,20 +1,15 @@
-# 轨迹地图底图来源
+# 路线与活动静态底图
 
-## 默认底图
+用户于2026-11-06选择单张覆盖路线的地图图片。现行路线/活动查看器不再使用在线 XYZ 瓦片，也不依赖旧 `VITE_TERRAIN_TILE_*` 配置。
 
-- 服务：OpenStreetMap Standard，直接由访问者浏览器请求 `https://tile.openstreetmap.org/{z}/{x}/{y}.png`。
-- 地图和数据来源：[OpenStreetMap 版权与许可](https://www.openstreetmap.org/copyright)。界面保留可见的 `© OpenStreetMap contributors` 链接，不混用原 OpenTopoMap/SRTM 的署名。
-- 使用依据：[OSMF Tile Usage Policy](https://operations.osmfoundation.org/policies/tiles/)，2026-11-06 核对。公开小型网站的普通交互查看可使用，无需新 API key；服务尽力提供，不保证可用性。
-- 只按当前视口和正常浏览器行为请求，不实现离线下载、区域预抓或批量抓取，不添加服务端瓦片代理。使用浏览器默认缓存，不发送禁缓存请求头。
-- Leaflet 瓦片使用 `strict-origin-when-cross-origin`，保留站点来源 Referer，不把当前活动页面的完整地址发送给跨站底图服务。
-- 默认最高缩放级别 19，轨迹按 GPX/KML 的真实 WGS84 坐标叠加。坐标不为显示底图改写，不在轨迹断点间补线，不改变海拔或统计。
+- 路线管理上传 GPX/KML 时，由同源后端验证可信领队/管理员，再从真实 OpenStreetMap 要素生成一张 1000×600 SVG。图片、精确 WGS84 范围、EPSG:3857 投影、生成时间、来源和许可保存在 `track.basemap`。
+- 已有路线在路线编辑中点击“生成底图”，成功后仍需保存路线；生成失败、取消、换轨或旧请求迟到都不能替换当前编辑。更新底图使用新对象，活动继续保留选择路线时的历史快照。
+- 查看路线库、路线详情或活动详情，只读取随路线保存的图片并按同一 Mercator 范围叠加原始轨迹。段与段保持断开，选段与海拔采样点高亮保留；单张图片不提供缩放和平移。
+- 仅接受经过大小、元数据、被动 SVG 元素与属性校验的本地 Data URL；不接受外部图像地址、脚本、外部引用或任意 HTML。缺图、图像无效或加载失败时明确提示并展示真实坐标图，不用示意地形冒充地图。
+- 图片绘制真实道路、水系、封闭水域/植被区域及命名地点，不推测等高线、行政归属或通行情况。地图数据、服务边界和请求限制详见 [服务端来源说明](../../server/basemaps/SOURCE.md)。
 
-## 自定义与离线
+保留可见、可点击的 [© OpenStreetMap contributors](https://www.openstreetmap.org/copyright) 与 ODbL 许可说明，图片内部也含署名。仅一次授权生成过程需要地图数据服务可达；已经保存的图片查看不依赖该服务。
 
-继续支持 `.env.example` 中的 `VITE_TERRAIN_TILE_URL`、`VITE_TERRAIN_TILE_ATTRIBUTION` 和 `VITE_TERRAIN_TILE_MAX_ZOOM`。自定义 HTTPS XYZ 必须提供来源署名；设置为 `offline` 时明确只显示坐标轨迹。环境变量保留原名以兼容已有配置，并不表示默认 OSM Standard 含地形等高线。
+本站没有下载或预抓 `tile.openstreetmap.org` 标准瓦片。[OSMF 瓦片策略](https://operations.osmfoundation.org/policies/tiles/)禁止该服务的离线预抓，开放数据许可不等于标准瓦片服务器的离线使用许可。此前默认 OSM Standard 在线瓦片方案已由本静态方案替代。
 
-瓦片需要访问者网络可达。网络失败显示明确提示与重试入口，坐标轨迹始终可以查看；不以虚构地形代替真实底图。站点 SVG 全国省级地图的来源/授权另见 `src/map/SOURCE.md`，此处更换瓦片不会改变该数据的许可状态。
-
-## 本次核验边界
-
-在正常系统代理路径，对惠州附近 z13/z15 的各一张瓦片进行少量按需检查，原 OpenTopoMap 和 OSM 均返回有效 PNG；OSM 本次响应更快。此观察不证明所有网络环境可用，也不表示原 OpenTopoMap 停止服务。没有批量扫描、预取多级区域或把样例轨迹作为协会记录。
+合成坐标与受控要素只用于自动化测试，不作为真实协会路线或活动发布。实际公网请求、云端运行与目视检查分别记录在生产交接中，不能以测试通过代替源服务可达性验收。全国省级足迹地图的数据来源仍见 `src/map/SOURCE.md`。

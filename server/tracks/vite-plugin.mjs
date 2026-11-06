@@ -4,6 +4,7 @@ import { handleCoverRequest } from '../covers/http.mjs';
 import { handlePhotoRequest } from '../photos/http.mjs';
 import { handlePaymentProofRequest } from '../payments/http.mjs';
 import { createLocalImageBinding } from '../covers/local-images.mjs';
+import { createRouteBasemap } from '../basemaps/create-route-basemap.mjs';
 
 export function isLocalPreviewRequest(request, explicitlyEnabled) {
   if (explicitlyEnabled !== true || !isLoopbackAddress(request.socket?.localAddress) || !isLoopbackAddress(request.socket?.remoteAddress)) return false;
@@ -81,6 +82,7 @@ export function tracksVitePlugin(options = {}) {
           localPreview: isLocalPreviewRequest(incoming, options.localPreview),
           fetchImpl: options.fetchImpl || fetch,
           authTimeoutMs: options.authTimeoutMs,
+          createBasemap: options.createBasemap ?? ((geojson, { signal }) => createRouteBasemap(geojson, { signal, fetchImpl: options.fetchImpl || fetch })),
         });
         if (!outgoing.destroyed) {
           if (!incoming.complete) outgoing.setHeader('connection', 'close');

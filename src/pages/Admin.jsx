@@ -20,6 +20,7 @@ import { runtimeMode } from '../runtime-mode.js';
 import { safeInternalReturn } from '../applications/registration.js';
 import { parseRegistrationCapacity } from '../applications/settings.js';
 import { parseRegistrationFee, registrationFeeInputValue } from '../activities/registration-fee.js';
+import { activityTypeOptions } from '../activities/categories.js';
 import ActivityRegistrationAdmin from '../applications/ActivityRegistrationAdmin.jsx';
 import SignupVerification from '../auth/SignupVerification.jsx';
 import SiteImagesAdmin from '../site-images/SiteImagesAdmin.jsx';
@@ -314,6 +315,7 @@ export function AdminPage() {
       if (editor.kind === 'photo' && !payload.image) throw new Error('请先上传照片，再保存影像内容。');
       if (!publicImageUrl(payload.image, { local })) throw new Error('图片请使用 HTTPS 地址或以 / 开头的站内路径。');
       if (editor.kind === 'route') {
+        payload.featured = form.get('featured') === 'on';
         for (const field of ['location', 'difficulty']) payload[field] = String(form.get(field) || '').trim();
         if (track === undefined && (editor.payload.track || editor.payload.trackLocalId)) throw new Error('原有轨迹尚未读取完成，请重试读取或明确移除后保存。');
         if (!track) {
@@ -324,6 +326,7 @@ export function AdminPage() {
         }
       }
       if (editor.kind === 'activity') {
+        payload.showInHistory = form.get('showInHistory') === 'on';
         payload.date = String(form.get('date') || '').trim();
         payload.status = String(form.get('status') || '即将开始');
         payload.difficulty = String(form.get('difficulty') || '入门');
@@ -549,7 +552,9 @@ export function ContentEditor({ editor, rows = [], onRefreshRoutes = () => {}, r
         <label>内容标题<span>*</span><input name="title" defaultValue={editor.payload.title || ''} onInput={event => setRouteTitle(event.currentTarget.value)} aria-describedby={nameCheckUnavailable || matchingRoutes.length ? 'route-name-feedback' : undefined} maxLength={120} required placeholder={editor.kind === 'route' ? '输入路线名称' : '给这次出发起一个名字'} /></label>
         {nameCheckUnavailable ? <div className="admin-route-name-feedback" id="route-name-feedback" role="status"><p>{routesLoading ? '正在读取已有路线，暂无法核对重名。' : '路线列表读取失败，暂无法核对重名。'}</p><button type="button" className="admin-btn" disabled={routesLoading || busy} onClick={onRefreshRoutes}>{routesLoading ? '正在读取…' : '重新读取路线'}</button></div> : matchingRoutes.length > 0 && <section className="admin-route-name-feedback" id="route-name-feedback" role="status" aria-live="polite" aria-atomic="true"><h3>已有 {matchingRoutes.length} 条同名路线</h3><p>请核对已有路线，或修改名称以便区分。同名不代表相同路线，保存不会合并、覆盖或归档已有记录。</p><ul>{matchingRoutes.slice(0, 3).map(row => <li key={row.id}><strong>{row.payload.title}</strong><span>{row.payload.location || '地点未填写'} · {row.payload.source || '来源未注明'} · {row.published ? '已发布' : '草稿'}</span></li>)}</ul>{matchingRoutes.length > 3 && <p>另有 {matchingRoutes.length - 3} 条同名路线，可在路线管理搜索核对。</p>}</section>}
         {editor.kind === 'route' && !nameCheckUnavailable && <div className="admin-route-tools"><small>按当前已加载的路线核对名称。</small><button type="button" className="admin-btn" disabled={busy} onClick={onRefreshRoutes}>刷新已有路线</button></div>}
-        <label>内容类别<input name="type" defaultValue={editor.payload.type || ''} maxLength={40} placeholder="例如：山地徒步" /></label>
+        {editor.kind === 'activity'
+          ? <label>活动种类<select name="type" defaultValue={editor.payload.type || ''}><option value="">请选择活动种类</option>{activityTypeOptions([editor.payload.type, ...rows.filter(row => row.kind === 'activity').map(row => row.payload?.type)]).map(type => <option key={type} value={type}>{type}</option>)}</select></label>
+          : <label>内容类别<input name="type" defaultValue={editor.payload.type || ''} maxLength={40} placeholder="例如：山地徒步" /></label>}
         <ContentFields editor={editor} track={track} routeData={routeData} trackBlocked={trackBlocked} activityStatus={activityStatus} onStatusChange={setActivityStatus} />
         {editor.kind === 'activity' && <section className="admin-activity-route" aria-label="活动关联路线">
           <label>关联路线<select name="routeId" value={routeId} onChange={event => changeRoute(event.target.value)}><option value="">暂不关联路线</option>{routeId && !availableRoutes.some(row => row.id === routeId) && <option value={routeId}>已关联路线（当前不可选）</option>}{availableRoutes.map(row => <option key={row.id} value={row.id}>{row.payload.title}{row.payload.location ? ` · ${row.payload.location}` : ''}{Number.isFinite(row.payload.distance) ? ` · ${row.payload.distance} km` : ''}{row.payload.track || row.payload.trackLocalId ? ' · 有轨迹' : ' · 无轨迹'}</option>)}</select></label>
@@ -583,6 +588,8 @@ function ContentFields({ editor, track, routeData, trackBlocked = false, activit
     {kind === 'activity' && <>
       <div className="admin-field-grid"><label>活动开始时间<input name="dateStart" type="datetime-local" defaultValue={toLocalDateTime(payload.dateStart)} />{/^\d{4}-\d{2}-\d{2}$/.test(payload.dateStart || '') && <small>原记录日期：{payload.dateStart}，具体时刻未知，留空保留原日期。</small>}</label><label>活动结束时间<input name="dateEnd" type="datetime-local" defaultValue={toLocalDateTime(payload.dateEnd)} /></label></div>
       <label>活动状态<select name="status" value={activityStatus} onChange={event => onStatusChange(event.target.value)}><option>即将开始</option><option>报名中</option><option>进行中</option><option>已结束</option></select></label>
+      <label className="admin-checkbox"><input name="showInHistory" type="checkbox" defaultChecked={payload.showInHistory === true} aria-describedby="activity-history-help" />展示到大事记</label>
+      <small id="activity-history-help">可提前勾选；活动已发布、已结束且日期完整时，才会在关于页“一路走来”展示。</small>
       <label>日期说明<input name="date" defaultValue={payload.date || ''} maxLength={100} placeholder="补充集合时间等说明" /></label>
       <label>预设报名人数<input name="registrationCapacity" type="number" min="1" max="100000" step="1" defaultValue={payload.registrationCapacity ?? ''} placeholder="例如：5" /><small>按有效报名时间排序，名额内入选，其余候补；退出后顺次递补。旧活动未设置时保持未知。</small></label>
       <label>报名费用（元）<input name="registrationFee" type="number" min="0" step="0.01" inputMode="decimal" defaultValue={registrationFeeInputValue(payload.registrationFeeCents)} placeholder="例如：50.00" /><small>留空显示“未公布”，填写0显示“免费”。金额会显示在活动报名区域与缴费窗口。</small></label>
@@ -591,7 +598,10 @@ function ContentFields({ editor, track, routeData, trackBlocked = false, activit
       <div className="admin-field-grid"><label>报名开启时间<input name="registrationStart" type="datetime-local" defaultValue={toLocalDateTime(payload.registrationStart)} /></label><label>报名截止时间<input name="registrationDeadline" type="datetime-local" defaultValue={toLocalDateTime(payload.registrationDeadline)} /></label></div>
       <p className="admin-schedule-note">按本地时区填写。报名开启须早于截止，截止不晚于活动开始，活动结束须晚于开始。草稿可暂留空；已截止的活动仍可编辑保存。</p>
     </>}
-    {kind === 'route' && <label>路线来源<input name="source" defaultValue={payload.source || '协会整理'} maxLength={100} placeholder="例如：协会整理" /></label>}
+    {kind === 'route' && <>
+      <label>路线来源<input name="source" defaultValue={payload.source || '协会整理'} maxLength={100} placeholder="例如：协会整理" /></label>
+      <label className="admin-checkbox"><input name="featured" type="checkbox" defaultChecked={payload.featured === true} />设为精选路线</label>
+    </>}
     {['photo', 'article'].includes(kind) && <label>栏目分类<input name="category" defaultValue={payload.category || ''} maxLength={60} placeholder={kind === 'photo' ? '例如：精选摄影' : '例如：协会动态'} /></label>}
     {kind === 'article' && <>
       <div className="admin-field-grid"><label>文章日期<input name="date" defaultValue={payload.date || ''} maxLength={100} placeholder="例如：2026.10.30" /></label><label>阅读时间（分钟）<input name="readTime" type="number" min="1" max="240" step="1" defaultValue={payload.readTime || 5} /></label></div>

@@ -170,7 +170,8 @@ test('sample content and unavailable real history are disclosed where visitors s
   for (const item of activities) assert.ok(!footprints.includes(item.title), 'sample activities must not become real association footprints');
   const about = textContent(renderRoute('/about'));
   assert.match(about, /成员资料待发布/, 'unknown real members should remain empty');
-  assert.match(about, /协会历史正在整理/, 'unknown history should remain empty');
+  assert.match(about, /尚无大事记/, 'unknown history should remain empty');
+  for (const item of activities) assert.ok(!about.includes(item.title), 'sample activities must not become association history');
   assert.match(renderRoute('/join'), /id="faq"/, 'the public FAQ link must resolve to a real target');
 });
 
@@ -207,7 +208,7 @@ test('all rendered static media and CSS image/font paths exist in public', async
 
 
 test('home featured route uses unavailable metric text, preserves zero, and rounds known values',()=>{
- const featured=routes[0];const original={distance:featured.distance,ascent:featured.ascent};
+ const original=routes[0];const featured={...original,featured:true,published:true,isDemo:false};routes[0]=featured;
  const homeStats=()=>{
   const html=renderToStaticMarkup(createElement(StaticRouter,{location:'/'},createElement(CatalogProvider,null,createElement(App))));
   return html.match(/<div class="route-feature-stats">([\s\S]*?)<small class="image-credit">/)[1];
@@ -220,5 +221,5 @@ test('home featured route uses unavailable metric text, preserves zero, and roun
   }
   featured.distance=0;featured.ascent=0;let stats=homeStats();assert.match(textContent(stats),/0 km/);assert.match(textContent(stats),/0 m/);assert.doesNotMatch(stats,/暂不提供数据/);
   featured.distance=12.345678;featured.ascent=123.456789;stats=homeStats();assert.match(textContent(stats),/12\.35 km/);assert.match(textContent(stats),/123\.5 m/);
- }finally{Object.assign(featured,original);}
+ }finally{routes[0]=original;}
 });

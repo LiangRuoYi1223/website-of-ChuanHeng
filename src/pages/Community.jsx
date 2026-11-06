@@ -10,6 +10,7 @@ import './community.css';
 import FootprintExplorer from '../map/FootprintMap.jsx';
 import { OFFICIAL_BADGE } from '../Brand.jsx';
 import SiteImage,{SiteImageCredit} from '../site-images/SiteImage.jsx';
+import ActivityHistory from '../activities/ActivityHistory.jsx';
 
 const roleGroups = [
   { name: '管理团队', description: '管理团队名单及分工介绍将在确认后发布。' },
@@ -21,9 +22,7 @@ export function AboutPage() {
 
   return (
     <div className="community-page c-about-page">
-      <PageHero title="山野之间，彼此同行。" description="川衡登山协会 · 从一次出发开始，认识山野，也认识同行的人。" imageSlot="aboutHero">
-        <a className="btn btn-outline" href="#about-story">认识川衡 <ArrowDown size={17} aria-hidden="true" /></a>
-      </PageHero>
+      <PageHero title="山野之间，彼此同行。" description="川衡登山协会 · 从一次出发开始，认识山野，也认识同行的人。" imageSlot="aboutHero" />
 
       <section className="section container c-about-intro" id="about-story">
         <div className="c-intro-photo"><SiteImage slot="aboutStory" loading="lazy"/><SiteImageCredit slot="aboutStory" className="c-image-label" as="span"/></div>
@@ -59,7 +58,7 @@ export function AboutPage() {
 
       <section className="section container c-history-section">
         <SectionHeading title="一路走来" description="每一段值得留下的记忆，都从真实的经历开始。" />
-        <div className="c-history-empty"><Flag size={30} strokeWidth={1.2} aria-hidden="true" /><div><h3>协会历史正在整理</h3><p>经过确认的时间、故事与活动资料，将在这里串成川衡的来路。</p></div></div>
+        <ActivityHistory />
       </section>
 
       <section className="section container c-about-footprints">

@@ -1,7 +1,8 @@
-import {useEffect,useId,useRef,useState} from 'react';
+import {useEffect,useId,useMemo,useRef,useState} from 'react';
 import {Upload,Download,Trash2} from 'lucide-react';
 import {supabase} from '../backend.js';
-import {convertTrackFile,downloadTrackJson} from './import-client.js';
+import {convertTrackFile,downloadTrackJson,generateTrackBasemap} from './import-client.js';
+import {buildCachedTrackMapModel} from './cached-basemap.js';
 import TrackVisualization from './TrackVisualization.jsx';
 import './track-import.css';
 import {resolvedTrackMetrics,withManualTrackMetrics} from './metrics.js';
@@ -32,15 +33,24 @@ export default function TrackUpload({value,onChange,disabled=false,local=false,o
   const [busy,setBusy] = useState(false), [error,setError] = useState('');
   const [dragging,setDragging] = useState(false);
   const [pending,setPending]=useState(null);
-  const controller = useRef(null), revision = useRef(0), busyCallback = useRef(onBusyChange);
+  const hasBasemap=useMemo(()=>Boolean(buildCachedTrackMapModel(value)),[value]);
+  const controller = useRef(null), revision = useRef(0), busyCallback = useRef(onBusyChange), currentValue=useRef(value), previousValue=useRef(value);
+  currentValue.current=value;
   busyCallback.current=onBusyChange;
   useEffect(()=>()=>{revision.current++;controller.current?.abort();busyCallback.current?.(false)},[]);
+  useEffect(()=>{
+    if(previousValue.current===value)return;
+    previousValue.current=value;
+    revision.current++;
+    controller.current?.abort();
+    setPending(null);setBusy(false);setError('');busyCallback.current?.(false);
+  },[value]);
   async function upload(file) {
     if (!file || disabled || busy) return;
-    const current=++revision.current;
+    const original=value,current=++revision.current;
     setError('');setBusy(true);busyCallback.current?.(true);
-    controller.current?.abort();controller.current=new AbortController();
-    const timeout=setTimeout(()=>controller.current?.abort(),60000);
+    controller.current?.abort();const operation=new AbortController();controller.current=operation;
+    const timeout=setTimeout(()=>operation.abort(),60000);
     let awaitingDecision=false;
     try {
       let token;
@@ -50,8 +60,8 @@ export default function TrackUpload({value,onChange,disabled=false,local=false,o
         token=data.session?.access_token;
       }
       // Authorization is enforced by the server, never by this local UI flag.
-      const track=await convertTrackFile(file,{token,signal:controller.current.signal});
-      if(current===revision.current) {
+      const track=await convertTrackFile(file,{token,signal:operation.signal,prepareBasemap:true});
+      if(current===revision.current&&currentValue.current===original&&!operation.signal.aborted) {
         const metrics=resolvedTrackMetrics(track);
         if(metrics.distanceM===null||metrics.ascentM===null){awaitingDecision=true;setPending(track)}
         else onChange(track);
@@ -63,18 +73,32 @@ export default function TrackUpload({value,onChange,disabled=false,local=false,o
       if(current===revision.current&&!awaitingDecision) {setBusy(false);busyCallback.current?.(false);}
     }
   }
+  async function prepareMap() {
+    if(!value||disabled||busy)return;
+    const original=value,current=++revision.current;
+    setError('');setBusy(true);busyCallback.current?.(true);
+    controller.current?.abort();const operation=new AbortController();controller.current=operation;
+    const timeout=setTimeout(()=>operation.abort(),60000);
+    try {
+      let token;
+      if(!local&&supabase){const {data,error:authError}=await supabase.auth.getSession();if(authError)throw new Error('无法读取登录信息，请重新登录。');token=data.session?.access_token;}
+      const basemap=await generateTrackBasemap(original,{token,signal:operation.signal});
+      if(current===revision.current&&currentValue.current===original&&!operation.signal.aborted)onChange({...original,basemap});
+    }catch(caught){if(current===revision.current)setError(caught.name==='AbortError'?'底图生成已取消或超时，原路线保留。请重试。':caught.message);}
+    finally{clearTimeout(timeout);if(current===revision.current){setBusy(false);busyCallback.current?.(false);}}
+  }
   return <section className="track-upload" aria-label="轨迹文件导入" aria-busy={busy}>
     <div className={`track-drop ${dragging?'is-dragging':''}`} onDragOver={e=>{e.preventDefault();if(!disabled&&!busy)setDragging(true)}} onDragLeave={()=>setDragging(false)} onDrop={e=>{e.preventDefault();setDragging(false);if(e.dataTransfer.files.length!==1){setError('请一次上传一个文件；一个文件中可包含多段轨迹。');return;}upload(e.dataTransfer.files[0]);}}>
       <Upload size={25} aria-hidden="true"/><div><h3>{value?'替换轨迹文件':'导入 GPX / KML'}</h3><p>拖放文件到这里，或点击选择。每个文件最多 5 MiB、30,000 点、100 段。</p></div>
-      <label className="btn" htmlFor={inputId}>{busy?'正在转换…':'选择轨迹文件'}</label>
+      <label className="btn" htmlFor={inputId}>{busy?'正在处理…':'选择轨迹文件'}</label>
       <input id={inputId} className="track-file-input" type="file" accept=".gpx,.kml" disabled={busy||disabled} onChange={e=>{upload(e.target.files[0]);e.target.value=''}}/>
     </div>
-    <p className="track-import-hint">分段路线显示在同一张地图，每段单独生成海拔图。KML 请使用绝对海拔；贴地或缺失海拔会标明未提供。</p>
-    {busy&&!pending&&<p role="status">后端正在读取坐标、海拔并计算各段数据… <button type="button" className="track-text-button" onClick={()=>controller.current?.abort()}>取消</button></p>}
+    <p className="track-import-hint">上传时自动生成覆盖路线的单张真实地图，随路线保存，查看时不再连接在线地图。分段路线同图显示、海拔分段；缺失海拔不会补造。</p>
+    {busy&&!pending&&<p role="status">正在处理路线并准备真实底图，请稍候… <button type="button" className="track-text-button" onClick={()=>controller.current?.abort()}>取消</button></p>}
     {pending&&<TrackMetricsDialog track={pending} onConfirm={next=>{onChange(next);setPending(null);setBusy(false);busyCallback.current?.(false)}} onCancel={()=>{setPending(null);setBusy(false);busyCallback.current?.(false)}}/>}
     {value&&!pending&&(resolvedTrackMetrics(value).distanceM===null||resolvedTrackMetrics(value).ascentM===null)&&<button type="button" disabled={busy||disabled} onClick={()=>{setPending(value);setBusy(true);busyCallback.current?.(true)}}>补充缺失路线参数</button>}
     {error&&<p role="alert" className="track-import-error">{error}</p>}
     {value?.location&&<div className="track-location-info" role="status"><strong>省市自动识别</strong><p>{value.location.locations?.length ? [...new Set(value.location.locations.map(place=>`${place.province || ''} ${place.city || ''}`.trim()))].join(' / ') : '未匹配到省市边界，请核实坐标和轨迹位置。'}</p>{value.location.locationStatus!=='matched'&&<small>部分点位未能确定行政区。请在 Debug 查看并核实，不会按最近城市猜测归属。</small>}</div>}
-    {value&&<><div className="track-import-result"><div><strong>{value.name}</strong><span>{value.sourceFile} · {value.pointCount.toLocaleString()} 个点 · {value.segmentCount} 段</span></div><div className="track-import-actions"><button type="button" onClick={()=>downloadTrackJson(value,true)}><Download size={15}/>GeoJSON</button><button type="button" onClick={()=>downloadTrackJson(value)}><Download size={15}/>完整结果</button><button type="button" disabled={disabled||busy} onClick={()=>{onChange(null);setError('')}}><Trash2 size={15}/>移除</button></div></div><TrackVisualization track={value}/></>}
+    {value&&<><div className="track-import-result"><div><strong>{value.name}</strong><span>{value.sourceFile} · {value.pointCount.toLocaleString()} 个点 · {value.segmentCount} 段</span></div><div className="track-import-actions"><button type="button" disabled={disabled||busy} onClick={prepareMap}>{hasBasemap?'更新底图':'生成底图'}</button><button type="button" onClick={()=>downloadTrackJson(value,true)}><Download size={15}/>GeoJSON</button><button type="button" onClick={()=>downloadTrackJson(value)}><Download size={15}/>完整结果</button><button type="button" disabled={disabled||busy} onClick={()=>{onChange(null);setError('')}}><Trash2 size={15}/>移除</button></div></div><TrackVisualization track={value}/></>}
   </section>;
 }
