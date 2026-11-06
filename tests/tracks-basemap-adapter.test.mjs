@@ -3,12 +3,11 @@ import {once} from 'node:events';
 import {createServer} from 'node:http';
 import {test} from 'node:test';
 import {tracksVitePlugin} from '../server/tracks/vite-plugin.mjs';
+import {archiveResponse, catalogUrl} from './fixtures/pmtiles-basemap.mjs';
 
 const env = {SUPABASE_URL: 'https://project.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_adapter_fixture'};
 const authUrl = 'https://project.supabase.co/auth/v1/user';
-const overpassUrl = 'https://overpass.private.coffee/api/interpreter';
 const geojson = {type: 'LineString', coordinates: [[114, 22], [114.01, 22.01]]};
-const data = {elements: [{type: 'way', id: 1, tags: {highway: 'path'}, geometry: [{lon: 114, lat: 22}, {lon: 114.01, lat: 22.01}]}]};
 async function listen(t, hook, options) {
   let middleware;
   tracksVitePlugin(options)[hook]({middlewares: {use(handler) {middleware = handler;}}});
@@ -24,22 +23,24 @@ test('both Vite adapters authenticate before preparing a static basemap with the
     const origin = await listen(t, hook, {env, fetchImpl: async (url, options) => {
       requests.push({url, options});
       if (url === authUrl) return Response.json({id: 'synthetic-admin', app_metadata: {role: 'admin'}});
-      assert.equal(url, overpassUrl);
       assert.equal(new Headers(options.headers).get('authorization'), null);
       assert.equal(new Headers(options.headers).get('apikey'), null);
-      return Response.json(data);
+      return archiveResponse(url, options);
     }});
     const response = await fetch(`${origin}/api/tracks/basemap`, {method: 'POST', headers: {origin, authorization: 'Bearer synthetic-adapter', 'content-type': 'application/json'}, body: JSON.stringify({geojson})});
     const result = await response.json();
     assert.equal(response.status, 200, JSON.stringify(result));
     assert.equal(result.basemap.projection, 'EPSG:3857');
     assert.match(result.basemap.image, /^data:image\/svg\+xml;base64,/);
-    assert.deepEqual(requests.map(request => request.url), [authUrl, overpassUrl]);
+    assert.deepEqual(requests.slice(0, 2).map(request => request.url), [authUrl, catalogUrl]);
+    assert.ok(requests.length > 2, 'the actual archive protocol loads header and vector tile ranges');
+    for (const request of requests.slice(2)) assert.match(new Headers(request.options.headers).get('range'), /^bytes=\d+-\d+$/);
+    const authorizedRequests = requests.length;
     assert.equal(requests[0].options.headers.authorization, 'Bearer synthetic-adapter');
     const rejected = await fetch(`${origin}/api/tracks/basemap`, {method: 'POST', headers: {origin, 'content-type': 'application/json'}, body: JSON.stringify({geojson})});
     assert.equal(rejected.status, 401);
     assert.equal((await rejected.json()).error.code, 'AUTH_REQUIRED');
-    assert.equal(requests.length, 2, 'missing identity must stop before Auth or map data requests');
+    assert.equal(requests.length, authorizedRequests, 'missing identity must stop before Auth or map data requests');
   });
 });
 

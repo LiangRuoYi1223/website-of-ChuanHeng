@@ -15,7 +15,7 @@ const xml = (name, offset = 0, elevations = true) => `<gpx><trk><name>${name}</n
 async function fixture(name, offset, elevations = true) {
   const track = convertTrack(xml(name, offset, elevations), {filename: `${name}.gpx`});
   const points = track.geojson.geometry.coordinates[0];
-  const basemap = await createRouteBasemap(track.geojson, {now: Date.parse('2026-11-06T00:00:00Z'), fetchImpl: async () => Response.json({elements: [{type: 'way', id: 1, tags: {highway: 'path'}, geometry: points.map(([lon, lat]) => ({lon, lat}))}]})});
+  const basemap = await createRouteBasemap(track.geojson, {now: Date.parse('2026-11-06T00:00:00Z'), loadElements: async () => ({elements: [{type: 'way', id: 1, tags: {highway: 'path'}, geometry: points.map(([lon, lat]) => ({lon, lat}))}]})});
   return {legacy: track, prepared: {...track, basemap}, basemap};
 }
 const first = await fixture('原合成路线', 0), second = await fixture('新合成路线', .1), missingElevation = await fixture('缺失海拔合成路线', .2, false);

@@ -75,11 +75,28 @@ test('only finite pixels inside the saved image can be produced or highlighted',
 
 test('actual server-generated roads and escaped place labels remain displayable and aligned', async () => {
   const geojson = { type: 'Feature', geometry: { type: 'LineString', coordinates: [[114, 22], [114.01, 22.01]] } };
-  const generated = await createRouteBasemap(geojson, { now: () => Date.parse('2026-11-06T00:00:00Z'), fetchImpl: async () => Response.json({ elements: [
+  const generated = await createRouteBasemap(geojson, { now: () => Date.parse('2026-11-06T00:00:00Z'), loadElements: async () => ({ elements: [
     { type: 'way', tags: { highway: 'path' }, geometry: [{ lon: 114, lat: 22 }, { lon: 114.01, lat: 22.01 }] },
     { type: 'node', tags: { place: 'village', name: '合成地名 & <测试>' }, lon: 114.005, lat: 22.005 },
   ] }) });
   assert.ok(readCachedBasemap(generated));
   const model = buildCachedTrackMapModel({ basemap: generated, geojson }); assert.ok(model);
   for (const point of model.segments[0].points) assert.ok(point.x > 0 && point.x < 1000 && point.y > 0 && point.y < 600);
+});
+
+test('new archive provenance is retained while legacy saved maps remain readable',()=>{
+  const modern={...basemap(),source:'Protomaps / OpenStreetMap',sourceArchive:'https://build.protomaps.com/20261106.pmtiles',sourceVersion:'4.15.2',sourceZoom:12};
+  const value=readCachedBasemap(modern);assert.ok(value);assert.equal(value.sourceArchive,modern.sourceArchive);assert.equal(value.sourceVersion,'4.15.2');assert.equal(value.sourceZoom,12);
+  assert.ok(readCachedBasemap(basemap()));
+  for(const change of [{sourceArchive:'https://other.invalid/maps.pmtiles'},{sourceArchive:'https://build.protomaps.com/../../private'},{sourceVersion:'<script>'},{sourceZoom:30}])assert.equal(readCachedBasemap({...modern,...change}),null);
+});
+
+test('real polygon holes survive image generation and passive SVG validation',async()=>{
+  const points=[[114,22],[114.01,22.01]], ring=coordinates=>coordinates.map(([lon,lat])=>({lon,lat}));
+  const geojson={type:'Feature',geometry:{type:'LineString',coordinates:points}};
+  const generated=await createRouteBasemap(geojson,{loadElements:async()=>({elements:[{type:'way',tags:{natural:'water'},geometry:ring([[113.99,21.99],[114.02,21.99],[114.02,22.02],[113.99,22.02],[113.99,21.99]]),holes:[ring([[114.004,22.004],[114.006,22.004],[114.006,22.006],[114.004,22.006],[114.004,22.004]])]}]})});
+  assert.ok(readCachedBasemap(generated));
+  const svg=Buffer.from(generated.image.split(',')[1],'base64').toString('utf8');
+  assert.match(svg,/fill-rule="evenodd"/);
+  const area=svg.match(/<path d="([^"]+)" fill-rule/)[1];assert.equal((area.match(/M/g)||[]).length,2,'an inner ring cuts out its real island instead of painting solid water');
 });

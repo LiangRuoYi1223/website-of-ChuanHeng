@@ -2,13 +2,16 @@
 
 用户于2026-11-06选择单张覆盖路线的地图图片。现行路线/活动查看器不再使用在线 XYZ 瓦片，也不依赖旧 `VITE_TERRAIN_TILE_*` 配置。
 
+当前数据来自 Protomaps 官方开放 PMTiles 归档。上传时按区域读取必要部分并自行绘图，不依赖实时 Overpass 查询服务；实际归档与版本随图片保存。实现和许可见 [当前数据来源](../../server/basemaps/PROTOMAPS_SOURCE.md)。
+
 - 路线管理上传 GPX/KML 时，由同源后端验证可信领队/管理员，再从真实 OpenStreetMap 要素生成一张 1000×600 SVG。图片、精确 WGS84 范围、EPSG:3857 投影、生成时间、来源和许可保存在 `track.basemap`。
 - 已有路线在路线编辑中点击“生成底图”，成功后仍需保存路线；生成失败、取消、换轨或旧请求迟到都不能替换当前编辑。更新底图使用新对象，活动继续保留选择路线时的历史快照。
 - 查看路线库、路线详情或活动详情，只读取随路线保存的图片并按同一 Mercator 范围叠加原始轨迹。段与段保持断开，选段与海拔采样点高亮保留；单张图片不提供缩放和平移。
 - 仅接受经过大小、元数据、被动 SVG 元素与属性校验的本地 Data URL；不接受外部图像地址、脚本、外部引用或任意 HTML。缺图、图像无效或加载失败时明确提示并展示真实坐标图，不用示意地形冒充地图。
+- 对没有底图的旧轨迹，若所有实际坐标均被网站已保存的公共区域参考图覆盖，则直接显示“本地参考底图”。已有但无效的底图仍明确提示；参考选择不依赖名称、不更改轨迹或活动快照。[参考图来源](../assets/maps/SOURCE.md)保留实际数据文件与许可记录。
 - 图片绘制真实道路、水系、封闭水域/植被区域及命名地点，不推测等高线、行政归属或通行情况。地图数据、服务边界和请求限制详见 [服务端来源说明](../../server/basemaps/SOURCE.md)。
 
-保留可见、可点击的 [© OpenStreetMap contributors](https://www.openstreetmap.org/copyright) 与 ODbL 许可说明，图片内部也含署名。仅一次授权生成过程需要地图数据服务可达；已经保存的图片查看不依赖该服务。
+保留可见、可点击的 [© OpenStreetMap contributors](https://www.openstreetmap.org/copyright)、[Protomaps](https://protomaps.com) 与 ODbL 许可说明，图片内部也含署名。仅一次授权生成过程需要开放地图文件可达；已经保存的图片查看不依赖该来源。
 
 本站没有下载或预抓 `tile.openstreetmap.org` 标准瓦片。[OSMF 瓦片策略](https://operations.osmfoundation.org/policies/tiles/)禁止该服务的离线预抓，开放数据许可不等于标准瓦片服务器的离线使用许可。此前默认 OSM Standard 在线瓦片方案已由本静态方案替代。
 

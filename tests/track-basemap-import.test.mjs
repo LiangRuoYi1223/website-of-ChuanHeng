@@ -4,7 +4,7 @@ import * as client from '../src/tracks/import-client.js';
 import { createRouteBasemap } from '../server/basemaps/create-route-basemap.mjs';
 
 const track = {version:1,name:'合成路线',pointCount:2,segmentCount:1,stats:{distanceM:1500,ascentM:20},profile:[],segments:[],geojson:{type:'Feature',geometry:{type:'MultiLineString',coordinates:[[[114,22,10],[114.01,22.01,30]]]}}};
-const basemap = await createRouteBasemap(track.geojson,{fetchImpl:async()=>Response.json({elements:[{type:'way',tags:{highway:'path'},geometry:[{lon:114,lat:22},{lon:114.01,lat:22.01}]}]})});
+const basemap = await createRouteBasemap(track.geojson,{loadElements:async()=>({elements:[{type:'way',tags:{highway:'path'},geometry:[{lon:114,lat:22},{lon:114.01,lat:22.01}]}]})});
 
 test('route upload explicitly prepares and validates its single saved basemap',async()=>{
   let calls=0;

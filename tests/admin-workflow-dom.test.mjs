@@ -63,7 +63,7 @@ const fixtures = new Map([
 ]);
 for (const [filename, fixture] of fixtures) {
   fixture.track = convertTrack(fixture.xml, { filename });
-  fixture.track.basemap = await createRouteBasemap(fixture.track.geojson,{fetchImpl:async()=>Response.json({elements:fixture.track.geojson.geometry.coordinates.map(segment=>({type:'way',tags:{highway:'path'},geometry:segment.map(([lon,lat])=>({lon,lat}))}))})});
+  fixture.track.basemap = await createRouteBasemap(fixture.track.geojson,{loadElements:async()=>({elements:fixture.track.geojson.geometry.coordinates.map(segment=>({type:'way',tags:{highway:'path'},geometry:segment.map(([lon,lat])=>({lon,lat}))}))})});
   fixture.track.location = { coordinates: fixture.track.geojson.geometry.coordinates[0][0].slice(0, 2), province: '四川省', city: fixture.status === 'matched' ? '成都市' : null, adcode: null, locations: [{ province: '四川省', city: fixture.status === 'matched' ? '成都市' : null, segmentIndex: 0 }], locationStatus: fixture.status, source: 'synthetic-test-location' };
 }
 const requests = [];

@@ -5,6 +5,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
+import {archiveResponse, catalogUrl, archiveEtag, archive} from './fixtures/pmtiles-basemap.mjs';
 
 const root = realpathSync(fileURLToPath(new URL('../', import.meta.url)));
 const configuration = JSON.parse(readFileSync(join(root, 'wrangler.jsonc'), 'utf8'));
@@ -109,8 +110,6 @@ test('bundled production Worker rejects Auth redirects without sending credentia
   assert.doesNotMatch(JSON.stringify(body), /runtime-test-access-token|sb_publishable_runtime_test_key/);
 });
 
-const overpassUrl = 'https://overpass.private.coffee/api/interpreter';
-const mapData = {elements: [{type: 'way', id: 1, tags: {highway: 'path'}, geometry: [{lon: 114, lat: 22}, {lon: 114.01, lat: 22.01}]}]};
 const geometry = {type: 'LineString', coordinates: [[114, 22], [114.01, 22.01]]};
 function storedBasemap(worker, {authorization = `Bearer ${accessToken}`, requestOrigin = origin} = {}) {
   return worker.dispatchFetch(`${origin}/api/tracks/basemap`, {
@@ -133,26 +132,29 @@ function assertSavedBasemap(map) {
   assert.doesNotMatch(svg, /\b(?:href|onload)=|<(?:image|script|foreignObject)\b|url\(/);
 }
 
-test('workerd basemap upload authenticates first and stores one static Overpass image without leaking Auth headers', {timeout: 30000}, async t => {
+test('workerd basemap upload authenticates before PMTiles Range reads and stores one static image without leaking Auth headers', {timeout: 30000}, async t => {
   const requests = [];
   const worker = await runtime(t, async request => {
-    requests.push({url: request.url, method: request.method, authorization: request.headers.get('authorization'), apikey: request.headers.get('apikey')});
+    requests.push({url: request.url, method: request.method, authorization: request.headers.get('authorization'), apikey: request.headers.get('apikey'), range: request.headers.get('range')});
     if (request.url === authUrl) return Response.json({id: 'synthetic-admin', app_metadata: {role: 'admin'}});
-    assert.equal(request.url, overpassUrl);
-    const query = new URLSearchParams(await request.text()).get('data');
-    assert.match(query, /\[out:json\]/);
-    assert.doesNotMatch(query, /Synthetic runtime fixture|runtime-test-access-token|sb_publishable/);
-    return Response.json(mapData);
+    assert.doesNotMatch(request.url, /Synthetic runtime fixture|runtime-test-access-token|sb_publishable/);
+    return archiveResponse(request);
   });
   const response = await upload(worker, {query: '?basemap=1'});
   const body = await response.json();
   assert.equal(response.status, 200, JSON.stringify(body));
   assert.equal(body.track.pointCount, 2);
   assertSavedBasemap(body.track.basemap);
-  assert.deepEqual(requests, [
-    {url: authUrl, method: 'GET', authorization: `Bearer ${accessToken}`, apikey: publishableKey},
-    {url: overpassUrl, method: 'POST', authorization: null, apikey: null},
-  ]);
+  assert.deepEqual(requests[0], {url: authUrl, method: 'GET', authorization: `Bearer ${accessToken}`, apikey: publishableKey, range: null});
+  assert.equal(requests[1].url, catalogUrl);
+  assert.ok(requests.length >= 3, 'the real archive reader requests its header and tile byte ranges');
+  for (const request of requests.slice(1)) {
+    assert.equal(request.method, 'GET'); assert.equal(request.authorization, null); assert.equal(request.apikey, null);
+    if (request.url !== catalogUrl) {
+      assert.match(request.url, /^https:\/\/build\.protomaps\.com\/\d{8}\.pmtiles$/);
+      assert.match(request.range, /^bytes=\d+-\d+$/);
+    }
+  }
 });
 
 test('workerd stored-route basemap shares same-origin trusted-role checks and rejects token-free uploads before any map request', {timeout: 30000}, async t => {
@@ -161,10 +163,7 @@ test('workerd stored-route basemap shares same-origin trusted-role checks and re
   const worker = await runtime(t, request => {
     requests.push(request.url);
     if (request.url === authUrl) return Response.json({id: 'synthetic-user', app_metadata: {role}, user_metadata: {role: 'admin'}});
-    assert.equal(request.url, overpassUrl);
-    assert.equal(request.headers.get('authorization'), null);
-    assert.equal(request.headers.get('apikey'), null);
-    return Response.json(mapData);
+    return archiveResponse(request);
   });
   for (const response of [
     await upload(worker, {query: '?basemap=1&preview=1', authorization: ''}),
@@ -184,28 +183,34 @@ test('workerd stored-route basemap shares same-origin trusted-role checks and re
   const body = await response.json();
   assert.equal(response.status, 200, JSON.stringify(body));
   assertSavedBasemap(body.basemap);
-  assert.deepEqual(requests, [authUrl, authUrl, overpassUrl]);
+  assert.deepEqual(requests.slice(0, 3), [authUrl, authUrl, catalogUrl]);
+  assert.ok(requests.slice(3).length > 0);
+  for (const url of requests.slice(3)) assert.match(url, /^https:\/\/build\.protomaps\.com\/\d{8}\.pmtiles$/);
 });
 
 test('workerd rejects oversized or failed basemap responses without returning a partial converted track', {timeout: 30000}, async t => {
   for (const [reply, status, code] of [
     [() => new Response('busy', {status: 429}), 503, 'BASEMAP_UNAVAILABLE'],
-    [() => new Response('x'.repeat(4 * 1024 * 1024 + 1)), 422, 'BASEMAP_DATA_TOO_LARGE'],
+    [() => new Response('x'.repeat(4 * 1024 * 1024 + 1), {status: 206, headers: {'content-length': String(4 * 1024 * 1024 + 1), 'content-range': `bytes 0-4194304/${archive.length}`, etag: archiveEtag}}), null, null],
   ]) {
     const requests = [];
     const worker = await runtime(t, request => {
       requests.push(request.url);
       if (request.url === authUrl) return Response.json({id: 'synthetic-admin', app_metadata: {role: 'admin'}});
-      assert.equal(request.url, overpassUrl);
+      if (request.url === catalogUrl) return archiveResponse(request);
+      assert.match(request.url, /^https:\/\/build\.protomaps\.com\/\d{8}\.pmtiles$/);
       return reply();
     });
     const response = await upload(worker, {query: '?basemap=1'});
     const body = await response.json();
-    assert.equal(response.status, status, JSON.stringify(body));
-    assert.equal(body.error.code, code);
+    if (status !== null) assert.equal(response.status, status, JSON.stringify(body));
+    else assert.ok(response.status >= 400, JSON.stringify(body));
+    if (code !== null) assert.equal(body.error.code, code);
+    else assert.match(body.error.code, /^BASEMAP_/);
     assert.equal(Object.hasOwn(body, 'track'), false, 'an incomplete map generation must not replace the prior route');
     assert.equal(Object.hasOwn(body, 'basemap'), false);
-    assert.deepEqual(requests, [authUrl, overpassUrl]);
+    assert.deepEqual(requests.slice(0, 2), [authUrl, catalogUrl]);
+    assert.equal(requests.length, 3, 'a failing archive read must not be retried');
     assert.doesNotMatch(JSON.stringify(body), /runtime-test-access-token|sb_publishable_runtime_test_key/);
   }
 });

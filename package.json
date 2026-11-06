@@ -12,10 +12,13 @@
     "deploy": "npm run build:production && wrangler deploy --keep-vars"
   },
   "dependencies": {
+    "@mapbox/vector-tile": "3.0.0",
     "@supabase/supabase-js": "2.78.0",
     "fast-xml-parser": "5.11.2",
     "leaflet": "1.9.4",
     "lucide-react": "0.468.0",
+    "pbf": "5.1.2",
+    "pmtiles": "4.5.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-router-dom": "7.18.5"

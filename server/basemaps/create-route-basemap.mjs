@@ -1,11 +1,10 @@
 import { TrackError } from '../tracks/parse.mjs';
+import { loadBasemapElements } from './pmtiles-source.mjs';
 
-export const OVERPASS_URL = 'https://overpass.private.coffee/api/interpreter';
 export const MAX_BASEMAP_SVG_BYTES = 256 * 1024;
-export const MAX_BASEMAP_DATA_BYTES = 4 * 1024 * 1024;
 const WIDTH = 1000, HEIGHT = 600, RADIUS = 6378137, RAD = Math.PI / 180;
 const LATITUDE_LIMIT = 85.05112878;
-const MAX_ELEMENTS = 6000, MAX_DATA_POINTS = 60000, DEADLINE_MS = 20000;
+const MAX_ELEMENTS = 6000, MAX_DATA_POINTS = 60000, DEADLINE_MS = 30000;
 const fail = (code, message, status = 422) => { throw new TrackError(code, message, status); };
 const validPoint = point => Array.isArray(point) && point.length >= 2 && Number.isFinite(point[0]) && Number.isFinite(point[1]) && Math.abs(point[0]) <= 180 && Math.abs(point[1]) <= 90;
 const project = ([longitude, latitude]) => [RADIUS * longitude * RAD, RADIUS * Math.log(Math.tan(Math.PI / 4 + latitude * RAD / 2))];
@@ -125,8 +124,16 @@ function renderMap(data, frame) {
     if ((water || green || tags.natural === 'wetland') && coordinates.length >= 4 && same(coordinates[0], coordinates.at(-1))) {
       const polygon = clipPolygon(pixels);
       if (polygon.length >= 3) {
-        const path = `M${polygon.map(point => point.map(number).join(',')).join('L')}Z`;
-        areas.push(`<path d="${path}" fill="${water ? '#a8d0df' : tags.natural === 'wetland' ? '#c9ddd5' : '#d0dfc5'}" stroke="${water ? '#78a9bb' : '#b4c9a6'}" stroke-width="0.6"/>`);
+        const rings=[polygon];
+        for(const hole of element.holes || []) {
+          if(!Array.isArray(hole)||hole.length<4||!hole.every(point=>validPoint([point?.lon,point?.lat])&&Math.abs(point.lat)<LATITUDE_LIMIT)||!same([hole[0].lon,hole[0].lat],[hole.at(-1).lon,hole.at(-1).lat])) fail('BASEMAP_INVALID_RESPONSE','地图区域边界无效，请稍后重试。',502);
+          pointCount+=hole.length;
+          if(pointCount>MAX_DATA_POINTS)fail('BASEMAP_DATA_TOO_LARGE','此范围地图坐标过多，请缩小路线范围后重试。');
+          const clipped=clipPolygon(hole.map(point=>frame.pixel([point.lon,point.lat])));
+          if(clipped.length>=3)rings.push(clipped);
+        }
+        const path = rings.map(ring=>`M${ring.map(point => point.map(number).join(',')).join('L')}Z`).join('');
+        areas.push(`<path d="${path}" fill-rule="evenodd" fill="${water ? '#a8d0df' : tags.natural === 'wetland' ? '#c9ddd5' : '#d0dfc5'}" stroke="none"/>`);
         featureCount++;
       }
     }
@@ -143,7 +150,7 @@ function renderMap(data, frame) {
     }
   }
   if (!featureCount) fail('BASEMAP_NO_FEATURES', '此范围暂无可用的真实地图要素，未生成替代示意图。');
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}"><rect width="${WIDTH}" height="${HEIGHT}" fill="#ebe9df"/><g stroke-linecap="round" stroke-linejoin="round">${areas.join('')}${waterways.join('')}${roads.join('')}</g><g font-family="sans-serif">${labels.join('')}<rect x="0" y="578" width="1000" height="22" fill="#f6f3e9"/><text x="990" y="593" text-anchor="end" font-size="11" fill="#4b5b51">© OpenStreetMap contributors · ODbL · openstreetmap.org/copyright</text></g></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}"><rect width="${WIDTH}" height="${HEIGHT}" fill="#ebe9df"/><g stroke-linecap="round" stroke-linejoin="round">${areas.join('')}${waterways.join('')}${roads.join('')}</g><g font-family="sans-serif">${labels.join('')}<rect x="0" y="578" width="1000" height="22" fill="#f6f3e9"/><text x="990" y="593" text-anchor="end" font-size="11" fill="#4b5b51">© OpenStreetMap contributors · Protomaps · ODbL · openstreetmap.org/copyright</text></g></svg>`;
   const bytes = new TextEncoder().encode(svg);
   if (bytes.byteLength > MAX_BASEMAP_SVG_BYTES) fail('BASEMAP_IMAGE_TOO_LARGE', '底图图片超过 256 KiB，请缩小路线范围后重试。');
   let binary = '';
@@ -151,54 +158,28 @@ function renderMap(data, frame) {
   return `data:image/svg+xml;base64,${btoa(binary)}`;
 }
 
-function queryFor([west, south, east, north]) {
-  const bbox = [south, west, north, east].join(',');
-  return `[out:json][timeout:15][maxsize:16777216];(way["highway"](${bbox});way["waterway"](${bbox});way["natural"~"^(water|wood|scrub|wetland)$"](${bbox});way["landuse"~"^(forest|reservoir|meadow|grass)$"](${bbox});node["place"~"^(city|town|village|hamlet|suburb|locality)$"](${bbox});node["natural"~"^(peak|saddle)$"](${bbox}););out body geom;`;
-}
-
-export async function createRouteBasemap(geojson, { fetchImpl = fetch, signal, now = Date.now, timeoutMs = DEADLINE_MS } = {}) {
+export async function createRouteBasemap(geojson, { fetchImpl = fetch, signal, now = Date.now, timeoutMs = DEADLINE_MS, loadElements = loadBasemapElements } = {}) {
   const frame = frameFor(geojson);
   const generatedAt = new Date(typeof now === 'function' ? now() : now).toISOString();
   if (signal?.aborted) fail('BASEMAP_CANCELLED', '底图准备已取消，原路线保留。', 408);
   const controller = new AbortController();
-  let reader, timer, rejectDeadline;
-  const cancelReader = () => { try { Promise.resolve(reader?.cancel()).catch(() => {}); } catch { /* reader already closed */ } };
+  let timer, rejectDeadline;
   const deadline = new Promise((_, reject) => {
     rejectDeadline = reject;
     const supplied = Number(timeoutMs);
-    timer = setTimeout(() => { reject(new TrackError('BASEMAP_TIMEOUT', '地图服务响应超时，原路线保留，请稍后重试。', 504)); controller.abort(); cancelReader(); }, Number.isFinite(supplied) && supplied > 0 ? Math.min(supplied, DEADLINE_MS) : DEADLINE_MS);
+    timer = setTimeout(() => { reject(new TrackError('BASEMAP_TIMEOUT', '地图资源读取超时，原路线保留，请稍后重试。', 504)); controller.abort(); }, Number.isFinite(supplied) && supplied > 0 ? Math.min(supplied, DEADLINE_MS) : DEADLINE_MS);
   });
-  const abort = () => { rejectDeadline(new TrackError('BASEMAP_CANCELLED', '底图准备已取消，原路线保留。', 408)); controller.abort(); cancelReader(); };
+  const abort = () => { rejectDeadline(new TrackError('BASEMAP_CANCELLED', '底图准备已取消，原路线保留。', 408)); controller.abort(); };
   signal?.addEventListener('abort', abort, { once: true });
   try {
     return await Promise.race([deadline, (async () => {
-      const response = await fetchImpl(OVERPASS_URL, { method: 'POST', redirect: 'manual', signal: controller.signal,
-        headers: { accept: 'application/json', 'content-type': 'application/x-www-form-urlencoded;charset=UTF-8', 'user-agent': 'ChuanhengRouteBasemap/1.0 (+https://github.com/LiangRuoYi1223/website-of-ChuanHeng)' }, body: new URLSearchParams({ data: queryFor(frame.bounds) }).toString() });
-      if (!response.ok || controller.signal.aborted) { try { await response.body?.cancel(); } catch { /* no body */ } fail('BASEMAP_UNAVAILABLE', '地图数据服务暂时不可用，请稍后重试。', 503); }
-      const declared = response.headers.get('content-length');
-      if (declared && /^\d+$/.test(declared) && Number(declared) > MAX_BASEMAP_DATA_BYTES) { try { await response.body?.cancel(); } catch { /* no body */ } fail('BASEMAP_DATA_TOO_LARGE', '此范围地图数据过大，请缩小路线范围后重试。'); }
-      reader = response.body?.getReader();
-      let size = 0;
-      const chunks = [];
-      if (reader) try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          size += value.byteLength;
-          if (size > MAX_BASEMAP_DATA_BYTES) { cancelReader(); fail('BASEMAP_DATA_TOO_LARGE', '此范围地图数据过大，请缩小路线范围后重试。'); }
-          chunks.push(value);
-        }
-      } finally { try { reader.releaseLock(); } catch { /* deadline already cancelled */ } }
+      const data = await loadElements(frame.bounds,{fetchImpl,signal:controller.signal});
       if (controller.signal.aborted) fail('BASEMAP_CANCELLED', '底图准备已取消，原路线保留。', 408);
-      const bytes = new Uint8Array(size);
-      let offset = 0;
-      for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
-      let data;
-      try { data = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); }
-      catch { fail('BASEMAP_INVALID_RESPONSE', '地图服务返回了无效数据，请稍后重试。', 502); }
       const image = renderMap(data, frame);
+      const sourceArchive=data.archive || data.sourceArchive;
       return { version: 1, format: 'svg', image, bounds: frame.bounds, projection: 'EPSG:3857', width: WIDTH, height: HEIGHT,
-        attribution: '© OpenStreetMap contributors', source: 'OpenStreetMap / Overpass API', license: 'ODbL-1.0', licenseUrl: 'https://www.openstreetmap.org/copyright', generatedAt };
+        attribution: '© OpenStreetMap contributors', source: 'Protomaps / OpenStreetMap', license: 'ODbL-1.0', licenseUrl: 'https://www.openstreetmap.org/copyright', generatedAt,
+        ...(sourceArchive?{sourceArchive,sourceVersion:data.sourceVersion,sourceZoom:data.zoom}:{}) };
     })()]);
   } catch (error) {
     if (error instanceof TrackError) throw error;

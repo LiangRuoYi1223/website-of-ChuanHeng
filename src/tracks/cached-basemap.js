@@ -8,7 +8,7 @@ const MAX_TRACK_SEGMENTS = 100;
 const PREFIX = 'data:image/svg+xml;base64,';
 const LATITUDE_LIMIT = 85.05112878;
 const ATTRIBUTION = '© OpenStreetMap contributors';
-const SOURCE = 'OpenStreetMap / Overpass API';
+const SOURCES = ['OpenStreetMap / Overpass API','Protomaps / OpenStreetMap'];
 const LICENSE_URL = 'https://www.openstreetmap.org/copyright';
 const mercatorY = latitude => Math.log(Math.tan(Math.PI / 4 + latitude * Math.PI / 360));
 const parser = new XMLParser({ preserveOrder: true, ignoreAttributes: false, attributeNamePrefix: '', parseTagValue: false, parseAttributeValue: false, processEntities: false, trimValues: false });
@@ -25,6 +25,7 @@ const attributes = {
   'stroke-dasharray': value => /^[\d. ]+$/.test(value),
   'font-family': value => value === 'sans-serif',
   'paint-order': value => value === 'stroke',
+  'fill-rule': value => value === 'evenodd',
   'text-anchor': value => ['start', 'middle', 'end'].includes(value),
   d: value => /^[MLZmlz\d.,\s-]+$/.test(value),
 };
@@ -64,9 +65,13 @@ export function readCachedBasemap(value) {
   if (west < -180 || east > 180 || west >= east || south <= -LATITUDE_LIMIT || north >= LATITUDE_LIMIT || south >= north) return null;
   const lower = mercatorY(south), upper = mercatorY(north);
   if (!Number.isFinite(lower) || !Number.isFinite(upper) || !(upper > lower)) return null;
-  if (value.attribution !== ATTRIBUTION || value.source !== SOURCE || !Number.isFinite(scheduleInstant(value.generatedAt))) return null;
+  if (value.attribution !== ATTRIBUTION || !SOURCES.includes(value.source) || !Number.isFinite(scheduleInstant(value.generatedAt))) return null;
   if (value.license != null && value.license !== 'ODbL-1.0' || value.licenseUrl != null && value.licenseUrl !== LICENSE_URL || !passiveSvg(value.image)) return null;
-  return { version: 1, format: 'svg', image: value.image, bounds: [...bounds], projection: 'EPSG:3857', width: 1000, height: 600, attribution: ATTRIBUTION, source: SOURCE, license: 'ODbL-1.0', licenseUrl: LICENSE_URL, generatedAt: value.generatedAt };
+  const provenance={};
+  if(value.sourceArchive!=null){if(value.source!=='Protomaps / OpenStreetMap'||typeof value.sourceArchive!=='string'||!/^https:\/\/build\.protomaps\.com\/\d{8}\.pmtiles$/.test(value.sourceArchive))return null;provenance.sourceArchive=value.sourceArchive;}
+  if(value.sourceVersion!=null){if(typeof value.sourceVersion!=='string'||!/^\d+\.\d+\.\d+$/.test(value.sourceVersion))return null;provenance.sourceVersion=value.sourceVersion;}
+  if(value.sourceZoom!=null){if(!Number.isInteger(value.sourceZoom)||value.sourceZoom<0||value.sourceZoom>15)return null;provenance.sourceZoom=value.sourceZoom;}
+  return { version: 1, format: 'svg', image: value.image, bounds: [...bounds], projection: 'EPSG:3857', width: 1000, height: 600, attribution: ATTRIBUTION, source: value.source, license: 'ODbL-1.0', licenseUrl: LICENSE_URL, generatedAt: value.generatedAt,...provenance };
 }
 
 export function buildCachedTrackMapModel(track) {

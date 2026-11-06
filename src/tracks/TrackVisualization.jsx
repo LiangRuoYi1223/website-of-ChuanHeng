@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useState } from 'react';
 import { AlertCircle, ArrowDownToLine, Check, Compass, LocateFixed, Map, Mountain, Route } from 'lucide-react';
 import { buildElevationModel, buildTrackMapModel, formatKilometers, formatMeters, nearestProfileIndex } from './visualization-helpers.js';
-import { buildCachedTrackMapModel } from './cached-basemap.js';
+import { resolveTrackBasemap } from './reference-basemaps.js';
 import CachedTrackMap from './CachedTrackMap.jsx';
 import './track-visualization.css';
 
@@ -76,7 +76,7 @@ function ElevationSection({ section, active, onSelectPoint, onChooseSegment }) {
 
 export default function TrackVisualization({ track }) {
   const geometry = useMemo(() => buildTrackMapModel(track), [track]);
-  const cached = useMemo(() => buildCachedTrackMapModel(track), [track]);
+  const cached = useMemo(() => resolveTrackBasemap(track), [track]);
   const sections = useMemo(() => prepareSections(track, geometry), [track, geometry]);
   const [mode, setMode] = useState('saved');
   const [failedImage, setFailedImage] = useState(null);
@@ -85,6 +85,7 @@ export default function TrackVisualization({ track }) {
   const componentId = useId();
   const savedAvailable = cached && cached.basemap.image !== failedImage;
   const showSaved = mode === 'saved' && savedAvailable;
+  const basemapLabel = cached?.reference ? '本地参考底图' : '已保存底图';
   useEffect(() => { setSelectedSegment(null); setSelectedPoint(null); setFailedImage(null); setMode('saved'); }, [track]);
   function chooseSegment(index) { setSelectedSegment(index); setSelectedPoint(null); }
   function choosePoint(point, index) { setSelectedSegment(index); setSelectedPoint(point); }
@@ -94,11 +95,11 @@ export default function TrackVisualization({ track }) {
     <header className="tv-heading"><div><span className="tv-file-type"><Check size={13} aria-hidden="true" />已解析 {String(track.format || 'GPS').toUpperCase()}</span><h2>{track.name || '已导入轨迹'}</h2><p>{sourceFile && <span>{sourceFile} · </span>}{finite(track.pointCount) ? track.pointCount.toLocaleString('zh-CN') : geometry.segments.reduce((sum, segment) => sum + segment.points.length, 0)} 个轨迹点 · {geometry.segments.length} 段独立轨迹</p></div><span className="tv-real-data">来自导入文件</span></header>
     <TrackStatistics stats={{ ...track.stats, ...resolvedTrackMetrics(track) }} />
     {Object.values(resolvedTrackMetrics(track).sources).includes('administrator') && <p className="track-import-hint">缺失的路线指标由管理员补充；分段统计与海拔曲线仍使用原始轨迹。</p>}
-    <div className="tv-map-toolbar"><div className="tv-map-switch" role="group" aria-label="轨迹底图选择"><button type="button" aria-pressed={Boolean(showSaved)} onClick={() => setMode('saved')} disabled={!savedAvailable}><Map size={15} aria-hidden="true" />已保存底图</button><button type="button" aria-pressed={!showSaved} onClick={() => setMode('coordinate')}><Compass size={15} aria-hidden="true" />坐标轨迹</button></div></div>
-    {!savedAvailable && <div className="tv-map-notice" role="status"><AlertCircle size={16} aria-hidden="true" /><span>{failedImage ? '已保存底图暂时无法显示，当前展示真实坐标轨迹。' : track.basemap ? '已保存底图与轨迹不匹配或数据无效，当前展示真实坐标轨迹。' : '此轨迹尚未保存地图底图，当前仅显示本地坐标。'}</span></div>}
+    <div className="tv-map-toolbar"><div className="tv-map-switch" role="group" aria-label="轨迹底图选择"><button type="button" aria-pressed={Boolean(showSaved)} onClick={() => setMode('saved')} disabled={!savedAvailable}><Map size={15} aria-hidden="true" />{basemapLabel}</button><button type="button" aria-pressed={!showSaved} onClick={() => setMode('coordinate')}><Compass size={15} aria-hidden="true" />坐标轨迹</button></div></div>
+    {!savedAvailable && <div className="tv-map-notice" role="status"><AlertCircle size={16} aria-hidden="true" /><span>{failedImage ? `${basemapLabel}暂时无法显示，当前展示真实坐标轨迹。` : track.basemap ? '已保存底图与轨迹不匹配或数据无效，当前展示真实坐标轨迹。' : '此轨迹尚未保存地图底图，当前仅显示本地坐标。'}</span></div>}
     <div className="tv-map-frame">{showSaved ? <CachedTrackMap model={cached} selectedSegment={selectedSegment} selectedPoint={selectedPoint} onChooseSegment={chooseSegment} onError={() => setFailedImage(cached.basemap.image)} /> : <CoordinateTrack geometry={geometry} selectedSegment={selectedSegment} selectedPoint={selectedPoint} onChooseSegment={chooseSegment} />}</div>
-    <div className="tv-map-footer"><div className="tv-map-legend"><span><i className="is-start" />起点</span><span><i className="is-end" />终点</span><span><i className="is-route" />实际轨迹</span></div><span>{showSaved ? '已保存的单张地图 · 完整路线' : '本地坐标图，不含地图底图'}</span></div>
-    {showSaved && <p className="tv-basemap-credit"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a> · OpenStreetMap / Overpass API · ODbL</p>}
+    <div className="tv-map-footer"><div className="tv-map-legend"><span><i className="is-start" />起点</span><span><i className="is-end" />终点</span><span><i className="is-route" />实际轨迹</span></div><span>{showSaved ? cached.reference ? '本地参考底图 · 完整路线' : '已保存的单张地图 · 完整路线' : '本地坐标图，不含地图底图'}</span></div>
+    {showSaved && <p className="tv-basemap-credit"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a> · {cached.basemap.source==='Protomaps / OpenStreetMap'?<a href="https://protomaps.com" target="_blank" rel="noopener noreferrer">Protomaps</a>:'OpenStreetMap / Overpass API'} · ODbL</p>}
     <div className="tv-segment-selector" role="group" aria-label="高亮轨迹段"><button type="button" aria-pressed={selectedSegment === null} onClick={() => chooseSegment(null)}>全部轨迹 <span>{sections.length}</span></button>{sections.map(section => <button type="button" key={section.index} aria-pressed={selectedSegment === section.index} onClick={() => chooseSegment(section.index)}>{section.name}</button>)}</div>
     <div className="tv-profiles-heading"><div><h2>分段海拔</h2><p>每段从 0 km 开始，分别显示海拔与统计；地图保留所有段及其断点。</p></div><Mountain size={24} strokeWidth={1.3} aria-hidden="true" /></div>
     <div className="tv-elevation-list" id={`${componentId}-profiles`}>{sections.map(section => <ElevationSection key={`${track.sourceFile || track.name || ''}-${section.index}`} section={section} active={selectedSegment === section.index} onSelectPoint={choosePoint} onChooseSegment={chooseSegment} />)}</div>
