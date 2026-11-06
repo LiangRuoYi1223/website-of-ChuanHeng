@@ -12,9 +12,8 @@ import { OFFICIAL_BADGE } from '../Brand.jsx';
 import SiteImage,{SiteImageCredit} from '../site-images/SiteImage.jsx';
 
 const roleGroups = [
-  { name: '组织与协调', description: '让一次出发从想法成为可以执行的安排。' },
-  { name: '活动与训练', description: '关注路线、准备与团队协作，在实践中积累经验。' },
-  { name: '影像与传播', description: '记录同行的故事，让山野的记忆被更多人看见。' },
+  { name: '管理团队', description: '管理团队名单及分工介绍将在确认后发布。' },
+  { name: '领队', description: '领队名单及带队介绍将在确认后发布。' },
 ];
 
 export function AboutPage() {
@@ -49,12 +48,12 @@ export function AboutPage() {
       </section>
 
       <section className="section container c-team-section">
-        <SectionHeading title="每一次出发，都有人认真准备" description="从组织协调，到活动执行与影像记录。不同的角色，让同行成为可能。" />
+        <SectionHeading title="每一次出发，都有人认真准备" description="认识川衡的管理团队与领队。" />
         <div className="c-team-workspace">
-          <div className="c-role-options" aria-label="查看组织团队角色">
+          <div className="c-role-options" aria-label="查看管理团队与领队">
             {roleGroups.map((role, index) => <button type="button" key={role.name} aria-pressed={activeRole === index} onClick={() => setActiveRole(index)} className={activeRole === index ? 'is-active' : ''}><span>{role.name}</span><ArrowRight size={17} aria-hidden="true" /></button>)}
           </div>
-          <div className="c-role-panel" aria-live="polite"><Users size={27} strokeWidth={1.2} aria-hidden="true" /><h3>{roleGroups[activeRole].name}</h3><p>{roleGroups[activeRole].description}</p><EmptyState title="成员资料待发布" description="确认后的团队名单与角色介绍，将在这里与大家见面。" /></div>
+          <div className="c-role-panel" aria-live="polite"><Users size={27} strokeWidth={1.2} aria-hidden="true" /><h3>{roleGroups[activeRole].name}</h3><p>{roleGroups[activeRole].description}</p><EmptyState title="成员资料待发布" description="成员资料以协会确认后的正式发布为准。" /></div>
         </div>
       </section>
 

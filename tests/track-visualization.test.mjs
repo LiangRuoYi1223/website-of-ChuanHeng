@@ -190,11 +190,10 @@ test('a segment chart can use its own distance starting at zero while retaining 
 test('terrain configuration keeps default attribution and validates custom tile source credits', () => {
   const defaults = terrainTileConfiguration({});
   assert.equal(defaults.offline, false);
-  assert.match(defaults.url, /^https:\/\/.*opentopomap\.org\/\{z\}\/\{x\}\/\{y\}\.png$/);
+  assert.equal(defaults.url, 'https://tile.openstreetmap.org/{z}/{x}/{y}.png');
   assert.match(defaults.attribution, /OpenStreetMap/);
-  assert.match(defaults.attribution, /SRTM/);
-  assert.match(defaults.attribution, /OpenTopoMap/);
-  assert.match(defaults.attribution, /CC-BY-SA/);
+  assert.equal(defaults.maxZoom, 19);
+  assert.doesNotMatch(defaults.attribution, /SRTM|OpenTopoMap/);
   assert.equal(terrainTileConfiguration({ VITE_TERRAIN_TILE_URL: 'offline' }).offline, true);
   assert.equal(terrainTileConfiguration({ VITE_TERRAIN_TILE_URL: 'http://example.test/{z}/{x}/{y}.png', VITE_TERRAIN_TILE_ATTRIBUTION: 'test' }).offline, true);
   assert.equal(terrainTileConfiguration({ VITE_TERRAIN_TILE_URL: 'https://example.test/{z}/{x}.png', VITE_TERRAIN_TILE_ATTRIBUTION: 'test' }).offline, true);
@@ -263,7 +262,8 @@ test('SSR renders authoritative statistics and a separate elevation chart for ev
   const charts = [...html.matchAll(/<svg\b[^>]*aria-label="([^"]*海拔剖面)"/g)];
   assert.deepEqual(charts.map(match => match[1]), ['第一分段海拔剖面', '第二分段海拔剖面']);
   assert.match(html, /无地形背景/);
-  assert.match(html, /OpenTopoMap/);
+  assert.match(html, /地图底图/);
+  assert.doesNotMatch(html, /OpenTopoMap|SRTM/);
   assert.match(html, /OpenStreetMap/);
   assert.doesNotMatch(html, /undefined|NaN/);
 });

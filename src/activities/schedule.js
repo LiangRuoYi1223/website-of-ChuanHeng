@@ -50,10 +50,20 @@ export function formatActivityTime(value) {
   return new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(value));
 }
 
+export function formatActivityDate(value) {
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const calendar = new Date(`${value}T00:00:00Z`);
+    return Number.isFinite(calendar.getTime()) && calendar.toISOString().slice(0, 10) === value ? value.replaceAll('-', '/') : '待公布';
+  }
+  if (!Number.isFinite(scheduleInstant(value))) return '待公布';
+  return new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(value));
+}
+
 export function activityDateLabel(activity) {
-  if (Number.isFinite(scheduleInstant(activity?.dateStart))) {
-    const start = formatActivityTime(activity.dateStart);
-    return Number.isFinite(scheduleInstant(activity.dateEnd)) ? `${start} — ${formatActivityTime(activity.dateEnd)}` : start;
+  const start = formatActivityDate(activity?.dateStart);
+  if (start !== '待公布') {
+    const end = formatActivityDate(activity.dateEnd);
+    return end !== '待公布' && end !== start ? `${start} — ${end}` : start;
   }
   return activity?.date || activity?.dateStart || '日期待公布';
 }

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { activityDateLabel, effectiveActivityStatus, readActivitySchedule, toLocalDateTime } from '../src/activities/schedule.js';
+import { activityDateLabel, effectiveActivityStatus, formatActivityDate, formatActivityTime, readActivitySchedule, scheduleInstant, toLocalDateTime } from '../src/activities/schedule.js';
 
 const form = changes => new Map(Object.entries({ dateStart: '2026-11-10T08:30', dateEnd: '2026-11-10T18:00', registrationStart: '2026-11-01T09:00', registrationDeadline: '2026-11-09T20:00', registrationOpen: 'on', ...changes }));
 test('activity schedule saves local minute values as ISO instants and retains elapsed registration windows', () => {
@@ -29,8 +29,32 @@ test('effective status follows registration and activity boundaries without chan
   assert.equal(effectiveActivityStatus({ status: '已结束', dateStart: '2027-01-01' }), '已结束');
   assert.equal(effectiveActivityStatus({ status: '报名中' }), '报名中');
 });
-test('public date labels use actual times and keep the old date description when times are unknown', () => {
-  assert.match(activityDateLabel({ dateStart: '2026-11-10T00:30:00Z', dateEnd: '2026-11-10T10:00:00Z' }), /2026/);
+test('activity dates use Beijing calendar days across UTC midnight while registration keeps minutes', () => {
+  assert.equal(formatActivityDate('2026-11-09T16:30:45Z'), '2026/11/10');
+  assert.equal(formatActivityDate('2026-11-10T07:30:00-08:00'), '2026/11/10');
+  assert.equal(formatActivityTime('2026-11-09T16:30:45Z'), '2026/11/10 00:30');
+  for (const value of [undefined, null, '', '另行通知', '2026-02-30T09:00:00Z']) assert.equal(formatActivityDate(value), '待公布');
+});
+
+test('legacy calendar-only dates display their known day without creating a schedule instant', () => {
+  assert.equal(formatActivityDate('2026-11-10'), '2026/11/10');
+  assert.equal(formatActivityDate('2024-02-29'), '2024/02/29');
+  for (const value of ['2026-02-29', '2026-02-30', '2026-13-01', '2026-00-01', '2026-11-00', '2026-11-31', '2026-1-01']) assert.equal(formatActivityDate(value), '待公布');
+  assert.equal(Number.isNaN(scheduleInstant('2026-11-10')), true);
+  assert.equal(toLocalDateTime('2026-11-10'), '');
+  assert.equal(formatActivityTime('2026-11-10'), '待公布');
+});
+
+test('public date labels collapse the same Beijing day and show cross-day ranges without hours', () => {
+  assert.equal(activityDateLabel({ dateStart: '2026-11-09T16:30:00Z', dateEnd: '2026-11-10T10:00:00Z' }), '2026/11/10');
+  assert.equal(activityDateLabel({ dateStart: '2026-11-10T15:30:00Z', dateEnd: '2026-11-10T16:00:00Z' }), '2026/11/10 — 2026/11/11');
+  assert.equal(activityDateLabel({ dateStart: '2026-11-10T00:30:00Z' }), '2026/11/10');
+  assert.equal(activityDateLabel({ dateStart: '2026-11-10', dateEnd: '2026-11-10' }), '2026/11/10');
+  assert.equal(activityDateLabel({ dateStart: '2026-11-10', dateEnd: '2026-11-11' }), '2026/11/10 — 2026/11/11');
+});
+
+test('public date labels keep the old date description when times are unknown', () => {
   assert.equal(activityDateLabel({ date: '协会另行通知' }), '协会另行通知');
+  assert.equal(activityDateLabel({ dateStart: '协会另行通知' }), '协会另行通知');
   assert.equal(activityDateLabel({}), '日期待公布');
 });

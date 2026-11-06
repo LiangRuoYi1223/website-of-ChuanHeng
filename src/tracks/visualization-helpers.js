@@ -116,7 +116,7 @@ export function nearestProfileIndex(profile, distance, distanceKey = 'segmentDis
 
 const escapeMarkup = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
 
-// Sources checked 2026-10-31: https://opentopomap.org/about#verwendung
+// Sources checked 2026-11-06: BASEMAP_SOURCE.md and https://operations.osmfoundation.org/policies/tiles/
 // Leaflet 1.9.4 API: https://leafletjs.com/reference.html
 export function terrainTileConfiguration(environment = {}) {
   const url = String(environment.VITE_TERRAIN_TILE_URL || '').trim();
@@ -126,9 +126,9 @@ export function terrainTileConfiguration(environment = {}) {
   if (url && !credit) return { offline: true, reason: '自定义底图缺少来源署名，当前仅显示真实坐标轨迹。' };
   const configuredZoom = Number(environment.VITE_TERRAIN_TILE_MAX_ZOOM);
   return {
-    offline: false, custom: Boolean(url), url: url || 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-    maxZoom: Number.isFinite(configuredZoom) && configuredZoom >= 1 ? Math.min(20, Math.floor(configuredZoom)) : 17,
-    attribution: url ? escapeMarkup(credit) : '地图数据 &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a> | DEM: SRTM, Sonny | 地图样式 &copy; <a href="https://opentopomap.org" target="_blank" rel="noopener noreferrer">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer">CC-BY-SA</a>)',
-    plainAttribution: url ? credit : '© OpenStreetMap contributors · DEM: SRTM, Sonny · © OpenTopoMap (CC-BY-SA)',
+    offline: false, custom: Boolean(url), url: url || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    maxZoom: Number.isFinite(configuredZoom) && configuredZoom >= 1 ? Math.min(20, Math.floor(configuredZoom)) : url ? 17 : 19,
+    attribution: url ? escapeMarkup(credit) : '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>',
+    plainAttribution: url ? credit : '© OpenStreetMap contributors',
   };
 }

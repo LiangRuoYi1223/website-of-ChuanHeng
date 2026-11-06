@@ -110,6 +110,30 @@ test('summary preserves zero metrics and unknown schedule without fabricating ac
   assert.equal(container.querySelectorAll('#application').length, 1);
 });
 
+test('activity information uses Beijing dates for the activity and minute precision for registration', async () => {
+  await mount({ overrides: { dateStart: '2026-11-07T17:30:00Z', dateEnd: '2026-11-08T16:15:00Z', registrationStart: '2026-11-02T01:25:36Z', registrationDeadline: '2026-11-06T12:45:50Z' } });
+  const date = container.querySelector('.activity-sidebar-when time');
+  assert.equal(date.textContent, '2026/11/08');
+  assert.equal(date.getAttribute('datetime'), '2026-11-07T17:30:00Z', 'display precision does not change the stored instant');
+  const info = new Map([...container.querySelectorAll('.activity-sidebar-information dt')].map(node => [node.textContent, node.nextElementSibling.textContent]));
+  assert.equal(info.get('活动开始'), '2026/11/08');
+  assert.equal(info.get('活动结束'), '2026/11/09');
+  assert.equal(info.get('报名开启'), '2026/11/02 09:25');
+  assert.equal(info.get('报名截止'), '2026/11/06 20:45');
+});
+
+test('legacy calendar-only activity dates stay visible without inventing a time or a missing end day', async () => {
+  await mount({ overrides: { dateStart: '2026-11-08', dateEnd: null, registrationStart: null, registrationDeadline: null } });
+  const date = container.querySelector('.activity-sidebar-when time');
+  assert.equal(date.textContent, '2026/11/08');
+  assert.equal(date.getAttribute('datetime'), null, 'a legacy calendar day must not become a timestamp');
+  const info = new Map([...container.querySelectorAll('.activity-sidebar-information dt')].map(node => [node.textContent, node.nextElementSibling.textContent]));
+  assert.equal(info.get('活动开始'), '2026/11/08');
+  assert.equal(info.get('活动结束'), '待公布');
+  assert.equal(info.get('报名开启'), '待公布');
+  assert.equal(info.get('报名截止'), '待公布');
+});
+
 for (const [fee, expected] of [[undefined, '未公布'], [null, '未公布'], [0, '免费'], [1250, '¥12.50']]) {
   test(`registration footer and activity information display the fee ${String(fee)}`, async () => {
     await mount({ overrides: { registrationFeeCents: fee } });

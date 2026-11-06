@@ -38,6 +38,16 @@ test('missing registration email stays unknown instead of falling back to accoun
  assert.match(container.querySelector('[aria-label="注册邮箱"]')?.textContent||'',/暂未提供邮箱/);
  assert.doesNotMatch(container.textContent,/metadata@example|pending@example/);
 });
+test('member history shows activity calendar dates and retains the registration minute',async()=>{
+ control.user={id:'one'};
+ control.history=[{activityId:'date-precision',title:'日期显示测试活动',dateStart:'2026-11-07T17:30:00Z',dateEnd:'2026-11-08T16:15:00Z',registeredAt:'2026-11-01T16:25:50Z',status:'active',selectionStatus:'confirmed',paymentStatus:'unpaid',insuranceStatus:'uninsured'}];
+ try {
+  await mount(Settings);await wait(()=>container.querySelector('.member-history article'));
+  const article=container.querySelector('.member-history article');
+  assert.equal(article.querySelector('p').textContent,'2026/11/08 — 2026/11/09');
+  assert.equal(article.querySelector('small').textContent,'报名时间：2026/11/02 00:25');
+ } finally { control.history=[]; }
+});
 test('signing out immediately removes the prior registration email',async()=>{
  control.user={id:'one',email:'signed-out@example.invalid'};await mount(Settings);await wait(()=>container.textContent.includes('signed-out@example.invalid'));
  await act(async()=>{control.user=null;for(const listener of control.listeners)listener('SIGNED_OUT');});

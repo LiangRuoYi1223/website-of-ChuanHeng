@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Compass, Mountain, Route as RouteIcon, X } from 'lucide-react';
 import ActivityApplication from '../applications/ActivityApplication.jsx';
 import ActivityScheduleDetails from './ActivityScheduleDetails.jsx';
-import { formatActivityTime, scheduleInstant } from './schedule.js';
+import { formatActivityDate, scheduleInstant } from './schedule.js';
 import { formatRegistrationFee } from './registration-fee.js';
 import './activity-sidebar.css';
 
@@ -150,7 +150,7 @@ function SidebarPanel({ activity, summary, details, actions, shortLabel, details
         <header className="activity-sidebar-header">
           <div className="activity-sidebar-heading"><h2 id={titleId}>活动信息</h2><button ref={closeButton} className="activity-sidebar-close" type="button" aria-label="关闭活动信息" onClick={() => setOpen(false)}><X size={20} aria-hidden="true"/><span>关闭活动信息</span></button></div>
           <dl className="activity-sidebar-metrics"><div><dt><RouteIcon size={13} aria-hidden="true"/>里程</dt><dd>{metric(activity.distance, 'km', 2)}</dd></div><div><dt><Mountain size={13} aria-hidden="true"/>累计爬升</dt><dd>{metric(activity.ascent, 'm', 1)}</dd></div><div><dt><Compass size={13} aria-hidden="true"/>难度</dt><dd>{activity.difficulty || '待评估'}</dd></div></dl>
-          <p className="activity-sidebar-when"><span>{activity.location || '地点待确认'}</span><time dateTime={Number.isFinite(scheduleInstant(activity.dateStart)) ? activity.dateStart : undefined}>{formatActivityTime(activity.dateStart)}</time></p>
+          <p className="activity-sidebar-when"><span>{activity.location || '地点待确认'}</span><time dateTime={Number.isFinite(scheduleInstant(activity.dateStart)) ? activity.dateStart : undefined}>{formatActivityDate(activity.dateStart)}</time></p>
         </header>
         <div className="activity-sidebar-tabs" role="tablist" aria-label="活动资料与报名详情">
           {tabs.map((item, index) => <button key={item.key} ref={node => { tabRefs.current[index] = node; }} type="button" role="tab" id={item.tabId} aria-controls={item.panelId} aria-selected={tab === item.key} tabIndex={tab === item.key ? 0 : -1} onClick={() => selectTab(index)} onKeyDown={event => tabKeys(event, index)}>{item.label}</button>)}
