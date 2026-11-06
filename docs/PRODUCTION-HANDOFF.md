@@ -1,6 +1,23 @@
 # 川衡 V1 生产交接与回滚
 
-## 当前发布：前台登录入口 12 小时核验（北京时间2026-11-05）
+## 当前发布：地图底图、活动日期与团队分区（北京时间2026-11-06）
+
+轨迹默认底图由 OpenTopoMap 改为 OpenStreetMap Standard，保留可见署名和正常浏览器缓存、Referer；自定义底图与坐标模式仍可用。只按当前视口成功的真实瓦片判断地图就绪，修复首批成功后平移、半加载期间平移造成空白又不超时的问题，失败可重试。活动起止在前台显示到天，报名开启/截止仍到分钟；合法旧纯日期可以显示已知日，原始时间戳、后台输入、报名窗口和活动结束资料清理保持。关于页面团队区改为“管理团队”“领队”，没有虚构人员资料。
+
+| 项目 | 本次确认结果 |
+| --- | --- |
+| 功能提交 | `165f2fd789180114ef0ef271342dfe21d4f5d307`，已推送 GitHub `main` |
+| 正式发布 | 2026-11-06 21:27（北京时间），Worker `06ca620e-6264-4114-9d72-96ab84b6667a`，100% 流量；部署 ID `b6b56f12-2cb6-4dd2-b70d-10b77cd77dd4` |
+| 自动验证 | 全套 676/676 通过，正式构建通过；真实 Leaflet DOM 4/4、日期对应 51/51 及团队切换回归通过，独立审查完成 |
+| 线上验收 | 21:28（北京时间）完成；13 个公开入口 HTTP200 并引用 `index-BajmHTT_.js`；全部 8 个 JS/CSS 的 SHA-256 与本地正式构建一致 |
+| 地图来源 | [来源记录](../src/tracks/BASEMAP_SOURCE.md)；使用 `https://tile.openstreetmap.org/{z}/{x}/{y}.png`，不引入新 key、收费服务、瓦片代理或离线预抓。少量真实 PNG 请求通过系统默认网络核验，不能据此保证所有访问者网络可达 |
+| 运行与权限 | `/api/tracks/status` 为 `configured:true`、`localPreview:false`；匿名轨迹/封面 POST 均 HTTP401；保留 IMAGES、HYPERDRIVE、ASSETS 和公开配置 |
+| 数据与回退 | 无 Worker 源码、数据库、Storage、Edge、Cron 变更；未改真实轨迹或活动记录。回退版本 `29bdd615-6341-4826-870b-6f5a4a8aa030` |
+| 验收边界 | 未登录真实管理员或读取真实会员、报名资料；未执行浏览器像素/实机视觉验收。地图加载行为由真实 Leaflet 组件和合成轨迹验证，HTTP入口及PNG响应不代替真实用户网络和视觉验收 |
+
+证据位于 ignored `artifacts/map-dates-team-tests.log`、`artifacts/map-dates-team-build.log`、`artifacts/map-dates-team-before-deploy.json`、`artifacts/map-dates-team-deploy.log`、`artifacts/map-dates-team-after-deploy.json`、`artifacts/map-dates-team-live-verification.json`。原有未跟踪 KML 计划未纳入提交。
+
+## 上一发布：前台登录入口 12 小时核验（北京时间2026-11-05）
 
 前台桌面导航与移动菜单共用标签页内存会话。首次服务器核验后固定 12 小时内，切回标签页、切换站内页面、打开移动菜单保留登录显示与用户名，不反复显示“正在确认登录…”。到期后台核验；资料更新保留旧名直到新名就绪。退出、换号、匿名化及时清除；管理员降级撤管理入口，升级须服务器确认，过时升级及资料响应不得恢复旧状态。记录已核验的 session 角色声明，避免旧声明导致反复核验；恢复请求超时可重试。现有后台缓存和业务实时服务端鉴权保持。
 
