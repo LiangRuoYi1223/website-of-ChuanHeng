@@ -244,13 +244,13 @@ export async function loadBasemapElements(bounds, {fetchImpl = fetch, signal, no
     const bytes=new Uint8Array(raw);let count=0,factor=1,position=0,complete=false;
     for(;position<Math.min(bytes.length,8);position++){
       const byte=bytes[position];count+=(byte&127)*factor;
-      if(!Number.isSafeInteger(count)||count>60000)tooLarge();
+      if(!Number.isSafeInteger(count)||count>65536)tooLarge();
       if(byte<128){position++;complete=true;break;}factor*=128;
     }
     // The SDK allocates Entry objects from the first varint before reading
     // four columns. Bound that allocation before handing a directory to it.
     if(!complete||bytes.length-position<count*4)fail('BASEMAP_INVALID_DIRECTORY','地图目录记录不完整，请稍后重试。',502);
-    if((directoryEntries+=count)>120000)tooLarge();
+    if((directoryEntries+=count)>262144)tooLarge();
     checkedDirectories.add(raw);return raw;
   };
   try {

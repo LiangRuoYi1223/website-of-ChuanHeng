@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {gzipSync} from 'node:zlib';
+import {zxyToTileId} from 'pmtiles';
 import {loadBasemapElements} from '../server/basemaps/pmtiles-source.mjs';
 import {archive,archiveUrl,archiveEtag,archiveResponse,makeArchive,makeMvt,defaultLayers} from './fixtures/pmtiles-basemap.mjs';
 
@@ -141,4 +142,19 @@ test('compressed directory counts are bounded before the SDK allocates entry obj
     new DataView(bytes.buffer).setBigUint64(16,BigInt(compressed.length),true);
     await assert.rejects(loadBasemapElements(bounds,{now,fetchImpl:fixtureFetch(bytes)}),{code});
   }
+});
+
+test('a valid 61220-entry directory remains readable within the bounded object budget',async()=>{
+  const count=61220,mvt=makeMvt(),base=makeArchive({mvt,minZoom:13,maxZoom:13});
+  const scale=2**13,x=Math.floor((114.005+180)/360*scale),y=Math.floor((1-Math.asinh(Math.tan(22.005*Math.PI/180))/Math.PI)/2*scale);
+  const start=zxyToTileId(13,x,y)-1000,values=[count,start,...Array(count-1).fill(1),...Array(count).fill(1),...Array(count).fill(mvt.length),...Array(count).fill(1)],encoded=[];
+  for(let value of values){do{const byte=value%128;value=Math.floor(value/128);encoded.push(byte+(value?128:0));}while(value);}
+  const directory=gzipSync(Uint8Array.from(encoded)),metadata=gzipSync('{}');
+  assert.ok(127+directory.length+metadata.length<16384);
+  const bytes=base.slice(0,16384+mvt.length),header=new DataView(bytes.buffer);
+  bytes.fill(0,127,16384);bytes.set(directory,127);bytes.set(metadata,127+directory.length);bytes[97]=2;
+  header.setBigUint64(16,BigInt(directory.length),true);header.setBigUint64(24,BigInt(127+directory.length),true);header.setBigUint64(32,BigInt(metadata.length),true);
+  header.setBigUint64(64,BigInt(mvt.length),true);header.setBigUint64(72,BigInt(count),true);header.setBigUint64(80,BigInt(count),true);header.setBigUint64(88,1n,true);
+  const result=await loadBasemapElements(bounds,{now,fetchImpl:fixtureFetch(bytes)});
+  assert.ok(result.elements.some(element=>element.tags.landuse==='forest'));
 });
