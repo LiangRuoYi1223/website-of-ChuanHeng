@@ -1,6 +1,23 @@
 # 川衡 V1 生产交接与回滚
 
-## 当前发布：单段轨迹隐藏切换栏（北京时间2026-11-07）
+## 当前发布：活动独立编辑页与实时预览（北京时间2026-11-07）
+
+活动编辑从弹窗改为独立页面，桌面左侧编辑、右侧实时预览，窄屏可切换编辑与预览。活动介绍、资料提示、行程、装备和安全内容全部可修改，行程项、装备模块与安全条目支持增删排序。公开详情与预览共用正文渲染；旧活动保留原默认文案，明确清空的文字或条目不会自动补回。新增未保存返回、刷新及浏览器后退保护，预览中保存失败会显示编辑区和错误。
+
+| 项目 | 本次确认结果 |
+| --- | --- |
+| 功能提交 | `988dd48a77bc2e62f89910d67edd03d3884a9610`，已推送 GitHub `main` |
+| 正式发布 | 2026-11-07 11:06（北京时间）；Worker `4a96f4d6-65e5-4a23-b754-816d23447406`，100%流量，部署ID `b51e2b30-97f7-4716-99a8-f353af905e24` |
+| 管理入口 | https://chuanheng-website.vulhusky.workers.dev/admin/activities；新建 `/admin/activities/new`，编辑 `/admin/activities/:id/edit`，均须受信管理员身份 |
+| 自动验证 | 发布前全套796/796通过，正式构建通过，独立范围审查无阻断项；包含完整内容编辑、增删排序、保存重开、公开详情一致、日期与旧指标、路线快照、跨窗冲突、身份隔离及未保存导航保护 |
+| 线上验收 | 2026-11-07 11:45（北京时间）完成，25/25通过；16个公开入口HTTP200并引用新入口`index-BFEihn55.js`，全部6个JS/CSS的SHA-256与本地正式构建一致；轨迹服务`configured:true`、`localPreview:false`，匿名轨迹转换和封面处理POST均HTTP401 |
+| 运行与数据 | 保留IMAGES、HYPERDRIVE、ASSETS和既有公开配置；无Worker源码、数据库迁移、Storage、Edge或Cron变更。仅发布网页代码，不上传浏览器本地草稿，不改真实会员资料、活动记录或历史路线快照 |
+| 回退版本 | `a129a437-0265-4938-a922-35758985e7bd`，仅回退程序，不删除数据 |
+| 验收边界 | 本地浏览器控制在用户按Esc后已停止；本轮未进行线上桌面/手机视觉或真实管理员交互验收，未登录真实账号或读取会员/报名资料。HTTP与文件核对不代替这些检查 |
+
+证据保存在ignored `artifacts/activity-editor-release-tests.log`、`artifacts/activity-editor-release-build.log`、`artifacts/activity-editor-deploy.log`、`artifacts/activity-editor-before-deploy.json`、`artifacts/activity-editor-after-deploy.json`及`artifacts/activity-editor-live-verification.json`。原有未跟踪KML计划未纳入提交。已打开页面先保存当前编辑，再刷新加载新版。
+
+## 上一发布：单段轨迹隐藏切换栏（北京时间2026-11-07）
 
 仅有一段实际轨迹时，隐藏“全部轨迹／各轨迹段”整组切换按钮；有多段时保留全部及各段高亮入口。活动详情、路线详情和上传预览共用此规则，地图、逐段海拔与原始轨迹数据保持原有逻辑。
 
