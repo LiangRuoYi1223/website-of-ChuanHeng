@@ -27,6 +27,10 @@ import SiteImagesAdmin from '../site-images/SiteImagesAdmin.jsx';
 import ImageUpload from '../site-images/ImageUpload.jsx';
 import SiteImage, {SiteImageCredit} from '../site-images/SiteImage.jsx';
 import {getAdminSession} from '../session/admin-session.js';
+import ActivityEditorWorkspace from '../activities/ActivityEditorWorkspace.jsx';
+import ActivityContentFields from '../activities/ActivityContentFields.jsx';
+import {readActivityPageContent, parseActivityPageContent} from '../activities/page-content.js';
+import {formatActivityDistance, formatActivityAscent} from '../activities/presentation.js';
 
 const DRAFT_KEY = 'chuanheng-drafts';
 const NAV = [
@@ -218,11 +222,28 @@ export function AdminPage() {
   const [query, setQuery] = useState('');
   const [showSamples, setShowSamples] = useState(false);
   const [editor, setEditor] = useState(null);
+  const editorDirty = useRef(false);
   const [registrationActivity, setRegistrationActivity] = useState(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
+  const activityEditorPath = /^\/admin\/activities\/([^/]+)(?:\/edit)?\/?$/.exec(location.pathname);
+  const requestedActivityId = activityEditorPath?.[1] || '';
+
+  function openEditor(record) {
+    setError('');
+    editorDirty.current = false;
+    setEditor(structuredClone(record));
+    if (record.kind === 'activity') navigate(adminPath(record.id ? `/admin/activities/${record.id}/edit` : '/admin/activities/new'));
+  }
+  function closeEditor() {
+    if (busy) return;
+    if (editor?.kind === 'activity' && editorDirty.current && !window.confirm('还有未保存的活动修改，确定离开并放弃修改吗？')) return;
+    editorDirty.current = false;
+    setEditor(null); setError('');
+    if (requestedActivityId) navigate(adminPath('/admin/activities'));
+  }
 
   useEffect(() => {
     if (['footprints', 'debug'].includes(requestedSection)) {
@@ -231,8 +252,9 @@ export function AdminPage() {
     }
   }, [requestedSection, previewRequested, navigate]);
 
-  useEffect(() => { setQuery(''); setShowSamples(false); setEditor(null); setRegistrationActivity(null); setMobileOpen(false); setNotice(''); setError(''); }, [section]);
+  useEffect(() => { setQuery(''); setShowSamples(false); if (editor?.kind !== 'activity' || !editorDirty.current) setEditor(null); setRegistrationActivity(null); setMobileOpen(false); setNotice(''); setError(''); }, [section]);
   useLayoutEffect(() => {
+    editorDirty.current = false;
     setEditor(null); setRegistrationActivity(null); setCloudRows([]); setLoadedCloudVersion(null);
     setNotice(''); setError(''); setBusy(false);
   }, [identityKey, auth.epoch]);
@@ -270,6 +292,23 @@ export function AdminPage() {
   }, [auth.status, auth.user?.id, auth.epoch, refresh, local]);
 
   const rows = local ? drafts : cloudRows;
+  useEffect(() => {
+    const sameActivity = editor?.kind === 'activity' && (editor.id || 'new') === requestedActivityId;
+    if (sameActivity) return;
+    if (editor?.kind === 'activity' && editorDirty.current) {
+      if (!window.confirm('还有未保存的活动修改，确定离开并放弃修改吗？')) {
+        navigate(adminPath(editor.id ? `/admin/activities/${editor.id}/edit` : '/admin/activities/new'), {replace:true});
+        return;
+      }
+      editorDirty.current = false;
+    }
+    if (!requestedActivityId) { setEditor(current => current?.kind === 'activity' ? null : current); return; }
+    if (!allowed || (!local && (loading || loadError || loadedCloudVersion !== `${auth.user?.id || ''}:${refresh}`))) return;
+    if (requestedActivityId === 'new') { setError(''); setEditor({kind:'activity',payload:{}}); return; }
+    const record = rows.find(row => row.kind === 'activity' && row.id === requestedActivityId && !row.isDemo && !row.payload?.isDemo && !row.payload?.archived);
+    if (!record) { setEditor(null); setError('活动不存在或已移除，请返回活动列表核对。'); return; }
+    setError(''); setEditor(structuredClone(record));
+  }, [requestedActivityId, allowed, local, loading, loadError, loadedCloudVersion, refresh, auth.user?.id, auth.epoch, identityKey, location.key, editor, rows]);
   const requestedRouteId=new URLSearchParams(location.search).get('edit');
   useEffect(()=>{
     if(section!=='routes'||!requestedRouteId||!allowed||showSamples||(!local&&(loading||loadError||loadedCloudVersion!==`${auth.user?.id || ''}:${refresh}`)))return;
@@ -326,6 +365,7 @@ export function AdminPage() {
         }
       }
       if (editor.kind === 'activity') {
+        if (form.has('pageContent')) payload.pageContent = parseActivityPageContent(JSON.parse(String(form.get('pageContent'))));
         payload.showInHistory = form.get('showInHistory') === 'on';
         payload.date = String(form.get('date') || '').trim();
         payload.status = String(form.get('status') || '即将开始');
@@ -391,7 +431,9 @@ export function AdminPage() {
         window.dispatchEvent(new Event('chuanheng-content-updated'));
         setNotice(record.published ? '内容已保存并发布到云端内容表。' : '云端草稿已保存。');
       }
+      editorDirty.current = false;
       setEditor(null);
+      if (editor.kind === 'activity') navigate(adminPath('/admin/activities'));
     } catch (caught) { if (active()) { if (local && caught.code === 'DRAFT_CONFLICT') setDrafts(readDrafts()); setError(caught.message || '保存失败，请重试。'); } }
     finally { if (active()) setBusy(false); }
   }
@@ -429,18 +471,20 @@ export function AdminPage() {
     navigate(local ? '/' : '/login');
   }
 
-  const editButton = <button className="admin-btn primary" onClick={() => { setError(''); setEditor({ kind: kind || 'activity', payload: {} }); if (!local && kind === 'route') setRefresh(value => value + 1); }}><Plus size={17} />新建{KIND_NAMES[kind] || '活动'}</button>;
+  const editButton = <button className="admin-btn primary" onClick={() => { openEditor({ kind: kind || 'activity', payload: {} }); if (!local && kind === 'route') setRefresh(value => value + 1); }}><Plus size={17} />新建{KIND_NAMES[kind] || '活动'}</button>;
 
   function contentTable(overview = false) {
     const shown = overview ? filtered.slice(0, 6) : filtered;
     return <section className="admin-panel">
       <div className="admin-panel-heading"><div><h2>{overview ? '近期内容' : `${KIND_NAMES[kind]}列表`} <span>{filtered.length}</span></h2><p>{showSamples ? '界面示例只读，不计入统计，不支持报名或发布。' : local ? '管理此浏览器保存的内容草稿' : '管理云端内容与发布状态'}</p></div><div className="admin-panel-actions">{runtimeMode.allowLocalPreview && <button className={`admin-btn subtle ${showSamples ? 'selected' : ''}`} onClick={() => setShowSamples(value => !value)}><Eye size={15} />{showSamples ? '返回我的内容' : '查看示例'}</button>}{overview && <Link className="admin-text-link" to={adminPath("/admin/activities")}>全部活动<ArrowRight size={15} /></Link>}</div></div>
-      <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>内容名称</th><th>类别</th><th>状态</th><th>创建日期</th><th>操作</th></tr></thead><tbody>{shown.map(row => <tr key={row.id} onDoubleClick={event => { if (row.kind === 'activity' && !row.isDemo && allowed && !busy && !event.target.closest('button,a,input,select,textarea')) setRegistrationActivity(structuredClone(row)); }}><td><div className="admin-row-title">{row.payload.image ? <img src={row.payload.image} alt="" loading="lazy" onError={event => { event.currentTarget.style.visibility = 'hidden'; }} /> : <span className="admin-row-image"><MountainSnow size={19} /></span>}<div><strong>{row.payload.title}</strong><small>{String(row.payload.description || '').slice(0, 42) || '暂无简介'}</small>{routeMetricIssues(row).length > 0 && <small className="admin-record-warning">参数待补：{routeMetricIssues(row).join('、')}</small>}{activityLocationIssue(row) && <small className="admin-record-warning">地点待核实</small>}</div></div></td><td>{row.payload.type || KIND_NAMES[row.kind]}</td><td><span className={`admin-status ${row.isDemo ? 'sample' : row.payload.archived ? 'archived' : row.published ? 'published' : ''}`}>{row.isDemo ? '设计示例' : row.payload.archived ? '已归档' : row.published ? '已发布' : '草稿'}</span></td><td>{dateLabel(row.created_at)}</td><td>{row.isDemo || row.kind === 'route' && row.payload.archived ? <span className="admin-muted">{row.payload.archived ? '归档只读' : '只读'}</span> : <div className="admin-row-actions">{row.kind === 'activity' && <button aria-label={`管理${row.payload.title}的报名`} title="报名管理" onClick={() => setRegistrationActivity(structuredClone(row))} disabled={busy}><Users size={16} /></button>}{local && ['route', 'activity'].includes(row.kind) && <Link to={`/${row.kind === 'activity' ? 'activities' : 'routes'}/${row.id}?draft=1`} aria-label={`预览${row.payload.title}`} title={row.kind === 'activity' ? '预览本地活动' : '预览本地路线'}><Eye size={16} /></Link>}<button aria-label={`编辑${row.payload.title}`} title="编辑" onClick={() => { setError(''); setEditor(structuredClone(row)); }} disabled={busy}><Pencil size={16} /></button><button className="danger" aria-label={`删除${row.payload.title}`} title="删除" onClick={() => deleteContent(row)} disabled={busy}><Trash2 size={16} /></button></div>}</td></tr>)}</tbody></table></div>
+      <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>内容名称</th><th>类别</th><th>状态</th><th>创建日期</th><th>操作</th></tr></thead><tbody>{shown.map(row => <tr key={row.id} onDoubleClick={event => { if (row.kind === 'activity' && !row.isDemo && allowed && !busy && !event.target.closest('button,a,input,select,textarea')) setRegistrationActivity(structuredClone(row)); }}><td><div className="admin-row-title">{row.payload.image ? <img src={row.payload.image} alt="" loading="lazy" onError={event => { event.currentTarget.style.visibility = 'hidden'; }} /> : <span className="admin-row-image"><MountainSnow size={19} /></span>}<div><strong>{row.payload.title}</strong><small>{String(row.payload.description || '').slice(0, 42) || '暂无简介'}</small>{routeMetricIssues(row).length > 0 && <small className="admin-record-warning">参数待补：{routeMetricIssues(row).join('、')}</small>}{activityLocationIssue(row) && <small className="admin-record-warning">地点待核实</small>}</div></div></td><td>{row.payload.type || KIND_NAMES[row.kind]}</td><td><span className={`admin-status ${row.isDemo ? 'sample' : row.payload.archived ? 'archived' : row.published ? 'published' : ''}`}>{row.isDemo ? '设计示例' : row.payload.archived ? '已归档' : row.published ? '已发布' : '草稿'}</span></td><td>{dateLabel(row.created_at)}</td><td>{row.isDemo || row.kind === 'route' && row.payload.archived ? <span className="admin-muted">{row.payload.archived ? '归档只读' : '只读'}</span> : <div className="admin-row-actions">{row.kind === 'activity' && <button aria-label={`管理${row.payload.title}的报名`} title="报名管理" onClick={() => setRegistrationActivity(structuredClone(row))} disabled={busy}><Users size={16} /></button>}{local && ['route', 'activity'].includes(row.kind) && <Link to={`/${row.kind === 'activity' ? 'activities' : 'routes'}/${row.id}?draft=1`} aria-label={`预览${row.payload.title}`} title={row.kind === 'activity' ? '预览本地活动' : '预览本地路线'}><Eye size={16} /></Link>}<button aria-label={`编辑${row.payload.title}`} title="编辑" onClick={() => openEditor(row)} disabled={busy}><Pencil size={16} /></button><button className="danger" aria-label={`删除${row.payload.title}`} title="删除" onClick={() => deleteContent(row)} disabled={busy}><Trash2 size={16} /></button></div>}</td></tr>)}</tbody></table></div>
       {!shown.length && <EmptyState title={loading ? '正在读取内容' : query ? '没有找到匹配内容' : `还没有${KIND_NAMES[kind] || '内容'}${local ? '草稿' : ''}`} description={loading ? '请稍候，正在连接内容服务。' : query ? '试试其他关键词。' : '从一次新的创建开始，记录每一次出发。'} />}
       <div className="admin-table-footer"><span>共 {filtered.length} 条内容{showSamples ? ' · 设计示例' : local ? ' · 本地保存' : ''}</span><span>{overview && filtered.length > 6 ? '显示最近 6 条' : '全部内容'}<ChevronRight size={14} /></span></div>
     </section>;
   }
 
+  const contentEditor = editor && allowed && <ContentEditor key={`${editor.kind}:${editor.id || 'new'}`} editor={editor} rows={rows} onRefreshRoutes={() => { if (local) setDrafts(readDrafts()); else setRefresh(value => value + 1); }} routesLoading={loading} routesError={loadError} local={local} busy={busy} error={error} onSave={saveContent} onClose={closeEditor} onDirtyChange={() => { editorDirty.current = true; }} />;
+  if (editor?.kind === 'activity' && allowed) return <div className="admin-shell activity-editor-shell">{contentEditor}</div>;
   return <div className="admin-shell">
     {mobileOpen && <button className="admin-nav-backdrop" aria-label="关闭后台菜单" onClick={() => setMobileOpen(false)} />}
     <aside className={`admin-sidebar ${mobileOpen ? 'open' : ''}`}><Link className="admin-brand" to={adminPath("/admin")}><AdminMark /><span>川衡<span>管理后台</span></span></Link><div className="admin-nav-label">工作空间</div><nav aria-label="后台导航">{NAV.map(([id, label, Icon, path]) => <div key={id}>{id === 'backgrounds' && <div className="admin-nav-label admin-system-label">系统设置</div>}<Link className={section === id ? 'active' : ''} to={adminPath(path)}><Icon size={17} /><span>{label}</span>{section === id && <span className="admin-active-dot" />}</Link></div>)}</nav><div className="admin-sidebar-bottom"><Link to={local && section === "backgrounds" ? "/?preview=1" : "/"} target="_blank" rel="noopener noreferrer" title="在新标签页打开网站，保留当前后台"><ArrowRight size={16} />打开网站</Link><button onClick={signOut}><LogOut size={16} />{local ? '离开预览' : '退出登录'}</button></div></aside>
@@ -463,11 +507,11 @@ export function AdminPage() {
       <footer className="admin-footer"><span>川衡登山协会 · 管理工作空间</span><span>以山为伴，一路同行。</span></footer>
     </section></div>
     {registrationActivity && allowed && <ActivityRegistrationAdmin key={`${registrationActivity.id}:${auth.user?.id || 'preview'}:${auth.epoch}`} activity={registrationActivity} local={local} expectedUserId={auth.user?.id} onClose={() => setRegistrationActivity(null)} />}
-    {editor && allowed && <ContentEditor editor={editor} rows={rows} onRefreshRoutes={() => { if (local) setDrafts(readDrafts()); else setRefresh(value => value + 1); }} routesLoading={loading} routesError={loadError} local={local} busy={busy} error={error} onSave={saveContent} onClose={() => { if (!busy) { setEditor(null); setError(''); } }} />}
+    {contentEditor}
   </div>;
 }
 
-export function ContentEditor({ editor, rows = [], onRefreshRoutes = () => {}, routesLoading = false, routesError = '', local, busy, error, onSave, onClose }) {
+export function ContentEditor({ editor, rows = [], onRefreshRoutes = () => {}, routesLoading = false, routesError = '', local, busy, error, onSave, onClose, onDirtyChange = () => {} }) {
   const dialog = useRef(null);
   const closeRef = useRef(onClose);
   const supportsTrack = editor.kind === 'route' || editor.kind === 'activity' && !editor.payload.routeSnapshot && Boolean(editor.payload.track || editor.payload.trackLocalId);
@@ -492,6 +536,49 @@ export function ContentEditor({ editor, rows = [], onRefreshRoutes = () => {}, r
   const [trackConverting, setTrackConverting] = useState(false);
   const [imageBusy, setImageBusy] = useState(false);
   const [activityStatus, setActivityStatus] = useState(editor.payload.status || '即将开始');
+  const [pageContent, setPageContent] = useState(() => readActivityPageContent(editor.payload));
+  const [previewValues, setPreviewValues] = useState(editor.payload);
+  const formId = 'activity-content-editor-form';
+  const dirty = useRef(false);
+  function markDirty() { dirty.current = true; onDirtyChange(); }
+  function changePageContent(next) { markDirty(); setPageContent(next); }
+  useEffect(() => {
+    if (editor.kind !== 'activity') return undefined;
+    const activeHistoryIndex = window.history.state?.idx;
+    const beforeUnload = event => { if (dirty.current) { event.preventDefault(); event.returnValue = ''; } };
+    // Capture browser history traversal before BrowserRouter unmounts this page.
+    // Navigation within the admin area is handled by AdminPage's route effect.
+    const beforeHistoryLeave = event => {
+      if (!dirty.current || /^\/admin(?:\/|$)/.test(window.location.pathname)) return;
+      const targetIndex = event.state?.idx;
+      if (!Number.isInteger(activeHistoryIndex) || !Number.isInteger(targetIndex) || activeHistoryIndex === targetIndex) return;
+      if (window.confirm('还有未保存的活动修改，确定离开并放弃修改吗？')) { dirty.current = false; return; }
+      event.stopImmediatePropagation();
+      window.history.go(activeHistoryIndex - targetIndex);
+    };
+    window.addEventListener('beforeunload', beforeUnload);
+    window.addEventListener('popstate', beforeHistoryLeave, true);
+    return () => { window.removeEventListener('beforeunload', beforeUnload); window.removeEventListener('popstate', beforeHistoryLeave, true); };
+  }, [editor.kind]);
+  function updatePreview(event) {
+    if (editor.kind !== 'activity') return;
+    markDirty();
+    const values = Object.fromEntries(new FormData(event.currentTarget));
+    for (const field of ['dateStart', 'dateEnd', 'registrationStart', 'registrationDeadline']) {
+      const value = values[field];
+      if (value && Number.isFinite(new Date(value).getTime())) values[field] = new Date(value).toISOString();
+      else if (!value && /^\d{4}-\d{2}-\d{2}$/.test(editor.payload[field] || '')) values[field] = editor.payload[field];
+    }
+    setPreviewValues(current => ({...current, ...values}));
+  }
+  const previewMetrics = routeData || (editor.payload.routeSnapshot ? {} : editor.payload);
+  const previewTrackMetrics = resolvedTrackMetrics(track);
+  const previewItem = {
+    ...editor.payload, ...previewValues, pageContent, status: activityStatus,
+    location: previewMetrics.location || trackLocationLabel(track?.location) || '',
+    distance: Object.hasOwn(previewMetrics, 'distance') ? previewMetrics.distance : previewTrackMetrics.distanceM === null ? null : previewTrackMetrics.distanceM / 1000,
+    ascent: Object.hasOwn(previewMetrics, 'ascent') ? previewMetrics.ascent : previewTrackMetrics.ascentM,
+  };
   closeRef.current = onClose;
   useEffect(() => {
     if (!supportsTrack) return undefined;
@@ -527,6 +614,7 @@ export function ContentEditor({ editor, rows = [], onRefreshRoutes = () => {}, r
     onSave(event, supportsTrack ? track : undefined, selectedRoute);
   }
   useEffect(() => {
+    if (editor.kind === 'activity') return undefined;
     const previous = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -544,11 +632,8 @@ export function ContentEditor({ editor, rows = [], onRefreshRoutes = () => {}, r
     document.addEventListener('keydown', keydown);
     return () => { document.body.style.overflow = previousOverflow; document.removeEventListener('keydown', keydown); previous?.focus(); };
   }, []);
-  return <div className="admin-modal-overlay" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
-    <section ref={dialog} className={`admin-modal ${supportsTrack ? 'admin-route-modal' : ''}`} role="dialog" aria-modal="true" aria-labelledby="content-editor-title">
-      <div className="admin-modal-heading"><div><span className="admin-eyebrow">CONTENT EDITOR</span><h2 id="content-editor-title">{editor.id ? '编辑' : '新建'}{KIND_NAMES[editor.kind]}</h2></div><button aria-label="关闭编辑器" onClick={onClose} disabled={busy}><X size={22} /></button></div>
-      <p>{local ? '保存后成为本地草稿，尚未发布。' : '内容由云端 RLS 权限保护。请核实后发布。'}</p>
-      <form onSubmit={submit}>
+  const formContent = <form id={formId} onSubmit={submit} onInput={updatePreview} onChange={updatePreview}>
+        {editor.kind === 'activity' && <div id="editor-basic" className="activity-editor-section-heading"><h2>基本信息</h2><p>设置活动信息、报名规则与关联路线。</p></div>}
         <label>内容标题<span>*</span><input name="title" defaultValue={editor.payload.title || ''} onInput={event => setRouteTitle(event.currentTarget.value)} aria-describedby={nameCheckUnavailable || matchingRoutes.length ? 'route-name-feedback' : undefined} maxLength={120} required placeholder={editor.kind === 'route' ? '输入路线名称' : '给这次出发起一个名字'} /></label>
         {nameCheckUnavailable ? <div className="admin-route-name-feedback" id="route-name-feedback" role="status"><p>{routesLoading ? '正在读取已有路线，暂无法核对重名。' : '路线列表读取失败，暂无法核对重名。'}</p><button type="button" className="admin-btn" disabled={routesLoading || busy} onClick={onRefreshRoutes}>{routesLoading ? '正在读取…' : '重新读取路线'}</button></div> : matchingRoutes.length > 0 && <section className="admin-route-name-feedback" id="route-name-feedback" role="status" aria-live="polite" aria-atomic="true"><h3>已有 {matchingRoutes.length} 条同名路线</h3><p>请核对已有路线，或修改名称以便区分。同名不代表相同路线，保存不会合并、覆盖或归档已有记录。</p><ul>{matchingRoutes.slice(0, 3).map(row => <li key={row.id}><strong>{row.payload.title}</strong><span>{row.payload.location || '地点未填写'} · {row.payload.source || '来源未注明'} · {row.published ? '已发布' : '草稿'}</span></li>)}</ul>{matchingRoutes.length > 3 && <p>另有 {matchingRoutes.length - 3} 条同名路线，可在路线管理搜索核对。</p>}</section>}
         {editor.kind === 'route' && !nameCheckUnavailable && <div className="admin-route-tools"><small>按当前已加载的路线核对名称。</small><button type="button" className="admin-btn" disabled={busy} onClick={onRefreshRoutes}>刷新已有路线</button></div>}
@@ -564,11 +649,18 @@ export function ContentEditor({ editor, rows = [], onRefreshRoutes = () => {}, r
         </section>}
         {supportsTrack && <div className="admin-route-track"><div className="admin-route-track-heading"><h3>{editor.kind === 'activity' ? '历史轨迹（只读）' : '路线轨迹'}</h3>{editor.kind === 'route' && <span>GPX / KML</span>}</div>{trackLoading ? <p className="admin-track-loading" role="status">正在读取原有轨迹，完成前暂不可保存……</p> : trackLoadError ? <div className="admin-track-load-error" role="alert"><p>{trackLoadError}</p><div><button type="button" className="admin-btn" disabled={busy} onClick={() => { setTrackLoading(true); setTrackLoadError(''); setTrackRetry(value => value + 1); }}>重试读取</button>{editor.kind === 'route' && <button type="button" className="admin-btn danger" disabled={busy} onClick={() => changeTrack(null)}>移除旧轨迹引用</button>}</div></div> : editor.kind === 'route' ? <TrackUpload value={track ?? null} onChange={changeTrack} onBusyChange={setTrackConverting} disabled={busy} local={local} /> : <p className="admin-legacy-track">{track?.name || '历史活动轨迹'} · 保留原有轨迹，不支持在活动中上传或移除。</p>}</div>}
         <label>内容简介<textarea name="description" defaultValue={editor.payload.description || ''} rows={4} maxLength={3000} placeholder="写下内容介绍与需要知道的信息…" /></label>
-        {editor.kind === 'activity' ? <ActivityCoverUpload initialValue={editor.payload.image || ''} onBusyChange={setImageBusy} disabled={busy} local={local} /> : editor.kind === 'photo' ? <GalleryPhotoUpload initialValue={editor.payload.image || ''} onBusyChange={setImageBusy} disabled={busy} local={local} /> : <ImageUpload allowUrl initialValue={editor.payload.image || ''} onBusyChange={setImageBusy} disabled={busy} local={local} label={editor.kind === 'route' ? '路线封面' : '资讯封面'} />}
+        {editor.kind === 'activity' ? <ActivityCoverUpload initialValue={editor.payload.image || ''} onChange={image => { markDirty(); setPreviewValues(current => ({...current,image})); }} onBusyChange={setImageBusy} disabled={busy} local={local} /> : editor.kind === 'photo' ? <GalleryPhotoUpload initialValue={editor.payload.image || ''} onBusyChange={setImageBusy} disabled={busy} local={local} /> : <ImageUpload allowUrl initialValue={editor.payload.image || ''} onBusyChange={setImageBusy} disabled={busy} local={local} label={editor.kind === 'route' ? '路线封面' : '资讯封面'} />}
+        {editor.kind === 'activity' && <ActivityContentFields value={pageContent} onChange={changePageContent} disabled={busy} />}
         {!local && <label className="admin-checkbox"><input type="checkbox" name="published" defaultChecked={editor.published} />发布到云端内容表</label>}
         {error && <div className="admin-message error" role="alert">{error}</div>}
         <div className="admin-form-actions"><button className="admin-btn" type="button" onClick={onClose} disabled={busy}>取消</button><button className="admin-btn primary" disabled={busy || trackBlocked || imageBusy}><Check size={16} />{imageBusy ? editor.kind === 'photo' ? '正在处理照片…' : '正在处理封面…' : busy ? '正在保存…' : local ? '保存本地草稿' : '保存内容'}</button></div>
-      </form>
+      </form>;
+  if (editor.kind === 'activity') return <ActivityEditorWorkspace item={previewItem} routeData={routeData} legacyTrack={keepsLegacyTrack || !routeId ? track : null} local={local} editing={Boolean(editor.id)} formId={formId} busy={busy} saveDisabled={busy || trackBlocked || imageBusy} error={error} onClose={onClose}>{formContent}</ActivityEditorWorkspace>;
+  return <div className="admin-modal-overlay" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
+    <section ref={dialog} className={`admin-modal ${supportsTrack ? 'admin-route-modal' : ''}`} role="dialog" aria-modal="true" aria-labelledby="content-editor-title">
+      <div className="admin-modal-heading"><div><span className="admin-eyebrow">CONTENT EDITOR</span><h2 id="content-editor-title">{editor.id ? '编辑' : '新建'}{KIND_NAMES[editor.kind]}</h2></div><button aria-label="关闭编辑器" onClick={onClose} disabled={busy}><X size={22} /></button></div>
+      <p>{local ? '保存后成为本地草稿，尚未发布。' : '内容由云端 RLS 权限保护。请核实后发布。'}</p>
+      {formContent}
     </section>
   </div>;
 }
@@ -583,7 +675,7 @@ function ContentFields({ editor, track, routeData, trackBlocked = false, activit
   return <>
     {['activity', 'route'].includes(kind) && <>
       <div className="admin-field-grid"><label>目的地<input key={detectedLocation || 'manual-location'} name="location" defaultValue={kind === 'activity' ? detectedLocation : payload.location || ''} readOnly={kind === 'activity' || Boolean(detectedLocation)} maxLength={100} placeholder="例如：广东 · 深圳" />{detectedLocation && <small>来自轨迹地点识别</small>}</label><label>难度<select name="difficulty" defaultValue={payload.difficulty || '入门'}><option>入门</option><option>进阶</option><option>挑战</option></select></label></div>
-      {kind === 'activity' ? <dl className="admin-field-grid admin-track-metrics"><div><dt>里程（km）</dt><dd>{Number.isFinite(activityDistance)?activityDistance:'暂不提供数据'}</dd></div><div><dt>累计爬升（m）</dt><dd>{Number.isFinite(activityAscent)?activityAscent:'暂不提供数据'}</dd></div><small>来自所选路线或历史轨迹；参数请在路线管理维护。</small></dl> : track ? <div className="admin-field-grid admin-track-metrics" key="track-metrics"><label>里程（km）<input name="distance" type="number" step="any" value={Number.isFinite(effective.distanceM) ? effective.distanceM / 1000 : ''} readOnly /><small>{effective.sources.distance==='administrator'?'管理员补充':effective.sources.distance==='track'?'轨迹自动计算':'暂不提供数据'}</small></label><label>累计爬升（m）<input name="ascent" type="number" step="any" value={Number.isFinite(effective.ascentM) ? effective.ascentM : ''} placeholder="源文件未提供" readOnly /><small>{effective.sources.ascent==='administrator'?'管理员补充；原海拔数据保留':effective.sources.ascent==='track'?'轨迹自动计算':'暂不提供数据'}</small></label></div> : <div className="admin-field-grid" key="manual-metrics"><label>里程（km）<input name="distance" type="number" min="0" max="100000" step="any" defaultValue={payload.distance ?? 0} disabled={trackBlocked} /></label><label>累计爬升（m）<input name="ascent" type="number" min="0" max="100000" step="any" defaultValue={payload.ascent ?? ''} disabled={trackBlocked} /></label></div>}
+      {kind === 'activity' ? <dl className="admin-field-grid admin-track-metrics"><div><dt>里程（km）</dt><dd>{formatActivityDistance(activityDistance)}</dd></div><div><dt>累计爬升（m）</dt><dd>{formatActivityAscent(activityAscent)}</dd></div><small>来自所选路线或历史轨迹；参数请在路线管理维护。</small></dl> : track ? <div className="admin-field-grid admin-track-metrics" key="track-metrics"><label>里程（km）<input name="distance" type="number" step="any" value={Number.isFinite(effective.distanceM) ? effective.distanceM / 1000 : ''} readOnly /><small>{effective.sources.distance==='administrator'?'管理员补充':effective.sources.distance==='track'?'轨迹自动计算':'暂不提供数据'}</small></label><label>累计爬升（m）<input name="ascent" type="number" step="any" value={Number.isFinite(effective.ascentM) ? effective.ascentM : ''} placeholder="源文件未提供" readOnly /><small>{effective.sources.ascent==='administrator'?'管理员补充；原海拔数据保留':effective.sources.ascent==='track'?'轨迹自动计算':'暂不提供数据'}</small></label></div> : <div className="admin-field-grid" key="manual-metrics"><label>里程（km）<input name="distance" type="number" min="0" max="100000" step="any" defaultValue={payload.distance ?? 0} disabled={trackBlocked} /></label><label>累计爬升（m）<input name="ascent" type="number" min="0" max="100000" step="any" defaultValue={payload.ascent ?? ''} disabled={trackBlocked} /></label></div>}
     </>}
     {kind === 'activity' && <>
       <div className="admin-field-grid"><label>活动开始时间<input name="dateStart" type="datetime-local" defaultValue={toLocalDateTime(payload.dateStart)} />{/^\d{4}-\d{2}-\d{2}$/.test(payload.dateStart || '') && <small>原记录日期：{payload.dateStart}，具体时刻未知，留空保留原日期。</small>}</label><label>活动结束时间<input name="dateEnd" type="datetime-local" defaultValue={toLocalDateTime(payload.dateEnd)} /></label></div>

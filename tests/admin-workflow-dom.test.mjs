@@ -12,10 +12,12 @@ import { createRouteBasemap } from '../server/basemaps/create-route-basemap.mjs'
 import { getLocalTrack, putLocalTrack } from '../src/tracks/track-store.js';
 import { getFootprints } from '../src/map/footprints.js';
 import { applyActivityTrack, resolveDuplicateRoutes } from '../src/tracks/activity-workflow.js';
+import { formatActivityDistance } from '../src/activities/presentation.js';
 
 // A local component integration test. No browser automation, real geography lookup,
 // tile requests, cloud accounts or network requests are used.
 const dom = new JSDOM('<!doctype html><html><body><div id="app"></div></body></html>', { url: 'http://localhost:5178/admin', pretendToBeVisual: true });
+dom.window.confirm = () => true;
 const originals = new Map();
 function installGlobal(key, value) {
   originals.set(key, Object.getOwnPropertyDescriptor(globalThis, key));
@@ -90,7 +92,7 @@ const container = dom.window.document.getElementById('app');
 const drafts = () => JSON.parse(localStorage.getItem('chuanheng-drafts') || '[]');
 const text = element => element.textContent.replace(/\s+/g, ' ').trim();
 const button = (label, scope = container) => [...scope.querySelectorAll('button')].find(element => text(element) === label);
-const dialog = () => container.querySelector('[role="dialog"]');
+const dialog = () => container.querySelector('[role="dialog"], .activity-editor-page');
 async function click(element) {
   assert.ok(element, 'the requested control must exist');
   // HTMLElement.click() does not focus controls in JSDOM; model the browser's
@@ -312,9 +314,9 @@ test('admin safety regressions preserve concurrent route decisions, links and un
     const latest = drafts().map(row => row.id === 'concurrent-b' ? { ...row, payload: { ...row.payload, title: '另一窗口改过的活动乙' } } : row);
     localStorage.setItem('chuanheng-drafts', JSON.stringify(latest));
     await act(async () => dom.window.dispatchEvent(new dom.window.Event('chuanheng-drafts-updated')));
-    assert.match(text(container.querySelector('.admin-table')), /另一窗口改过的活动乙/);
     assert.equal(dialog().querySelector('[name="description"]').value, '本窗口未保存的说明');
     await saveEditor();
+    assert.match(text(container.querySelector('.admin-table')), /另一窗口改过的活动乙/, 'returning to the list displays the fresh cross-tab title');
     assert.equal(drafts().find(row => row.id === 'concurrent-a').payload.description, '本窗口未保存的说明');
     assert.equal(drafts().find(row => row.id === 'concurrent-b').payload.title, '另一窗口改过的活动乙');
   });
@@ -351,7 +353,7 @@ test('admin safety regressions preserve concurrent route decisions, links and un
     await mount('/admin/activities?preview=1');
     await click(container.querySelector('button[aria-label="编辑跨窗活动甲"]'));
     await waitFor(() => dialog()?.querySelector('.admin-legacy-track'), 'historical activity track');
-    assert.equal(Number(text(dialog().querySelector('.admin-track-metrics dd'))), fixtures.get('activity-a.gpx').track.stats.distanceM / 1000);
+    assert.equal(text(dialog().querySelector('.admin-track-metrics dd')), formatActivityDistance(fixtures.get('activity-a.gpx').track.stats.distanceM / 1000));
     assert.notEqual(dialog().querySelector('[name="location"]').value, '后来修改的地点');
   });
 
@@ -403,11 +405,15 @@ test('admin safety regressions preserve concurrent route decisions, links and un
     await fill('dateEnd', '2026-01-02T07:00');
     await click(button('保存本地草稿', dialog()));
     assert.match(text(dialog()), /活动结束时间必须晚于开始时间/);
+    assert.equal(container.querySelector('[role="dialog"]'), null, 'activity editing does not trap focus inside a modal');
     const save = button('保存本地草稿', dialog());
-    const close = dialog().querySelector('button[aria-label="关闭编辑器"]');
-    await act(async () => { save.focus(); save.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })); });
-    assert.equal(dom.window.document.activeElement, close);
-    await act(async () => close.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })));
+    const tab = new dom.window.KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    await act(async () => { save.focus(); save.dispatchEvent(tab); });
+    assert.equal(tab.defaultPrevented, false, 'the full page leaves standard Tab navigation intact');
+    await act(async () => save.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })));
+    assert.ok(dialog(), 'Escape must not discard an open activity page');
+    assert.equal(dialog().querySelector('[name="dateEnd"]').value, '2026-01-02T07:00');
+    await click(button('取消', dialog()));
     assert.equal(dialog(), null);
   });
 
@@ -456,6 +462,20 @@ test('admin safety regressions preserve concurrent route decisions, links and un
   });
 });
 
+
+test('route modal retains its focus cycle and Escape close behavior', async () => {
+  localStorage.clear();
+  await mount('/admin/routes?preview=1');
+  await click(button('新建路线'));
+  const modal = container.querySelector('[role="dialog"]');
+  assert.ok(modal, 'route editing still uses its existing modal');
+  const save = button('保存本地草稿', modal);
+  const close = modal.querySelector('button[aria-label="关闭编辑器"]');
+  await act(async () => { save.focus(); save.dispatchEvent(new dom.window.KeyboardEvent('keydown', {key: 'Tab', bubbles: true, cancelable: true})); });
+  assert.equal(document.activeElement, close, 'Tab from the last modal control cycles to its first control');
+  await act(async () => close.dispatchEvent(new dom.window.KeyboardEvent('keydown', {key: 'Escape', bubbles: true, cancelable: true})));
+  assert.equal(container.querySelector('[role="dialog"]'), null);
+});
 
 test('missing metric dialog preserves prior track on cancel, supports skip and administrator zero without replacing automatic distance',async()=>{
  localStorage.clear();await mount('/admin/routes?preview=1');await click(button('新建路线'));await fill('title','参数补充测试');

@@ -175,7 +175,7 @@ test('activity editor exposes separate route/date fields and track-derived read-
   assert.match(html, /历史轨迹/);
   assert.doesNotMatch(html, /name="published"/);
   assert.doesNotMatch(html, /name="(?:distance|ascent)"/);
-  assert.match(html, /<dd>2\.35<\/dd>/);
+  assert.match(html, /<dd>2\.35 km<\/dd>/);
   assert.match(html, /暂不提供数据/);
   assert.doesNotMatch(html, /name="includeFootprint"/, 'automatic activity footprints must not require another settings toggle');
 });

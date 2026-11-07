@@ -89,7 +89,7 @@ test('cloud activity save sends route selection and optimistic versions through 
   await fill('registrationFee', '12.50');
   await fill('routeId', route.id);
   await click(button('保存内容'));
-  await waitFor(() => !container.querySelector('[role="dialog"]'), 'new activity cloud save');
+  await waitFor(() => !container.querySelector('.activity-editor-page'), 'new activity cloud save');
   const first = controller.calls.at(-1);
   assert.equal(first.name, 'save_activity_with_route');
   assert.equal(first.args.activity_record.expected, null);
@@ -105,14 +105,14 @@ test('cloud activity save sends route selection and optimistic versions through 
   await fill('description', '冲突时保留的说明');
   controller.reject = true;
   await click(button('保存内容'));
-  await waitFor(() => container.querySelector('[role="dialog"] [role="alert"]'), 'cloud conflict');
+  await waitFor(() => container.querySelector('.activity-editor-page [role="alert"]'), 'cloud conflict');
   const edited = controller.calls.at(-1).args.activity_record;
   assert.deepEqual(edited.expected, { payload: saved.payload, published: saved.published });
   assert.equal(edited.expected.payload.registrationFeeCents, 1250);
   assert.equal(edited.payload.registrationFeeCents, 2030);
   assert.equal(edited.routeExpectedPayload, undefined, 'same route ID does not request a fresh snapshot');
   assert.equal(container.querySelector('[name="description"]').value, '冲突时保留的说明');
-  assert.ok(container.querySelector('[role="dialog"]'));
+  assert.ok(container.querySelector('.activity-editor-page'));
 });
 
 test('production legacy import URL redirects to route management without enabling local preview', async () => {

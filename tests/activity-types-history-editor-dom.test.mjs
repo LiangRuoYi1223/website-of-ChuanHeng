@@ -9,6 +9,7 @@ import {fileURLToPath, pathToFileURL} from 'node:url';
 
 // Real editor, catalog and listing components; only the network boundary is replaced.
 const dom = new JSDOM('<!doctype html><div id="app"></div>', {url: 'https://frontend.invalid/admin/activities', pretendToBeVisual: true});
+dom.window.confirm = () => true;
 const originals = new Map();
 function expose(key, value) {
   originals.set(key, Object.getOwnPropertyDescriptor(globalThis, key));
@@ -82,7 +83,7 @@ const {AdminPage, ContentEditor, ActivitiesPage, RoutesPage, CatalogProvider} = 
 let root;
 const text = element => element.textContent.replace(/\s+/g, ' ').trim();
 const button = label => [...container.querySelectorAll('button')].find(element => text(element) === label);
-const form = () => container.querySelector('[role="dialog"] form');
+const form = () => container.querySelector('[role="dialog"] form, .activity-editor-page form');
 const options = select => [...select.options].map(option => option.value);
 const activity = (id, payload = {}, published = false) => ({id, kind: 'activity', published, created_at: '2026-11-01T00:00:00Z', payload: {title: id, image: '/images/test-cover.webp', ...payload}});
 const route = (id, payload = {}, published = false) => ({id, kind: 'route', published, created_at: '2026-11-01T00:00:00Z', payload: {title: id, image: '/images/test-route.webp', distance: 3, ascent: 120, ...payload}});

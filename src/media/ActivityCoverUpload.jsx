@@ -4,7 +4,7 @@ import { supabase } from '../backend.js';
 import { uploadActivityCover } from './activity-cover.js';
 import './activity-cover.css';
 
-export default function ActivityCoverUpload({ initialValue = '', onBusyChange, disabled = false, local = false }) {
+export default function ActivityCoverUpload({ initialValue = '', onBusyChange, onChange, disabled = false, local = false }) {
   const inputId = useId();
   const [imageURL, setImageURL] = useState(initialValue);
   const [busy, setBusy] = useState(false);
@@ -20,7 +20,7 @@ export default function ActivityCoverUpload({ initialValue = '', onBusyChange, d
     pending.current = true; setBusy(true); setError(''); busyCallback.current?.(true);
     try {
       const value = await uploadActivityCover(supabase, file, { local });
-      if (current === revision.current) { setImageURL(value); setBroken(false); }
+      if (current === revision.current) { setImageURL(value); setBroken(false); onChange?.(value); }
     } catch (caught) {
       if (current === revision.current) setError(`${caught.message || '封面上传失败。'} 原封面已保留。`);
     } finally {
@@ -37,7 +37,7 @@ export default function ActivityCoverUpload({ initialValue = '', onBusyChange, d
       <div><strong>活动封面</strong><p>JPEG、PNG 或 WebP，最多 {local ? '1' : '3'} MiB。{local ? '图片仅保存在当前浏览器草稿。' : '后端自动压缩并移除图片元数据，上传完成后保存活动即可使用。'}</p></div>
       <button type="button" className="btn" disabled={disabled || busy} onClick={() => input.current?.click()}>{busy ? '正在上传…' : imageURL ? '更换封面' : '上传封面'}</button>
       <input ref={input} id={inputId} className="activity-cover-file" aria-label="活动封面文件" type="file" accept="image/jpeg,image/png,image/webp" disabled={disabled || busy} onChange={event => { upload(event.target.files?.[0]); event.target.value = ''; }} />
-      {imageURL && <button type="button" className="activity-cover-remove" disabled={disabled || busy} onClick={() => { setImageURL(''); setBroken(false); setError(''); }}>移除封面</button>}
+      {imageURL && <button type="button" className="activity-cover-remove" disabled={disabled || busy} onClick={() => { setImageURL(''); setBroken(false); setError(''); onChange?.(''); }}>移除封面</button>}
     </div>
     {busy && <p className="activity-cover-status" role="status">正在处理封面，请稍候再保存活动。</p>}
     {error && <p className="activity-cover-error" role="alert">{error}</p>}
